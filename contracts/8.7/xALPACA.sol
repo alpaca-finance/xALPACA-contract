@@ -82,7 +82,7 @@ contract xALPACA is ReentrancyGuard {
   /// @dev Mapping (round off timestamp to week => slopeDelta) to keep track slope changes over epoch
   mapping(uint256 => int128) public slopeChanges;
 
-  /// @notice BEP20 campatiable variables
+  /// @notice BEP20 compatible variables
   string public name;
   string public symbol;
   uint256 public decimals;
