@@ -6,7 +6,7 @@
     "mainnet": "hardhat console --no-compile --network mainnet",
     "test:case": "mocha --require hardhat/register --extension ts -g",
     "test:parallel": "mocha --require hardhat/register --recursive --parallel --extension ts --exit",
-    "test": "hardhat test --no-compile",
+    "test": "hardhat test",
     "testnet": "hardhat console --no-compile --network testnet",
     "coverage": "hardhat coverage",
     "solhint": "./node_modules/.bin/solhint -f table contracts/**/*.sol",

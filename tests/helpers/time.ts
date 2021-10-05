@@ -1,7 +1,7 @@
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 
-export async function latest(): Promise<BigNumber> {
+export async function latestTimestamp(): Promise<BigNumber> {
   const block = await ethers.provider.getBlock("latest");
   return ethers.BigNumber.from(block.timestamp);
 }
@@ -15,11 +15,11 @@ export async function advanceBlock() {
   await ethers.provider.send("evm_mine", []);
 }
 
-export async function set(timeStamp: BigNumber) {
+export async function setTimestamp(timeStamp: BigNumber) {
   await ethers.provider.send("evm_mine", [timeStamp.toNumber()]);
 }
 
-export async function increase(duration: BigNumber) {
+export async function increaseTimestamp(duration: BigNumber) {
   if (duration.isNegative()) throw Error(`Cannot increase time by a negative amount (${duration})`);
 
   await ethers.provider.send("evm_increaseTime", [duration.toNumber()]);
