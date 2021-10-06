@@ -21,8 +21,6 @@ import "./interfaces/IBEP20.sol";
 
 import "./SafeToken.sol";
 
-import "hardhat/console.sol";
-
 /// @title xALPACA - The goverance token of Alpaca Finance
 // solhint-disable not-rely-on-time
 // solhint-disable-next-line contract-name-camelcase
@@ -103,8 +101,6 @@ contract xALPACA is ReentrancyGuard {
   }
 
   function balanceOfAt(address _user, uint256 _blockNumber) public view returns (uint256) {
-    console.log("====== balanceOfAt ======");
-
     require(_blockNumber <= block.number, "bad _blockNumber");
 
     // Get most recent user Point to block
@@ -112,8 +108,6 @@ contract xALPACA is ReentrancyGuard {
     if (_userEpoch == 0) {
       return 0;
     }
-    console.log("_blockNumber: ", _blockNumber);
-    console.log("_userEpoch: ", _userEpoch);
 
     Point memory _userPoint = userPointHistory[_user][_userEpoch];
     uint256 _maxEpoch = epoch;
@@ -145,12 +139,10 @@ contract xALPACA is ReentrancyGuard {
   /// @notice Return the voting weight of a givne user
   /// @param _user The address of a user
   function balanceOf(address _user) public view returns (uint256) {
-    console.log("=== balanceOf ===");
     uint256 _epoch = userPointEpoch[_user];
     if (_epoch == 0) {
       return 0;
     }
-    console.log("block.timestamp: ", block.timestamp);
     Point memory _lastPoint = userPointHistory[_user][_epoch];
     _lastPoint.bias =
       _lastPoint.bias -
@@ -177,14 +169,6 @@ contract xALPACA is ReentrancyGuard {
     int128 _newSlopeDelta = 1;
     uint256 _epoch = epoch;
 
-    console.log("====== _checkpoint ======");
-    console.log("block.timestamp: ", block.timestamp);
-    console.log("_prevLocked.end: ", _prevLocked.end);
-    console.log("_prevLocked.amount: ", SafeCast.toUint256(_prevLocked.amount));
-
-    console.log("_newLocked.end: ", _newLocked.end);
-    console.log("_newLocked.amount: ", SafeCast.toUint256(_newLocked.amount));
-
     // if not 0x0, then update user's point
     if (_address != address(0)) {
       // Calculate slopes and biases according to linear decay graph
@@ -195,15 +179,11 @@ contract xALPACA is ReentrancyGuard {
         // Calculate slope and bias for the prev point
         _userPrevPoint.slope = _prevLocked.amount / SafeCast.toInt128(int256(MAX_LOCK));
         _userPrevPoint.bias = _userPrevPoint.slope * SafeCast.toInt128(int256(_prevLocked.end - block.timestamp));
-        console.log("_userPrevPoint.slope: ", SafeCast.toUint256(_userNewPoint.slope));
-        console.log("_userPrevPoint.bias: ", SafeCast.toUint256(_userNewPoint.bias));
       }
       if (_newLocked.end > block.timestamp && _newLocked.amount > 0) {
         // Calculate slope and bias for the new point
         _userNewPoint.slope = _newLocked.amount / SafeCast.toInt128(int256(MAX_LOCK));
         _userNewPoint.bias = _userNewPoint.slope * SafeCast.toInt128(int256(_newLocked.end - block.timestamp));
-        console.log("_userNewPoint.slope: ", SafeCast.toUint256(_userNewPoint.slope));
-        console.log("_userNewPoint.bias: ", SafeCast.toUint256(_userNewPoint.bias));
       }
 
       // Handle user history here
@@ -255,7 +235,12 @@ contract xALPACA is ReentrancyGuard {
     // initialLastPoint is used for extrapolation to calculate block number
     // (approximately, for xxxAt methods) and save them
     // as we cannot figure that out exactly from inside contract
-    Point memory _initialLastPoint = _lastPoint;
+    Point memory _initialLastPoint = Point({
+      bias: 0,
+      slope: 0,
+      timestamp: _lastPoint.timestamp,
+      blockNumber: _lastPoint.blockNumber
+    });
 
     // If last point is already recorded in this block, _blockSlope=0
     // That is ok because we know the block in such case
@@ -276,7 +261,6 @@ contract xALPACA is ReentrancyGuard {
       if (_weekCursor > block.timestamp) {
         // If the given _weekCursor go beyond block.timestamp,
         // We take block.timestamp as the cursor
-        console.log("_weekCursor go beyond block.timestamp");
         _weekCursor = block.timestamp;
       } else {
         // If the given _weekCursor is behind block.timestamp
@@ -304,8 +288,7 @@ contract xALPACA is ReentrancyGuard {
       // based on _initalLastPoint
       _lastPoint.blockNumber =
         _initialLastPoint.blockNumber +
-        (_blockSlope * (_weekCursor - _initialLastPoint.timestamp)) /
-        MULTIPLIER;
+        ((_blockSlope * ((_weekCursor - _initialLastPoint.timestamp))) / MULTIPLIER);
       _epoch = _epoch + 1;
       if (_weekCursor == block.timestamp) {
         // Hard to be happened, but better handling this case too
@@ -370,10 +353,7 @@ contract xALPACA is ReentrancyGuard {
   /// @param _unlockTime the timestamp when ALPACA get unlocked, it will be
   /// floored down to whole weeks
   function createLock(uint256 _amount, uint256 _unlockTime) external nonReentrant {
-    console.log("====== create lock ======");
-    console.log("_unlockTime (input): ", _unlockTime);
     _unlockTime = _timestampToFloorWeek(_unlockTime);
-    console.log("_unlockTime (floor): ", _unlockTime);
     LockedBalance memory _locked = locks[msg.sender];
 
     require(_amount > 0, "bad amount");
@@ -453,7 +433,7 @@ contract xALPACA is ReentrancyGuard {
       if (pointHistory[_mid].blockNumber <= _blockNumber) {
         _min = _mid;
       } else {
-        _max = _mid;
+        _max = _mid - 1;
       }
     }
     return _min;
@@ -465,7 +445,6 @@ contract xALPACA is ReentrancyGuard {
   function _findUserBlockEpoch(address _user, uint256 _blockNumber) internal view returns (uint256) {
     uint256 _min = 0;
     uint256 _max = userPointEpoch[_user];
-    console.log("_findUserBlockEpoch._max: ", _max);
     for (uint256 i = 0; i < 128; i++) {
       if (_min >= _max) {
         break;
@@ -488,8 +467,6 @@ contract xALPACA is ReentrancyGuard {
 
   /// @notice Calculate total supply of xALPACA (voting power)
   function totalSupply() external view returns (uint256) {
-    console.log("==== totalSupply ====");
-    console.log("block.timestamp: ", block.timestamp);
     return _totalSupplyAt(pointHistory[epoch], block.timestamp);
   }
 
@@ -525,13 +502,9 @@ contract xALPACA is ReentrancyGuard {
   /// @param _timestamp The timestamp to calculate the total voting power at
   function _totalSupplyAt(Point memory _point, uint256 _timestamp) internal view returns (uint256) {
     Point memory _lastPoint = _point;
-    console.log("_timestamp: ", _timestamp);
     uint256 _weekCursor = _timestampToFloorWeek(_point.timestamp);
     // Iterate through weeks to take slopChanges into the account
     for (uint256 i = 0; i < 255; i++) {
-      console.log("_lastPoint.bias: ", SafeCast.toUint256(_lastPoint.bias));
-      console.log("_lastPoint.slope: ", SafeCast.toUint256(_lastPoint.slope));
-      console.log("i: ", i);
       _weekCursor = _weekCursor + WEEK;
       int128 _slopeDelta = 0;
       if (_weekCursor > _timestamp) {
