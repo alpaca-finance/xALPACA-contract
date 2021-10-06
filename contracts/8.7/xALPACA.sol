@@ -145,10 +145,12 @@ contract xALPACA is ReentrancyGuard {
   /// @notice Return the voting weight of a givne user
   /// @param _user The address of a user
   function balanceOf(address _user) public view returns (uint256) {
+    console.log("=== balanceOf ===");
     uint256 _epoch = userPointEpoch[_user];
     if (_epoch == 0) {
       return 0;
     }
+    console.log("block.timestamp: ", block.timestamp);
     Point memory _lastPoint = userPointHistory[_user][_epoch];
     _lastPoint.bias =
       _lastPoint.bias -
@@ -285,7 +287,7 @@ contract xALPACA is ReentrancyGuard {
       // Calculate _biasDelta = _lastPoint.slope * (_weekCursor - _lastCheckpoint)
       int128 _biasDelta = _lastPoint.slope * SafeCast.toInt128(int256((_weekCursor.sub(_lastCheckpoint))));
       _lastPoint.bias = _lastPoint.bias - _biasDelta;
-      _lastPoint.slope = _lastPoint.slope - _slopeDelta;
+      _lastPoint.slope = _lastPoint.slope + _slopeDelta;
       if (_lastPoint.bias < 0) {
         // This can be happened
         _lastPoint.bias = 0;
@@ -486,17 +488,50 @@ contract xALPACA is ReentrancyGuard {
 
   /// @notice Calculate total supply of xALPACA (voting power)
   function totalSupply() external view returns (uint256) {
-    return _supplyAt(pointHistory[epoch], block.timestamp);
+    console.log("==== totalSupply ====");
+    console.log("block.timestamp: ", block.timestamp);
+    return _totalSupplyAt(pointHistory[epoch], block.timestamp);
+  }
+
+  /// @notice Calculate total supply of xALPACA at specific block
+  /// @param _blockNumber The specific block number to calculate totalSupply
+  function totalSupplyAt(uint256 _blockNumber) external view returns (uint256) {
+    require(_blockNumber <= block.number, "bad _blockNumber");
+    uint256 _epoch = epoch;
+    uint256 _targetEpoch = _findBlockEpoch(_blockNumber, _epoch);
+
+    Point memory _point = pointHistory[_targetEpoch];
+    uint256 _timeDelta = 0;
+    if (_targetEpoch < _epoch) {
+      Point memory _nextPoint = pointHistory[_targetEpoch + 1];
+      if (_point.blockNumber != _nextPoint.blockNumber) {
+        _timeDelta =
+          ((_blockNumber - _point.blockNumber) * (_nextPoint.timestamp - _point.timestamp)) /
+          (_nextPoint.blockNumber - _point.blockNumber);
+      }
+    } else {
+      if (_point.blockNumber != block.number) {
+        _timeDelta =
+          ((_blockNumber - _point.blockNumber) * (block.timestamp - _point.timestamp)) /
+          (block.number - _point.blockNumber);
+      }
+    }
+
+    return _totalSupplyAt(_point, _point.timestamp + _timeDelta);
   }
 
   /// @notice Calculate total supply of xALPACA (voting power) at some point in the past
   /// @param _point The point to start to search from
   /// @param _timestamp The timestamp to calculate the total voting power at
-  function _supplyAt(Point memory _point, uint256 _timestamp) internal view returns (uint256) {
+  function _totalSupplyAt(Point memory _point, uint256 _timestamp) internal view returns (uint256) {
     Point memory _lastPoint = _point;
+    console.log("_timestamp: ", _timestamp);
     uint256 _weekCursor = _timestampToFloorWeek(_point.timestamp);
     // Iterate through weeks to take slopChanges into the account
     for (uint256 i = 0; i < 255; i++) {
+      console.log("_lastPoint.bias: ", SafeCast.toUint256(_lastPoint.bias));
+      console.log("_lastPoint.slope: ", SafeCast.toUint256(_lastPoint.slope));
+      console.log("i: ", i);
       _weekCursor = _weekCursor + WEEK;
       int128 _slopeDelta = 0;
       if (_weekCursor > _timestamp) {
@@ -511,8 +546,7 @@ contract xALPACA is ReentrancyGuard {
       // Update bias at _weekCursor
       _lastPoint.bias =
         _lastPoint.bias -
-        _lastPoint.slope *
-        SafeCast.toInt128(int256(_weekCursor - _lastPoint.timestamp));
+        (_lastPoint.slope * SafeCast.toInt128(int256(_weekCursor - _lastPoint.timestamp)));
       if (_weekCursor == _timestamp) {
         break;
       }
@@ -526,5 +560,31 @@ contract xALPACA is ReentrancyGuard {
     }
 
     return SafeCast.toUint256(_lastPoint.bias);
+  }
+
+  /// @notice Withdraw all ALPACA when lock has expired.
+  function withdraw() external nonReentrant {
+    LockedBalance memory _lock = locks[msg.sender];
+
+    require(block.timestamp >= _lock.end, "!expired");
+
+    uint256 amount = SafeCast.toUint256(_lock.amount);
+
+    LockedBalance memory _prevLock = _lock;
+    _lock.end = 0;
+    _lock.amount = 0;
+    locks[msg.sender] = _lock;
+    uint256 _supplyBefore = supply;
+    supply = supply.sub(amount);
+
+    // _prevLock can have either block.timstamp >= _lock.end or zero end
+    // _lock has only 0 end
+    // Both can have >= 0 amount
+    _checkpoint(msg.sender, _prevLock, _lock);
+
+    token.safeTransfer(msg.sender, amount);
+
+    emit LogWithdraw(msg.sender, amount, block.timestamp);
+    emit LogSupply(_supplyBefore, supply);
   }
 }

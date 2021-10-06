@@ -153,16 +153,16 @@ describe("xALPACA", () => {
       // prepare
       const stages: any = {};
       const lockAmount = ethers.utils.parseEther("1000");
-      await ALPACAasAlice.approve(xALPACA.address, lockAmount);
-      await ALPACAasBob.approve(xALPACA.address, lockAmount);
+      await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+      await ALPACAasBob.approve(xALPACA.address, ethers.constants.MaxUint256);
 
+      expect(await xALPACA.totalSupply()).to.be.eq("0");
       expect(await xALPACA.supply()).to.be.eq("0");
       expect(await xALPACA.balanceOf(aliceAddress)).to.be.eq("0");
       expect(await xALPACA.balanceOf(bobAddress)).to.be.eq("0");
 
       // Set time to start of the next week (Unix start week, not typical start week)
-      const latestTimestamp = await timeHelpers.latestTimestamp();
-      await timeHelpers.setTimestamp(latestTimestamp.div(WEEK).add(1).mul(WEEK));
+      await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
       // Increase time by one hour
       await timeHelpers.increaseTimestamp(HOUR);
@@ -198,11 +198,19 @@ describe("xALPACA", () => {
 
       let t0 = await timeHelpers.latestTimestamp();
 
-      stages["alice_in_0"] = [];
-      stages["alice_in_0"].push([await timeHelpers.latestBlockNumber(), await timeHelpers.latestTimestamp()]);
+      stages["aliceIn0"] = [];
+      stages["aliceIn0"].push([await timeHelpers.latestBlockNumber(), await timeHelpers.latestTimestamp()]);
+
+      // Loop through 7 days to decay Alice's xALPACA
       for (let i = 0; i < 7; i++) {
+        // Move up 1 day
         await timeHelpers.increaseTimestamp(DAY);
         const timeDelta = (await timeHelpers.latestTimestamp()).sub(t0);
+
+        // The following conditions must be satisfied:
+        // - balanceOf Alice must be lockAmount / MAX_LOCK * MAX(WEEK - (2 * HOUR) - (CURRENT-T0))
+        // - totalSupply Alice must be lockAmount / MAX_LOCK * MAX(WEEK - (2 * HOUR) - (CURRENT-T0))
+        // - balanceOf Bob must be 0
         assertHelpers.assertBigNumberClosePercent(
           await xALPACA.totalSupply(),
           lockAmount.div(MAX_LOCK).mul(mathHelpers.max(WEEK.sub(HOUR.mul(2)).sub(timeDelta), 0)),
@@ -213,7 +221,210 @@ describe("xALPACA", () => {
           lockAmount.div(MAX_LOCK).mul(mathHelpers.max(WEEK.sub(HOUR.mul(2)).sub(timeDelta), 0)),
           TOLERANCE
         );
+        expect(await xALPACAasBob.balanceOf(bobAddress)).to.be.eq(0);
+        stages["aliceIn0"].push([await timeHelpers.latestBlockNumber(), await timeHelpers.latestTimestamp()]);
       }
+
+      // Increase time by 1 hour to make sure that Alice's lock is expired
+      await timeHelpers.increaseTimestamp(HOUR);
+
+      // Expect that balanceOf Alice should be 0
+      expect(await xALPACAasAlice.balanceOf(aliceAddress)).to.be.eq(0);
+
+      // Alice withdraws her ALPACA
+      let aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
+      await xALPACAasAlice.withdraw();
+      let aliceAlpacaAfter = await ALPACA.balanceOf(aliceAddress);
+
+      // States should be fresh & Alice should get lockAmount ALPACA back
+      expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(lockAmount);
+      expect(await xALPACA.totalSupply()).to.be.eq("0");
+      expect(await xALPACA.supply()).to.be.eq("0");
+      expect(await xALPACA.balanceOf(aliceAddress)).to.be.eq("0");
+      expect(await xALPACA.balanceOf(bobAddress)).to.be.eq("0");
+
+      // ==== Finish Alice's 1st graph ====
+
+      await timeHelpers.increaseTimestamp(HOUR);
+
+      // Set time to start of the next week (Unix start week, not typical start week)
+      await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+      await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(2)));
+      stages["aliceDeposit2"] = [await timeHelpers.latestBlockNumber(), await timeHelpers.latestTimestamp()];
+
+      // The following states must be satisfy:
+      // - balanceOf Alice should close to lockAmount / MAX_LOCK * (WEEK * 2) due to
+      // Alice lock 2 weeks.
+      // - totalSupply should close to lockAmount / MAX_LOCK * (WEEK * 2) due to
+      // There is only Alice that lock ALPACA at this point of time.
+      // - xALPACA.supply() should be the lockAmount
+      // - totalSupply should be the same as Alice's balance
+      // - Bob's balance should be 0
+      assertHelpers.assertBigNumberClosePercent(
+        lockAmount.div(MAX_LOCK).mul(WEEK.mul(2)),
+        await xALPACAasAlice.balanceOf(aliceAddress),
+        TOLERANCE
+      );
+      assertHelpers.assertBigNumberClosePercent(
+        lockAmount.div(MAX_LOCK).mul(WEEK.mul(2)),
+        await xALPACA.totalSupply(),
+        TOLERANCE
+      );
+      expect(await xALPACA.supply()).to.be.eq(lockAmount);
+      expect(await xALPACA.totalSupply()).to.be.eq(await xALPACAasAlice.balanceOf(aliceAddress));
+      expect(await xALPACAasBob.balanceOf(bobAddress)).to.be.eq(0);
+
+      await xALPACAasBob.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK));
+      stages["bobDeposit2"] = [await timeHelpers.latestBlockNumber(), await timeHelpers.latestTimestamp()];
+
+      // The following states must be satisfied:
+      // - totalSupply = [lockAmount / MAX_LOCK * (2 * WEEK)] <Alice> + [lockAmount / MAX_LOCK * WEEK] <Bob>
+      // - balanceOf(Alice) = [lockAmount / MAX_LOCK * (2 * WEEK)]
+      // - balanceOf(Bob) = [lockAmount / MAX_LOCK * WEEK]
+      // - supply = lockAmount + lockAmount
+      // - totalSupply = balanceOf(Alice) + balanceOf(Bob)
+      assertHelpers.assertBigNumberClosePercent(
+        lockAmount.div(MAX_LOCK).mul(WEEK.mul(2)).add(lockAmount.div(MAX_LOCK).mul(WEEK)),
+        await xALPACA.totalSupply(),
+        TOLERANCE
+      );
+      assertHelpers.assertBigNumberClosePercent(
+        lockAmount.div(MAX_LOCK).mul(WEEK.mul(2)),
+        await xALPACAasAlice.balanceOf(aliceAddress),
+        TOLERANCE
+      );
+      assertHelpers.assertBigNumberClosePercent(
+        lockAmount.div(MAX_LOCK).mul(WEEK),
+        await xALPACAasBob.balanceOf(bobAddress),
+        TOLERANCE
+      );
+
+      t0 = await timeHelpers.latestTimestamp();
+      await timeHelpers.increaseTimestamp(HOUR);
+
+      // Loop through weeks to decay Bob's xALPACA
+      stages["aliceBobIn2"] = [];
+      for (let i = 0; i < 7; i++) {
+        await timeHelpers.increaseTimestamp(DAY);
+
+        const timeDelta = (await timeHelpers.latestTimestamp()).sub(t0);
+        const totalSupply = await xALPACA.totalSupply();
+        const aliceBalance = await xALPACA.balanceOf(aliceAddress);
+        const bobBalance = await xALPACA.balanceOf(bobAddress);
+
+        // The following states must be satisfied:
+        // - balanceOf(Alice) = [lockAmount / MAX_LOCK * (2 * WEEK - TimeDelta)]
+        // - balanceOf(Bob) = [lockAmount / MAX_LOCK * (WEEK - TimeDelta)]
+        // - totalSupply = balanceOf(Alice) + balanceOf(Bob)
+        expect(totalSupply).to.be.eq(aliceBalance.add(bobBalance));
+        assertHelpers.assertBigNumberClosePercent(
+          lockAmount.div(MAX_LOCK).mul(mathHelpers.max(WEEK.mul(2).sub(timeDelta), 0)),
+          aliceBalance,
+          TOLERANCE
+        );
+        assertHelpers.assertBigNumberClosePercent(
+          lockAmount.div(MAX_LOCK).mul(mathHelpers.max(WEEK.sub(timeDelta), 0)),
+          bobBalance,
+          TOLERANCE
+        );
+        stages["aliceBobIn2"].push([await timeHelpers.latestBlockNumber(), await timeHelpers.latestTimestamp()]);
+      }
+
+      // Increase 1 hour to make sure that Bob's lock has expired
+      await timeHelpers.increaseTimestamp(HOUR);
+
+      // Bob withdraw his ALPACA from xALPACA
+      let bobAlpacaBefore = await ALPACA.balanceOf(bobAddress);
+      await xALPACAasBob.withdraw();
+      let bobAlpacaAfter = await ALPACA.balanceOf(bobAddress);
+      t0 = await timeHelpers.latestTimestamp();
+      stages["bobWithdraw1"] = [await timeHelpers.latestBlockNumber(), await timeHelpers.latestTimestamp()];
+
+      // The following conditions must be satisfied:
+      // - totalSupply = balanceOf(Alice)
+      // - Bob's ALPACA should increase by lockAmount
+      // - balanceOf(Alice) & totalSupply = lockAmount / MAX_LOCK * (WEEK * 2 - (WEEK + (HOUR * 2)))
+      // - balanceOf(Bob) should be 0
+      expect(await xALPACA.totalSupply()).to.be.eq(await xALPACA.balanceOf(aliceAddress));
+      expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(lockAmount);
+      assertHelpers.assertBigNumberClosePercent(
+        lockAmount.div(MAX_LOCK).mul(WEEK.mul(2).sub(WEEK.add(HOUR.mul(2)))),
+        await xALPACA.totalSupply(),
+        TOLERANCE
+      );
+      expect(await xALPACA.balanceOf(bobAddress)).to.be.eq(0);
+
+      // Increase time by 1 hour
+      await timeHelpers.increaseTimestamp(HOUR);
+
+      stages["aliceIn2"] = [];
+      for (let i = 0; i < 7; i++) {
+        await timeHelpers.increaseTimestamp(DAY);
+        const timeDelta = (await timeHelpers.latestTimestamp()).sub(t0);
+        const totalSupply = await xALPACA.totalSupply();
+        const aliceBalance = await xALPACA.balanceOf(aliceAddress);
+        const bobBalance = await xALPACA.balanceOf(bobAddress);
+
+        // The following conditions must be satisfied:
+        // - totalSupply = balanceOf(Alice)
+        // - Bob's ALPACA should increase by lockAmount
+        // - balanceOf(Alice) & totalSupply = lockAmount / MAX_LOCK * MAX(WEEK * 2 - (WEEK + (HOUR * 2) - TimeDelta), 0)
+        // - balanceOf(Bob) should be 0
+        expect(totalSupply).to.be.eq(aliceBalance);
+        assertHelpers.assertBigNumberClosePercent(
+          lockAmount.div(MAX_LOCK).mul(
+            mathHelpers.max(
+              WEEK.mul(2)
+                .sub(WEEK.add(HOUR.mul(2)))
+                .sub(timeDelta),
+              0
+            )
+          ),
+          aliceBalance,
+          TOLERANCE
+        );
+        expect(bobBalance).to.be.eq(0);
+        stages["aliceIn2"].push([await timeHelpers.latestBlockNumber(), await timeHelpers.latestTimestamp()]);
+      }
+
+      aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
+      await xALPACAasAlice.withdraw();
+      aliceAlpacaAfter = await ALPACA.balanceOf(aliceAddress);
+
+      // The following conditions are expected:
+      // - Alice's ALPACA grows by lockAmount
+      // - balanceOf(Alice) = 0
+      expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(lockAmount);
+      expect(await xALPACA.balanceOf(aliceAddress)).to.be.eq(0);
+
+      // Increase time by 1 hour
+      await timeHelpers.increaseTimestamp(HOUR);
+
+      // Bob try to withdraw but his lock is already 0
+      bobAlpacaBefore = await ALPACA.balanceOf(bobAddress);
+      await xALPACAasBob.withdraw();
+      bobAlpacaAfter = await ALPACA.balanceOf(bobAddress);
+
+      // The following conditions are expected:
+      // - Bob's ALPACA must remain the same
+      // - balanceOf(Bob) = 0
+      expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(0);
+      expect(await xALPACA.balanceOf(bobAddress)).to.be.eq(0);
+
+      // Total Supply must be 0
+      expect(await xALPACA.totalSupply()).to.be.eq(0);
+
+      // === Finish latest states test ===
+      // === Now move to historical xxxAt test ===
+      expect(await xALPACA.balanceOfAt(aliceAddress, stages["beforeDeposits"][0])).to.be.eq(0);
+      expect(await xALPACA.balanceOfAt(bobAddress, stages["beforeDeposits"][0])).to.be.eq(0);
+      expect(await xALPACA.totalSupplyAt(stages["beforeDeposits"][0])).to.be.eq(0);
+
+      const aliceBalance = await xALPACA.balanceOfAt(aliceAddress, stages["aliceDeposit"][0].add(10));
+      console.log(stages["aliceDeposit"][0]);
+      console.log(aliceBalance.toString());
+      assertHelpers.assertBigNumberClosePercent(aliceBalance, lockAmount.div(MAX_LOCK).mul(WEEK), TOLERANCE);
     });
   });
 });
