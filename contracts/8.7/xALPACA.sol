@@ -454,7 +454,7 @@ contract xALPACA is ReentrancyGuard {
       if (userPointHistory[_user][_mid].blockNumber <= _blockNumber) {
         _min = _mid;
       } else {
-        _max = _mid;
+        _max = _mid - 1;
       }
     }
     return _min;
