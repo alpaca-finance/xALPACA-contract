@@ -464,7 +464,7 @@ contract xALPACA is Ownable, ReentrancyGuard {
     }
     return _min;
   }
-  
+
   /// @notice Increase lock amount without increase "end"
   /// @param _amount The amount of ALPACA to be added to the lock
   function increaseLockAmount(uint256 _amount) external nonReentrant {
@@ -580,7 +580,7 @@ contract xALPACA is Ownable, ReentrancyGuard {
   function withdraw() external nonReentrant {
     LockedBalance memory _lock = locks[msg.sender];
 
-    if (breaker == 0) require(block.timestamp >= _lock.end, "!expired");
+    if (breaker == 0) require(block.timestamp >= _lock.end, "!lock expired");
 
     uint256 amount = SafeCast.toUint256(_lock.amount);
 
