@@ -156,16 +156,10 @@ describe("xALPACA", () => {
     });
   });
 
-  describe("#increaseLockAmount", async () => {
-    context("when _amount = 0", async () => {
-      it("should revert", async () => {
-        await expect(xALPACA.increaseLockAmount("0")).to.be.revertedWith("bad _amount");
-      });
-    });
-
+  describe("#increaseUnlockTime", async () => {
     context("when lock is not existed", async () => {
       it("should revert", async () => {
-        await expect(xALPACA.increaseLockAmount("1")).to.be.revertedWith("!lock existed");
+        await expect(xALPACA.increaseUnlockTime("1")).to.be.revertedWith("!lock existed");
       });
     });
 
@@ -183,8 +177,42 @@ describe("xALPACA", () => {
         // Move timestamp to 1 week and 1 second
         await timeHelpers.increaseTimestamp(WEEK.add(1));
 
-        // Alice try to increaseLockAmount, this should revert
-        await expect(xALPACAasAlice.increaseLockAmount("1")).to.be.revertedWith("lock expired. withdraw please");
+        // Alice try to increaseUnlockTime, this should revert
+        await expect(xALPACAasAlice.increaseUnlockTime("1")).to.be.revertedWith("lock expired. withdraw please");
+      });
+    });
+
+    context("when new unlock time before than lock.end", async () => {
+      it("should revert", async () => {
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 1 week
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK));
+
+        // Alice try to increaseUnlockTime, this should revert
+        await expect(xALPACAasAlice.increaseUnlockTime("1")).to.be.revertedWith("only extend lock");
+      });
+    });
+
+    context("when new unlock time after than 4 years", async () => {
+      it("should revert", async () => {
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 1 week
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK));
+
+        // Alice try to increaseUnlockTime to more than 4 years, this should revert
+        await expect(
+          xALPACAasAlice.increaseUnlockTime((await timeHelpers.latestTimestamp()).add(MAX_LOCK).add(WEEK))
+        ).to.be.revertedWith("4 years max");
       });
     });
 
@@ -215,8 +243,89 @@ describe("xALPACA", () => {
         expect(aliceLock.amount).to.be.eq(lockAmount);
         expect(aliceLock.end).to.be.eq(aliceLockEnd.div(WEEK).mul(WEEK));
 
+        // Alice increaseUnlockTime
+        await xALPACAasAlice.increaseUnlockTime(aliceLockEnd.add(WEEK));
+
+        aliceLock = await xALPACA.locks(aliceAddress);
+
+        assertHelpers.assertBigNumberClosePercent(
+          await xALPACA.balanceOf(aliceAddress),
+          lockAmount.div(MAX_LOCK).mul(WEEK.mul(2)),
+          TOLERANCE
+        );
+        assertHelpers.assertBigNumberClosePercent(
+          await xALPACA.totalSupply(),
+          lockAmount.div(MAX_LOCK).mul(WEEK.mul(2)),
+          TOLERANCE
+        );
+        expect(await xALPACA.totalSupply()).to.be.eq(await xALPACA.balanceOf(aliceAddress));
+        expect(aliceLock.amount).to.be.eq(lockAmount);
+        expect(aliceLock.end).to.be.eq(aliceLockEnd.add(WEEK).div(WEEK).mul(WEEK));
+      });
+    });
+  });
+      
+  describe("#increaseLockAmount", async () => {
+    context("when _amount = 0", async () => {
+      it("should revert", async () => {
+        await expect(xALPACA.increaseLockAmount("0")).to.be.revertedWith("bad _amount");
+      });
+    });
+
+    context("when lock is not existed", async () => {
+      it("should revert", async () => {
+        await expect(xALPACA.increaseLockAmount("1")).to.be.revertedWith("!lock existed");
+      });
+    });
+
+    context("when lock is expired", async () => {
+      it("should revert", async () => {
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 1 week
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK));
+        // Move timestamp to 1 week and 1 second
+        await timeHelpers.increaseTimestamp(WEEK.add(1));
+
+        // Alice try to increaseLockAmount, this should revert
+        await expect(xALPACAasAlice.increaseLockAmount("1")).to.be.revertedWith("lock expired. withdraw please");
+      });
+    });
+    
+    context("when everything is alright", async () => {
+      it("should work", async () => {
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 1 week
+        const aliceLockEnd = (await timeHelpers.latestTimestamp()).add(WEEK);
+        await xALPACAasAlice.createLock(lockAmount, aliceLockEnd);
+        let aliceLock = await xALPACA.locks(aliceAddress);
+
+        assertHelpers.assertBigNumberClosePercent(
+          await xALPACA.balanceOf(aliceAddress),
+          lockAmount.div(MAX_LOCK).mul(WEEK),
+          TOLERANCE
+        );
+        assertHelpers.assertBigNumberClosePercent(
+          await xALPACA.totalSupply(),
+          lockAmount.div(MAX_LOCK).mul(WEEK),
+          TOLERANCE
+        );
+        expect(await xALPACA.totalSupply()).to.be.eq(await xALPACA.balanceOf(aliceAddress));
+        expect(aliceLock.amount).to.be.eq(lockAmount);
+        expect(aliceLock.end).to.be.eq(aliceLockEnd.div(WEEK).mul(WEEK));
+        
         // Alice increaseLockAmount
         await xALPACAasAlice.increaseLockAmount(lockAmount);
+        
         aliceLock = await xALPACA.locks(aliceAddress);
 
         assertHelpers.assertBigNumberClosePercent(
