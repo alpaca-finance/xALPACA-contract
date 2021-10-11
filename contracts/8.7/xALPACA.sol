@@ -106,6 +106,14 @@ contract xALPACA is Ownable, ReentrancyGuard {
     symbol = "xALPACA";
   }
 
+  modifier onlyEOA() {
+    require(tx.origin == msg.sender, "only EOA");
+    _;
+  }
+
+  /// @notice Return the balance of xALPACA at a given "_blockNumber"
+  /// @param _user The address to get a balance of xALPACA
+  /// @param _blockNumber The speicific block number that you want to check the balance of xALPACA
   function balanceOfAt(address _user, uint256 _blockNumber) public view returns (uint256) {
     require(_blockNumber <= block.number, "bad _blockNumber");
 
@@ -358,7 +366,7 @@ contract xALPACA is Ownable, ReentrancyGuard {
   /// @param _amount the amount that user wishes to deposit
   /// @param _unlockTime the timestamp when ALPACA get unlocked, it will be
   /// floored down to whole weeks
-  function createLock(uint256 _amount, uint256 _unlockTime) external nonReentrant {
+  function createLock(uint256 _amount, uint256 _unlockTime) external onlyEOA nonReentrant {
     _unlockTime = _timestampToFloorWeek(_unlockTime);
     LockedBalance memory _locked = locks[msg.sender];
 
@@ -375,10 +383,10 @@ contract xALPACA is Ownable, ReentrancyGuard {
   /// @param _for The address to do the deposit
   /// @param _amount The amount that user wishes to deposit
   function depositFor(address _for, uint256 _amount) external nonReentrant {
-    LockedBalance memory _lock = locks[_for];
+    LockedBalance memory _lock = LockedBalance({ amount: locks[_for].amount, end: locks[_for].end });
 
-    require(_amount > 0, "bad amount");
-    require(_lock.amount > 0, "user not lock yet");
+    require(_amount > 0, "bad _amount");
+    require(_lock.amount > 0, "!lock existed");
     require(_lock.end > block.timestamp, "lock expired. please withdraw");
 
     _depositFor(_for, _amount, 0, _lock, ACTION_DEPOSIT_FOR);
@@ -467,24 +475,24 @@ contract xALPACA is Ownable, ReentrancyGuard {
 
   /// @notice Increase lock amount without increase "end"
   /// @param _amount The amount of ALPACA to be added to the lock
-  function increaseLockAmount(uint256 _amount) external nonReentrant {
+  function increaseLockAmount(uint256 _amount) external onlyEOA nonReentrant {
     LockedBalance memory _lock = LockedBalance({ amount: locks[msg.sender].amount, end: locks[msg.sender].end });
 
     require(_amount > 0, "bad _amount");
     require(_lock.amount > 0, "!lock existed");
-    require(_lock.end > block.timestamp, "lock expired. withdraw please");
+    require(_lock.end > block.timestamp, "lock expired. please withdraw");
 
     _depositFor(msg.sender, _amount, 0, _lock, ACTION_INCREASE_LOCK_AMOUNT);
   }
 
   /// @notice Increase unlock time without changing locked amount
   /// @param _newUnlockTime The new unlock time to be updated
-  function increaseUnlockTime(uint256 _newUnlockTime) external nonReentrant {
+  function increaseUnlockTime(uint256 _newUnlockTime) external onlyEOA nonReentrant {
     LockedBalance memory _lock = LockedBalance({ amount: locks[msg.sender].amount, end: locks[msg.sender].end });
     _newUnlockTime = _timestampToFloorWeek(_newUnlockTime);
 
     require(_lock.amount > 0, "!lock existed");
-    require(_lock.end > block.timestamp, "lock expired. withdraw please");
+    require(_lock.end > block.timestamp, "lock expired. please withdraw");
     require(_newUnlockTime > _lock.end, "only extend lock");
     require(_newUnlockTime <= block.timestamp + MAX_LOCK, "4 years max");
 

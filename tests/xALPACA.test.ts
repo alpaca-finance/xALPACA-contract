@@ -1,8 +1,15 @@
 import { ethers, waffle } from "hardhat";
-import { Signer, BigNumberish, utils, Wallet, BigNumber, constants } from "ethers";
+import { Signer, BigNumber } from "ethers";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
-import { BEP20, BEP20__factory, XALPACA, XALPACA__factory } from "../typechain";
+import {
+  BEP20,
+  BEP20__factory,
+  MockContractContext,
+  MockContractContext__factory,
+  XALPACA,
+  XALPACA__factory,
+} from "../typechain";
 import * as timeHelpers from "./helpers/time";
 import * as assertHelpers from "./helpers/assert";
 import * as mathHelpers from "./helpers/math";
@@ -20,6 +27,8 @@ describe("xALPACA", () => {
   // Contact Instance
   let ALPACA: BEP20;
   let xALPACA: XALPACA;
+
+  let contractContext: MockContractContext;
 
   // Accounts
   let deployer: Signer;
@@ -50,6 +59,13 @@ describe("xALPACA", () => {
       eve.getAddress(),
     ]);
 
+    // Deploy contract context
+    const MockContractContext = (await ethers.getContractFactory(
+      "MockContractContext",
+      deployer
+    )) as MockContractContext__factory;
+    contractContext = await MockContractContext.deploy();
+
     // Deploy ALPACA
     const BEP20 = (await ethers.getContractFactory("BEP20", deployer)) as BEP20__factory;
     ALPACA = await BEP20.deploy("ALPACA", "ALPACA");
@@ -57,10 +73,19 @@ describe("xALPACA", () => {
     await ALPACA.mint(aliceAddress, ethers.utils.parseEther("8888888"));
     await ALPACA.mint(bobAddress, ethers.utils.parseEther("8888888"));
     await ALPACA.mint(eveAddress, ethers.utils.parseEther("8888888"));
+    await ALPACA.mint(contractContext.address, ethers.utils.parseEther("8888888"));
 
     // Deploy xALPACA
     const XALPACA = (await ethers.getContractFactory("xALPACA", deployer)) as XALPACA__factory;
     xALPACA = await XALPACA.deploy(ALPACA.address);
+
+    // Approve xALPACA to transferFrom contractContext
+    await contractContext.executeTransaction(
+      ALPACA.address,
+      0,
+      "approve(address,uint256)",
+      ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [xALPACA.address, ethers.constants.MaxUint256])
+    );
 
     // Assign contract signer
     ALPACAasAlice = BEP20__factory.connect(ALPACA.address, alice);
@@ -93,6 +118,34 @@ describe("xALPACA", () => {
     });
   });
 
+  describe("#balanceOfAt", async () => {
+    context("when _blockNumber > block.number", async () => {
+      it("should revert", async () => {
+        await expect(
+          xALPACA.balanceOfAt(aliceAddress, (await timeHelpers.latestBlockNumber()).add(1))
+        ).to.be.revertedWith("bad _blockNumber");
+      });
+    });
+
+    context("when balanceOfAt(user, expiredBlock)", async () => {
+      it("should return 0", async () => {
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 1 week
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK));
+
+        // Move timestamp to 1 week and 1 second
+        await timeHelpers.increaseTimestamp(WEEK.add(1));
+
+        expect(await xALPACA.balanceOfAt(aliceAddress, await timeHelpers.latestBlockNumber())).to.be.eq("0");
+      });
+    });
+  });
+
   describe("#createLock", async () => {
     context("when try to lock 0 ALPACA", async () => {
       it("should revert", async () => {
@@ -113,6 +166,19 @@ describe("xALPACA", () => {
         await expect(
           xALPACA.createLock("1", (await timeHelpers.latestTimestamp()).add(MAX_LOCK.add(WEEK)))
         ).to.be.revertedWith("can only lock 4 years max");
+      });
+    });
+
+    context("when msg.sender is not EOA", async () => {
+      it("should revert", async () => {
+        await expect(
+          contractContext.executeTransaction(
+            xALPACA.address,
+            "0",
+            "createLock(uint256,uint256)",
+            ethers.utils.defaultAbiCoder.encode(["uint256", "uint256"], ["1", "1"])
+          )
+        ).to.be.revertedWith("only EOA");
       });
     });
 
@@ -156,6 +222,112 @@ describe("xALPACA", () => {
     });
   });
 
+  describe("#depositFor", async () => {
+    context("when _amount = 0", async () => {
+      it("should revert", async () => {
+        await expect(xALPACA.depositFor(aliceAddress, "0")).to.be.revertedWith("bad _amount");
+      });
+    });
+
+    context("when lock not existed", async () => {
+      it("should revert", async () => {
+        await expect(xALPACA.depositFor(aliceAddress, "1")).to.be.revertedWith("!lock existed");
+      });
+    });
+
+    context("when lock is expired", async () => {
+      it("should revert", async () => {
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 1 week
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK));
+
+        // Move timestamp to 1 week and 1 second
+        await timeHelpers.increaseTimestamp(WEEK.add(1));
+
+        // Alice try to call depositFor her lock, this should revert
+        await expect(xALPACAasAlice.depositFor(aliceAddress, "1")).to.be.revertedWith("lock expired. please withdraw");
+      });
+    });
+
+    context("when everything ok", async () => {
+      context("when msg.sender is Bob", async () => {
+        it("should work", async () => {
+          const lockAmount = ethers.utils.parseEther("10");
+          await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+          await ALPACAasBob.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+          // Set timestamp to the starting of next week
+          await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+          // Alice create lock with expire in 1 week
+          const aliceLockEnd = (await timeHelpers.latestTimestamp()).add(WEEK);
+          await xALPACAasAlice.createLock(lockAmount, aliceLockEnd);
+
+          // Bob deposit for Alice, this should work
+          await xALPACAasBob.depositFor(aliceAddress, lockAmount);
+          const aliceLock = await xALPACA.locks(aliceAddress);
+
+          assertHelpers.assertBigNumberClosePercent(
+            await xALPACA.balanceOf(aliceAddress),
+            lockAmount.add(lockAmount).div(MAX_LOCK).mul(WEEK),
+            TOLERANCE
+          );
+          assertHelpers.assertBigNumberClosePercent(
+            await xALPACA.totalSupply(),
+            lockAmount.add(lockAmount).div(MAX_LOCK).mul(WEEK),
+            TOLERANCE
+          );
+          expect(await xALPACA.totalSupply()).to.be.eq(await xALPACA.balanceOf(aliceAddress));
+          expect(aliceLock.amount).to.be.eq(lockAmount.add(lockAmount));
+          expect(aliceLock.end).to.be.eq(aliceLockEnd.div(WEEK).mul(WEEK));
+        });
+      });
+
+      context("when msg.sender is contract", async () => {
+        it("should work", async () => {
+          const lockAmount = ethers.utils.parseEther("10");
+          await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+          await ALPACAasBob.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+          // Set timestamp to the starting of next week
+          await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+          // Alice create lock with expire in 1 week
+          const aliceLockEnd = (await timeHelpers.latestTimestamp()).add(WEEK);
+          await xALPACAasAlice.createLock(lockAmount, aliceLockEnd);
+
+          // Contract deposit for Alice, this should work
+          await contractContext.executeTransaction(
+            xALPACA.address,
+            "0",
+            "depositFor(address,uint256)",
+            ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [aliceAddress, lockAmount])
+          );
+          const aliceLock = await xALPACA.locks(aliceAddress);
+
+          assertHelpers.assertBigNumberClosePercent(
+            await xALPACA.balanceOf(aliceAddress),
+            lockAmount.add(lockAmount).div(MAX_LOCK).mul(WEEK),
+            TOLERANCE
+          );
+          assertHelpers.assertBigNumberClosePercent(
+            await xALPACA.totalSupply(),
+            lockAmount.add(lockAmount).div(MAX_LOCK).mul(WEEK),
+            TOLERANCE
+          );
+          expect(await xALPACA.totalSupply()).to.be.eq(await xALPACA.balanceOf(aliceAddress));
+          expect(aliceLock.amount).to.be.eq(lockAmount.add(lockAmount));
+          expect(aliceLock.end).to.be.eq(aliceLockEnd.div(WEEK).mul(WEEK));
+        });
+      });
+    });
+  });
+
   describe("#increaseUnlockTime", async () => {
     context("when lock is not existed", async () => {
       it("should revert", async () => {
@@ -178,7 +350,7 @@ describe("xALPACA", () => {
         await timeHelpers.increaseTimestamp(WEEK.add(1));
 
         // Alice try to increaseUnlockTime, this should revert
-        await expect(xALPACAasAlice.increaseUnlockTime("1")).to.be.revertedWith("lock expired. withdraw please");
+        await expect(xALPACAasAlice.increaseUnlockTime("1")).to.be.revertedWith("lock expired. please withdraw");
       });
     });
 
@@ -213,6 +385,19 @@ describe("xALPACA", () => {
         await expect(
           xALPACAasAlice.increaseUnlockTime((await timeHelpers.latestTimestamp()).add(MAX_LOCK).add(WEEK))
         ).to.be.revertedWith("4 years max");
+      });
+    });
+
+    context("when msg.sender is not EOA", async () => {
+      it("should revert", async () => {
+        await expect(
+          contractContext.executeTransaction(
+            xALPACA.address,
+            "0",
+            "increaseUnlockTime(uint256)",
+            ethers.utils.defaultAbiCoder.encode(["uint256"], ["1"])
+          )
+        ).to.be.revertedWith("only EOA");
       });
     });
 
@@ -292,7 +477,20 @@ describe("xALPACA", () => {
         await timeHelpers.increaseTimestamp(WEEK.add(1));
 
         // Alice try to increaseLockAmount, this should revert
-        await expect(xALPACAasAlice.increaseLockAmount("1")).to.be.revertedWith("lock expired. withdraw please");
+        await expect(xALPACAasAlice.increaseLockAmount("1")).to.be.revertedWith("lock expired. please withdraw");
+      });
+    });
+
+    context("when msg.sender is not EOA", async () => {
+      it("should revert", async () => {
+        await expect(
+          contractContext.executeTransaction(
+            xALPACA.address,
+            "0",
+            "increaseLockAmount(uint256)",
+            ethers.utils.defaultAbiCoder.encode(["uint256"], ["1"])
+          )
+        ).to.be.revertedWith("only EOA");
       });
     });
 
