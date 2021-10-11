@@ -15,7 +15,7 @@ describe("xALPACA", () => {
   const HOUR = ethers.BigNumber.from(3600);
   const DAY = ethers.BigNumber.from(86400);
   const WEEK = DAY.mul(7);
-  const MAX_LOCK = 126144000;
+  const MAX_LOCK = ethers.BigNumber.from(126144000);
 
   // Contact Instance
   let ALPACA: BEP20;
@@ -103,8 +103,6 @@ describe("xALPACA", () => {
         await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
         await xALPACAasAlice.createLock(ethers.utils.parseEther("1000"), latestBlockTimestamp.add(MAX_LOCK));
 
-        console.log((await xALPACA.balanceOfAt(aliceAddress, latestBlockNumber.add(2))).toString());
-
         const lockedAlice = await xALPACAasAlice.locks(aliceAddress);
         expect(await ALPACA.balanceOf(xALPACA.address)).to.be.eq(ethers.utils.parseEther("1000"));
         expect(await xALPACA.supply()).to.be.eq(ethers.utils.parseEther("1000"));
@@ -120,39 +118,43 @@ describe("xALPACA", () => {
   // Complex scneario based on:
   // https://github.com/curvefi/curve-dao-contracts/blob/master/tests/integration/VotingEscrow/test_voting_escrow.py
   describe("#complex", async () => {
-    /**
-     *
-     * Test voting power in the following scenario.
-     * Alice:
-     * ~~~~~~~
-     * ^
-     * | *       *
-     * | | \     |  \
-     * | |  \    |    \
-     * +-+---+---+------+---> t
-     *
-     * Bob:
-     * ~~~~~~~
-     * ^
-     * |         *
-     * |         | \
-     * |         |  \
-     * +-+---+---+---+--+---> t
-     *
-     * Alice has 100% of voting power in the first period.
-     * She has 2/3 power at the start of 2nd period, with Bob having 1/2 power
-     * (due to smaller locktime).
-     * Alice's power grows to 100% by Bob's unlock.
-     *
-     * Checking that totalSupply is appropriate.
-     *
-     * After the test is done, check all over again with balanceOfAt / totalSupplyAt
-     */
+    it("when multiple users use xALPACA", async () => {
+      /**
+       *
+       * Test voting power in the following scenario.
+       * Alice:
+       * ~~~~~~~
+       * ^
+       * | *       *
+       * | | \     |  \
+       * | |  \    |    \
+       * +-+---+---+------+---> t
+       *
+       * Bob:
+       * ~~~~~~~
+       * ^
+       * |         *
+       * |         | \
+       * |         |  \
+       * +-+---+---+---+--+---> t
+       *
+       * Alice has 100% of voting power in the first period.
+       * She has 2/3 power at the start of 2nd period, with Bob having 1/2 power
+       * (due to smaller locktime).
+       * Alice's power grows to 100% by Bob's unlock.
+       *
+       * Checking that totalSupply is appropriate.
+       *
+       * After the test is done, check all over again with balanceOfAt / totalSupplyAt
+       */
 
-    it("should work", async () => {
       // prepare
       const stages: any = {};
       const lockAmount = ethers.utils.parseEther("1000");
+      let timeDelta,
+        aliceBalance,
+        totalSupply,
+        bobBalance = ethers.BigNumber.from(0);
       await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
       await ALPACAasBob.approve(xALPACA.address, ethers.constants.MaxUint256);
 
@@ -205,7 +207,7 @@ describe("xALPACA", () => {
       for (let i = 0; i < 7; i++) {
         // Move up 1 day
         await timeHelpers.increaseTimestamp(DAY);
-        const timeDelta = (await timeHelpers.latestTimestamp()).sub(t0);
+        timeDelta = (await timeHelpers.latestTimestamp()).sub(t0);
 
         // The following conditions must be satisfied:
         // - balanceOf Alice must be lockAmount / MAX_LOCK * MAX(WEEK - (2 * HOUR) - (CURRENT-T0))
@@ -225,7 +227,7 @@ describe("xALPACA", () => {
         stages["aliceIn0"].push([await timeHelpers.latestBlockNumber(), await timeHelpers.latestTimestamp()]);
       }
 
-      // Increase time by 1 hour to make sure that Alice's lock is expired
+      // Increase time by 1 hour to make sure that Alice's lock is expired & make block move
       await timeHelpers.increaseTimestamp(HOUR);
 
       // Expect that balanceOf Alice should be 0
@@ -242,6 +244,8 @@ describe("xALPACA", () => {
       expect(await xALPACA.supply()).to.be.eq("0");
       expect(await xALPACA.balanceOf(aliceAddress)).to.be.eq("0");
       expect(await xALPACA.balanceOf(bobAddress)).to.be.eq("0");
+
+      stages["aliceWithdraw"] = [await timeHelpers.latestBlockNumber(), await timeHelpers.latestTimestamp()];
 
       // ==== Finish Alice's 1st graph ====
 
@@ -308,10 +312,10 @@ describe("xALPACA", () => {
       for (let i = 0; i < 7; i++) {
         await timeHelpers.increaseTimestamp(DAY);
 
-        const timeDelta = (await timeHelpers.latestTimestamp()).sub(t0);
-        const totalSupply = await xALPACA.totalSupply();
-        const aliceBalance = await xALPACA.balanceOf(aliceAddress);
-        const bobBalance = await xALPACA.balanceOf(bobAddress);
+        timeDelta = (await timeHelpers.latestTimestamp()).sub(t0);
+        totalSupply = await xALPACA.totalSupply();
+        aliceBalance = await xALPACA.balanceOf(aliceAddress);
+        bobBalance = await xALPACA.balanceOf(bobAddress);
 
         // The following states must be satisfied:
         // - balanceOf(Alice) = [lockAmount / MAX_LOCK * (2 * WEEK - TimeDelta)]
@@ -361,10 +365,10 @@ describe("xALPACA", () => {
       stages["aliceIn2"] = [];
       for (let i = 0; i < 7; i++) {
         await timeHelpers.increaseTimestamp(DAY);
-        const timeDelta = (await timeHelpers.latestTimestamp()).sub(t0);
-        const totalSupply = await xALPACA.totalSupply();
-        const aliceBalance = await xALPACA.balanceOf(aliceAddress);
-        const bobBalance = await xALPACA.balanceOf(bobAddress);
+        timeDelta = (await timeHelpers.latestTimestamp()).sub(t0);
+        totalSupply = await xALPACA.totalSupply();
+        aliceBalance = await xALPACA.balanceOf(aliceAddress);
+        bobBalance = await xALPACA.balanceOf(bobAddress);
 
         // The following conditions must be satisfied:
         // - totalSupply = balanceOf(Alice)
@@ -406,6 +410,8 @@ describe("xALPACA", () => {
       await xALPACAasBob.withdraw();
       bobAlpacaAfter = await ALPACA.balanceOf(bobAddress);
 
+      stages["bobWithdraw2"] = [await timeHelpers.latestBlockNumber(), await timeHelpers.latestTimestamp()];
+
       // The following conditions are expected:
       // - Bob's ALPACA must remain the same
       // - balanceOf(Bob) = 0
@@ -421,10 +427,107 @@ describe("xALPACA", () => {
       expect(await xALPACA.balanceOfAt(bobAddress, stages["beforeDeposits"][0])).to.be.eq(0);
       expect(await xALPACA.totalSupplyAt(stages["beforeDeposits"][0])).to.be.eq(0);
 
-      const aliceBalance = await xALPACA.balanceOfAt(aliceAddress, stages["aliceDeposit"][0].add(10));
-      console.log(stages["aliceDeposit"][0]);
-      console.log(aliceBalance.toString());
-      assertHelpers.assertBigNumberClosePercent(aliceBalance, lockAmount.div(MAX_LOCK).mul(WEEK), TOLERANCE);
+      aliceBalance = await xALPACA.balanceOfAt(aliceAddress, stages["aliceDeposit"][0]);
+      assertHelpers.assertBigNumberClosePercent(aliceBalance, lockAmount.div(MAX_LOCK).mul(WEEK.sub(HOUR)), TOLERANCE);
+      expect(await xALPACA.balanceOfAt(bobAddress, stages["aliceDeposit"][0])).to.be.eq(0);
+
+      totalSupply = await xALPACA.totalSupplyAt(stages["aliceDeposit"][0]);
+      expect(totalSupply).to.be.eq(aliceBalance);
+
+      for (const [index, ele] of stages["aliceIn0"].entries()) {
+        aliceBalance = await xALPACA.balanceOfAt(aliceAddress, ele[0]);
+        bobBalance = await xALPACA.balanceOfAt(bobAddress, ele[0]);
+        totalSupply = await xALPACA.totalSupplyAt(ele[0]);
+
+        expect(bobBalance).to.be.eq(0);
+        expect(aliceBalance).to.be.eq(totalSupply);
+
+        const timeLeft = WEEK.mul(ethers.BigNumber.from(7).sub(index)).div(ethers.BigNumber.from(7).sub(HOUR.mul(2)));
+        assertHelpers.assertBigNumberClosePercent(aliceBalance, lockAmount.div(MAX_LOCK.mul(timeLeft)), TOLERANCE);
+      }
+
+      totalSupply = await xALPACA.totalSupplyAt(stages["aliceWithdraw"][0]);
+      aliceBalance = await xALPACA.balanceOfAt(aliceAddress, stages["aliceWithdraw"][0]);
+      bobBalance = await xALPACA.balanceOfAt(bobAddress, stages["aliceWithdraw"][0]);
+      expect(aliceBalance).to.be.eq(totalSupply);
+      expect(totalSupply).to.be.eq(0);
+
+      totalSupply = await xALPACA.totalSupplyAt(stages["aliceDeposit2"][0]);
+      aliceBalance = await xALPACA.balanceOfAt(aliceAddress, stages["aliceDeposit2"][0]);
+      bobBalance = await xALPACA.balanceOfAt(bobAddress, stages["aliceDeposit2"][0]);
+      assertHelpers.assertBigNumberClosePercent(lockAmount.div(MAX_LOCK).mul(WEEK.mul(2)), totalSupply, TOLERANCE);
+      expect(totalSupply).to.be.eq(aliceBalance);
+      expect(bobBalance).to.be.eq(0);
+
+      totalSupply = await xALPACA.totalSupplyAt(stages["bobDeposit2"][0]);
+      aliceBalance = await xALPACA.balanceOfAt(aliceAddress, stages["bobDeposit2"][0]);
+      bobBalance = await xALPACA.balanceOfAt(bobAddress, stages["bobDeposit2"][0]);
+      expect(aliceBalance.add(bobBalance)).to.be.eq(totalSupply);
+      assertHelpers.assertBigNumberClosePercent(
+        lockAmount.div(MAX_LOCK).mul(WEEK.mul(2)).add(lockAmount.div(MAX_LOCK).mul(WEEK)),
+        totalSupply
+      );
+      assertHelpers.assertBigNumberClosePercent(lockAmount.div(MAX_LOCK).mul(WEEK.mul(2)), aliceBalance);
+      assertHelpers.assertBigNumberClosePercent(lockAmount.div(MAX_LOCK).mul(WEEK), bobBalance);
+
+      t0 = stages["bobDeposit2"][1];
+      for (const [index, ele] of stages["aliceBobIn2"].entries()) {
+        aliceBalance = await xALPACA.balanceOfAt(aliceAddress, ele[0]);
+        bobBalance = await xALPACA.balanceOfAt(bobAddress, ele[0]);
+        totalSupply = await xALPACA.totalSupplyAt(ele[0]);
+
+        expect(totalSupply).to.be.eq(aliceBalance.add(bobBalance));
+        timeDelta = ele[1].sub(t0);
+
+        assertHelpers.assertBigNumberClosePercent(
+          aliceBalance,
+          lockAmount.div(MAX_LOCK).mul(mathHelpers.max(WEEK.mul(2).sub(timeDelta), 0)),
+          TOLERANCE
+        );
+        assertHelpers.assertBigNumberClosePercent(
+          bobAddress,
+          lockAmount.div(MAX_LOCK).mul(mathHelpers.max(WEEK.sub(timeDelta), 0)),
+          TOLERANCE
+        );
+      }
+
+      totalSupply = await xALPACA.totalSupplyAt(stages["bobWithdraw1"][0]);
+      aliceBalance = await xALPACA.balanceOfAt(aliceAddress, stages["bobWithdraw1"][0]);
+      bobBalance = await xALPACA.balanceOfAt(bobAddress, stages["bobWithdraw1"][0]);
+      expect(totalSupply).to.be.eq(aliceBalance);
+      assertHelpers.assertBigNumberClosePercent(
+        lockAmount.div(MAX_LOCK).mul(WEEK.sub(HOUR.mul(2))),
+        totalSupply,
+        TOLERANCE
+      );
+      expect(bobBalance).to.be.eq(0);
+
+      t0 = stages["bobWithdraw1"][1];
+      for (const [index, ele] of stages["aliceIn2"].entries()) {
+        aliceBalance = await xALPACA.balanceOfAt(aliceAddress, ele[0]);
+        bobBalance = await xALPACA.balanceOfAt(bobAddress, ele[0]);
+        totalSupply = await xALPACA.totalSupplyAt(ele[0]);
+
+        expect(totalSupply).to.be.eq(aliceBalance.add(bobBalance));
+        timeDelta = ele[1].sub(t0);
+
+        assertHelpers.assertBigNumberClosePercent(
+          aliceBalance,
+          lockAmount.div(MAX_LOCK).mul(mathHelpers.max(WEEK.mul(2).sub(timeDelta), 0)),
+          TOLERANCE
+        );
+        assertHelpers.assertBigNumberClosePercent(
+          bobAddress,
+          lockAmount.div(MAX_LOCK).mul(mathHelpers.max(WEEK.sub(timeDelta), 0)),
+          TOLERANCE
+        );
+      }
+
+      totalSupply = await xALPACA.totalSupplyAt(stages["bobWithdraw2"][0]);
+      aliceBalance = await xALPACA.balanceOfAt(aliceAddress, stages["bobWithdraw2"][0]);
+      bobBalance = await xALPACA.balanceOfAt(bobAddress, stages["bobWithdraw2"][0]);
+      expect(totalSupply).to.be.eq(aliceBalance.add(bobBalance));
+      expect(totalSupply).to.be.eq(0);
     });
   });
 });
