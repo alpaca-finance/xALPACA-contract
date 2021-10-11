@@ -1,5 +1,5 @@
 {
-  "name": "@alpaca-finance/xalpaca",
+  "name": "@alpaca-finance/xalpaca-contract",
   "version": "0.0.1",
   "scripts": {
     "compile": "hardhat typechain --config hardhat.config.ts",
