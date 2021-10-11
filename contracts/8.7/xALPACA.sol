@@ -57,8 +57,8 @@ contract xALPACA is Ownable, ReentrancyGuard {
   /// @dev Constants
   uint256 public constant ACTION_DEPOSIT_FOR = 0;
   uint256 public constant ACTION_CREATE_LOCK = 1;
-  uint256 public constant INCREASE_LOCK_AMOUNT = 2;
-  uint256 public constant INCREASE_UNLOCK_TIME = 3;
+  uint256 public constant ACTION_INCREASE_LOCK_AMOUNT = 2;
+  uint256 public constant ACTION_INCREASE_UNLOCK_TIME = 3;
 
   uint256 public constant WEEK = 7 days;
   uint256 public constant MAX_LOCK = 4 * 365 days;
@@ -463,6 +463,18 @@ contract xALPACA is Ownable, ReentrancyGuard {
       }
     }
     return _min;
+  }
+
+  /// @notice Increase lock amount without increase "end"
+  /// @param _amount The amount of ALPACA to be added to the lock
+  function increaseLockAmount(uint256 _amount) external nonReentrant {
+    LockedBalance memory _lock = LockedBalance({ amount: locks[msg.sender].amount, end: locks[msg.sender].end });
+
+    require(_amount > 0, "bad _amount");
+    require(_lock.amount > 0, "!lock existed");
+    require(_lock.end > block.timestamp, "lock expired. withdraw please");
+
+    _depositFor(msg.sender, _amount, 0, _lock, ACTION_INCREASE_LOCK_AMOUNT);
   }
 
   /// @notice Round off random timestamp to week
