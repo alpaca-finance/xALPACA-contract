@@ -115,6 +115,86 @@ describe("xALPACA", () => {
     });
   });
 
+  describe("#increaseLockAmount", async () => {
+    context("when _amount = 0", async () => {
+      it("should revert", async () => {
+        await expect(xALPACA.increaseLockAmount("0")).to.be.revertedWith("bad _amount");
+      });
+    });
+
+    context("when lock is not existed", async () => {
+      it("should revert", async () => {
+        await expect(xALPACA.increaseLockAmount("1")).to.be.revertedWith("!lock existed");
+      });
+    });
+
+    context("when lock is expired", async () => {
+      it("should revert", async () => {
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 1 week
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK));
+
+        // Move timestamp to 1 week and 1 second
+        await timeHelpers.increaseTimestamp(WEEK.add(1));
+
+        // Alice try to increaseLockAmount, this should revert
+        await expect(xALPACAasAlice.increaseLockAmount("1")).to.be.revertedWith("lock expired. withdraw please");
+      });
+    });
+
+    context("when everything is alright", async () => {
+      it("should work", async () => {
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 1 week
+        const aliceLockEnd = (await timeHelpers.latestTimestamp()).add(WEEK);
+        await xALPACAasAlice.createLock(lockAmount, aliceLockEnd);
+        let aliceLock = await xALPACA.locks(aliceAddress);
+
+        assertHelpers.assertBigNumberClosePercent(
+          await xALPACA.balanceOf(aliceAddress),
+          lockAmount.div(MAX_LOCK).mul(WEEK),
+          TOLERANCE
+        );
+        assertHelpers.assertBigNumberClosePercent(
+          await xALPACA.totalSupply(),
+          lockAmount.div(MAX_LOCK).mul(WEEK),
+          TOLERANCE
+        );
+        expect(await xALPACA.totalSupply()).to.be.eq(await xALPACA.balanceOf(aliceAddress));
+        expect(aliceLock.amount).to.be.eq(lockAmount);
+        expect(aliceLock.end).to.be.eq(aliceLockEnd.div(WEEK).mul(WEEK));
+
+        // Alice increaseLockAmount
+        await xALPACAasAlice.increaseLockAmount(lockAmount);
+        aliceLock = await xALPACA.locks(aliceAddress);
+
+        assertHelpers.assertBigNumberClosePercent(
+          await xALPACA.balanceOf(aliceAddress),
+          lockAmount.add(lockAmount).div(MAX_LOCK).mul(WEEK),
+          TOLERANCE
+        );
+        assertHelpers.assertBigNumberClosePercent(
+          await xALPACA.totalSupply(),
+          lockAmount.add(lockAmount).div(MAX_LOCK).mul(WEEK),
+          TOLERANCE
+        );
+        expect(await xALPACA.totalSupply()).to.be.eq(await xALPACA.balanceOf(aliceAddress));
+        expect(aliceLock.amount).to.be.eq(lockAmount.add(lockAmount));
+        expect(aliceLock.end).to.be.eq(aliceLockEnd.div(WEEK).mul(WEEK));
+      });
+    });
+  });
+
   // Complex scneario based on:
   // https://github.com/curvefi/curve-dao-contracts/blob/master/tests/integration/VotingEscrow/test_voting_escrow.py
   describe("#complex", async () => {
