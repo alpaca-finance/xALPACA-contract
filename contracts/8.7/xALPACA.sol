@@ -56,7 +56,7 @@ contract xALPACA is ReentrancyGuard {
   uint256 public constant ACTION_DEPOSIT_FOR = 0;
   uint256 public constant ACTION_CREATE_LOCK = 1;
   uint256 public constant INCREASE_LOCK_AMOUNT = 2;
-  uint256 public constant INCREASE_UNLOCK_TIME = 3;
+  uint256 public constant ACTION_INCREASE_UNLOCK_TIME = 3;
 
   uint256 public constant WEEK = 7 days;
   uint256 public constant MAX_LOCK = 4 * 365 days;
@@ -458,6 +458,20 @@ contract xALPACA is ReentrancyGuard {
       }
     }
     return _min;
+  }
+
+  /// @notice Increase unlock time without changing locked amount
+  /// @param _newUnlockTime The new unlock time to be updated
+  function increaseUnlockTime(uint256 _newUnlockTime) external nonReentrant {
+    LockedBalance memory _lock = LockedBalance({ amount: locks[msg.sender].amount, end: locks[msg.sender].end });
+    _newUnlockTime = _timestampToFloorWeek(_newUnlockTime);
+
+    require(_lock.amount > 0, "!lock existed");
+    require(_lock.end > block.timestamp, "lock expired. withdraw please");
+    require(_newUnlockTime > _lock.end, "only extend lock");
+    require(_newUnlockTime <= block.timestamp + MAX_LOCK, "4 years max");
+
+    _depositFor(msg.sender, 0, _newUnlockTime, _lock, ACTION_INCREASE_UNLOCK_TIME);
   }
 
   /// @notice Round off random timestamp to week
