@@ -14,6 +14,7 @@ Ported to Solidity from: https://github.com/curvefi/curve-dao-contracts/blob/mas
 
 pragma solidity 0.8.7;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -25,7 +26,7 @@ import "./SafeToken.sol";
 /// @title xALPACA - The goverance token of Alpaca Finance
 // solhint-disable not-rely-on-time
 // solhint-disable-next-line contract-name-camelcase
-contract xALPACA is ReentrancyGuard {
+contract xALPACA is Ownable, ReentrancyGuard {
   using SafeToken for address;
   using SafeMath for uint256;
 
@@ -38,6 +39,7 @@ contract xALPACA is ReentrancyGuard {
     uint256 timestamp
   );
   event LogWithdraw(address indexed locker, uint256 value, uint256 timestamp);
+  event LogSetBreaker(uint256 previousBreaker, uint256 breaker);
   event LogSupply(uint256 previousSupply, uint256 supply);
 
   struct Point {
@@ -55,7 +57,7 @@ contract xALPACA is ReentrancyGuard {
   /// @dev Constants
   uint256 public constant ACTION_DEPOSIT_FOR = 0;
   uint256 public constant ACTION_CREATE_LOCK = 1;
-  uint256 public constant INCREASE_LOCK_AMOUNT = 2;
+  uint256 public constant ACTION_INCREASE_LOCK_AMOUNT = 2;
   uint256 public constant ACTION_INCREASE_UNLOCK_TIME = 3;
 
   uint256 public constant WEEK = 7 days;
@@ -80,6 +82,9 @@ contract xALPACA is ReentrancyGuard {
   mapping(address => uint256) public userPointEpoch;
   /// @dev Mapping (round off timestamp to week => slopeDelta) to keep track slope changes over epoch
   mapping(uint256 => int128) public slopeChanges;
+
+  /// @dev Circuit breaker
+  uint256 public breaker;
 
   /// @notice BEP20 compatible variables
   string public name;
@@ -459,6 +464,18 @@ contract xALPACA is ReentrancyGuard {
     }
     return _min;
   }
+  
+  /// @notice Increase lock amount without increase "end"
+  /// @param _amount The amount of ALPACA to be added to the lock
+  function increaseLockAmount(uint256 _amount) external nonReentrant {
+    LockedBalance memory _lock = LockedBalance({ amount: locks[msg.sender].amount, end: locks[msg.sender].end });
+
+    require(_amount > 0, "bad _amount");
+    require(_lock.amount > 0, "!lock existed");
+    require(_lock.end > block.timestamp, "lock expired. withdraw please");
+
+    _depositFor(msg.sender, _amount, 0, _lock, ACTION_INCREASE_LOCK_AMOUNT);
+  }
 
   /// @notice Increase unlock time without changing locked amount
   /// @param _newUnlockTime The new unlock time to be updated
@@ -550,15 +567,24 @@ contract xALPACA is ReentrancyGuard {
     return SafeCast.toUint256(_lastPoint.bias);
   }
 
+  /// @notice Set breaker
+  /// @param _breaker The new value of breaker 0 if off, 1 if on
+  function setBreaker(uint256 _breaker) external onlyOwner {
+    require(_breaker == 0 || _breaker == 1, "only 0 or 1");
+    uint256 _previousBreaker = breaker;
+    breaker = _breaker;
+    emit LogSetBreaker(_previousBreaker, breaker);
+  }
+
   /// @notice Withdraw all ALPACA when lock has expired.
   function withdraw() external nonReentrant {
     LockedBalance memory _lock = locks[msg.sender];
 
-    require(block.timestamp >= _lock.end, "!expired");
+    if (breaker == 0) require(block.timestamp >= _lock.end, "!expired");
 
     uint256 amount = SafeCast.toUint256(_lock.amount);
 
-    LockedBalance memory _prevLock = _lock;
+    LockedBalance memory _prevLock = LockedBalance({ end: _lock.end, amount: _lock.amount });
     _lock.end = 0;
     _lock.amount = 0;
     locks[msg.sender] = _lock;
