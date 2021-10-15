@@ -27,12 +27,12 @@ interface IxALPACA {
   /// @dev Return the max global epoch
   function epoch() external view returns (uint256);
 
-  /// @dev Return the recorded point for _user at specific _poech
+  /// @dev Return the recorded point for _user at specific _epoch
   function userPointHistory(address _user, uint256 _epoch) external view returns (Point memory);
 
-  /// @dev Return the recorded global point at specific _poech
+  /// @dev Return the recorded global point at specific _epoch
   function pointHistory(uint256 _epoch) external view returns (Point memory);
 
-  /// @dev Return the recorded point for _user at specific _poech
-  function checkpoint(address _user, uint256 _epoch) external;
+  /// @dev Trigger global check point
+  function checkpoint() external;
 }
