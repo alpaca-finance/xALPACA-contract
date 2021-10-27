@@ -1,5 +1,15 @@
-import { BigNumber } from "ethers";
+import { BigNumber, BigNumberish } from "ethers";
 import { ethers } from "hardhat";
+
+const HOUR = ethers.BigNumber.from(3600);
+const DAY = ethers.BigNumber.from(86400);
+const WEEK = DAY.mul(7);
+const YEAR = DAY.mul(365);
+
+export function timestampFloorWeek(t: BigNumberish): BigNumber {
+  const bt = BigNumber.from(t);
+  return bt.div(WEEK).mul(WEEK);
+}
 
 export async function latestTimestamp(): Promise<BigNumber> {
   const block = await ethers.provider.getBlock("latest");
