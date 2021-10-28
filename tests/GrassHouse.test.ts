@@ -975,6 +975,96 @@ describe("GrassHouse", () => {
           expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(rewardsAtOneWeekAfterLock);
         });
       });
+
+      context("when xALPACA breaker is on and Alice withdraw before rewards assign to W2", async () => {
+        it("should NOT distribute W2 rewards to Alice at all", async () => {
+          // Steps:
+          // 1. Deployer call checkpointToken to move lastTokenTimestamp to W1.
+          // 2. Alice lock ALPACA at [W1 + 1 day]
+          // 3. Deployer swith breaker to on
+          // 4. Alice withdraw from xALPACA
+          // 5. Move timestamp to W2
+          // 6. Deployer call checkpoint to move lastTokenTimestamp to W2 to allocate rewards to W2 only
+          // Then deployer transfer rewards directly to GrassHouse and call checkpoint to perform the actual reward allocation.
+          // At this point user can call checkpointToken, hence Deployer enable canCheckpointToken.
+          // 7. Deployer feed rewards#1
+          // 8. Deployer feed rewards#2
+          // 9. Deployer feed rewards#3
+          // a. Deployer feed rewards#4
+          // b. Deployer feed rewards#5
+          // c. Deployer feed rewards#6
+          // d. Deployer feed rewards#7
+          // e. Move timestamp to W3
+          // f. Alice should get rewards on W2-W3 window at W3 as she locked ALPACA at W1 + seconds
+          // Timeline:
+          //                            5
+          //                    3       6             e
+          //              1 2   4       7 8 9 a b c d f
+          //  ─ ─ ─ ─ ─ ─ + ─ ─ ─ ─ ─ ─ + ─ ─ ─ ─ ─ ─ + ─ ─ ─ ─ ─ ─ ▶ Time (DAY)
+          //              W1            W2            W3
+
+          // Preparation
+          const stages: any = {};
+          const feedAmount = ethers.utils.parseEther("100");
+          const lockAmount = ethers.utils.parseEther("1");
+          await ALPACA.approve(grassHouse.address, ethers.constants.MaxUint256);
+
+          // 1. Deployer call checkpointToken to move lastTokenTimestamp to W1.
+          await grassHouse.checkpointToken();
+
+          // 2. Alice lock ALPACA at [W1 + 1 day]
+          await timeHelpers.increaseTimestamp(DAY);
+          let aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
+          await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(YEAR));
+          let aliceAlpacaAfter = await ALPACA.balanceOf(aliceAddress);
+          // Expect that Alice's ALPACA get locked and she has xALPACA balance
+          expect(aliceAlpacaBefore.sub(aliceAlpacaAfter)).to.be.eq(lockAmount);
+          expect(await xALPACA.balanceOf(aliceAddress)).to.be.gt(0);
+
+          // 3. Deployer swith breaker to on
+          await xALPACA.setBreaker(1);
+
+          // 4. Alice withdraw from xALPACA
+          aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
+          await xALPACAasAlice.withdraw();
+          aliceAlpacaAfter = await ALPACA.balanceOf(aliceAddress);
+          // Expect that Alice get lockAmount ALPACA back and her xALPACA gone
+          expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(lockAmount);
+          expect(await xALPACA.balanceOf(aliceAddress)).to.be.eq(0);
+
+          // 5. Move timestamp to W2
+          await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+          // 6. Deployer call checkpoint to move lastTokenTimestamp to W2 to allocate rewards to W2 only
+          // Then deployer transfer rewards directly to GrassHouse and call checkpoint to perform the actual reward allocation.
+          // At this point user can call checkpointToken, hence Deployer enable canCheckpointToken
+          stages["oneWeekAfterAliceLock"] = [
+            await timeHelpers.latestTimestamp(),
+            await timeHelpers.latestBlockNumber(),
+          ];
+          await grassHouse.checkpointToken();
+          await grassHouse.setCanCheckpointToken(true);
+
+          // 7-d.
+          for (let i = 0; i < 7; i++) {
+            await grassHouse.feed(feedAmount);
+            expect(await ALPACA.balanceOf(grassHouse.address)).to.be.eq(feedAmount.mul(i + 1));
+            expect((await grassHouse.lastTokenTimestamp()).div(WEEK).mul(WEEK)).to.be.eq(
+              (await timeHelpers.latestTimestamp()).div(WEEK).mul(WEEK)
+            );
+
+            await timeHelpers.increaseTimestamp(DAY);
+          }
+
+          // e. Move timestamp to W3
+          await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+          // f. Alice should get rewards on W2-W3 window at W3 as she locked ALPACA at W1 + seconds
+          const rewardsAtOneWeekAfterLock = await grassHouse.tokensPerWeek(stages["oneWeekAfterAliceLock"][0]);
+          expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
+          expect(rewardsAtOneWeekAfterLock).to.be.eq(feedAmount.mul(7));
+        });
+      });
     });
 
     context("when Alice and Bob lock ALPACA", async () => {
