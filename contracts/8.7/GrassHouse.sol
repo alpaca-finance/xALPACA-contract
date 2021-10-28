@@ -16,8 +16,6 @@ pragma solidity 0.8.7;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "./interfaces/IxALPACA.sol";
@@ -25,14 +23,11 @@ import "./interfaces/IBEP20.sol";
 
 import "./SafeToken.sol";
 
-import "hardhat/console.sol";
-
 /// @title GrassHouse - Where Alpaca eats
 // solhint-disable not-rely-on-time
 // solhint-disable-next-line contract-name-camelcase
 contract GrassHouse is Ownable, ReentrancyGuard {
   using SafeToken for address;
-  using SafeMath for uint256;
 
   /// @dev Events
   event LogSetCanCheckpointToken(bool _toggleFlag);
@@ -56,7 +51,7 @@ contract GrassHouse is Ownable, ReentrancyGuard {
   uint256 public lastTokenBalance;
 
   /// @dev xALPACA supply at week bounds
-  mapping(uint256 => uint256) public xSupply;
+  mapping(uint256 => uint256) public totalSupplyAt;
 
   bool public canCheckpointToken;
 
@@ -87,7 +82,7 @@ contract GrassHouse is Ownable, ReentrancyGuard {
   function _checkpointToken() internal {
     // Find out how many tokens to be distributed
     uint256 _rewardTokenBalance = rewardToken.myBalance();
-    uint256 _toDistribute = _rewardTokenBalance.sub(lastTokenBalance);
+    uint256 _toDistribute = _rewardTokenBalance - lastTokenBalance;
     lastTokenBalance = _rewardTokenBalance;
 
     // Prepare and update time-related variables
@@ -96,49 +91,34 @@ contract GrassHouse is Ownable, ReentrancyGuard {
     // 3. Setup iterable cursor
     // 4. Update lastTokenTimestamp to be block.timestamp
     uint256 _timeCursor = lastTokenTimestamp;
-    uint256 _deltaSinceLastTimestamp = block.timestamp.sub(_timeCursor);
+    uint256 _deltaSinceLastTimestamp = block.timestamp - _timeCursor;
     uint256 _thisWeekCursor = _timestampToFloorWeek(_timeCursor);
     uint256 _nextWeekCursor = 0;
     lastTokenTimestamp = block.timestamp;
 
-    console.log("==== _checkpointToken ====");
-    console.log("block.timstamp: ", block.timestamp);
-    console.log("_toDistribute: ", _toDistribute);
-    console.log("_deltaSinceLastTimestamp: ", _deltaSinceLastTimestamp);
-
     // Iterate through weeks to filled out missing tokensPerWeek (if any)
     for (uint256 _i = 0; _i < 20; _i++) {
-      _nextWeekCursor = _thisWeekCursor.add(WEEK);
-
-      console.log("_i: ", _i);
-      console.log("_thisWeek: ", _thisWeekCursor);
-      console.log("_nextWeek: ", _nextWeekCursor);
+      _nextWeekCursor = _thisWeekCursor + WEEK;
 
       // if block.timestamp < _nextWeekCursor, means _nextWeekCursor goes
       // beyond the actual block.timestamp, hence it is the last iteration
       // to fill out tokensPerWeek
       if (block.timestamp < _nextWeekCursor) {
-        console.log("block.timestamp < _nextWeekCursor");
         if (_deltaSinceLastTimestamp == 0 && block.timestamp == _timeCursor) {
-          tokensPerWeek[_thisWeekCursor] = tokensPerWeek[_thisWeekCursor].add(_toDistribute);
-          console.log("if tokensPerWeek: ", tokensPerWeek[_thisWeekCursor]);
+          tokensPerWeek[_thisWeekCursor] = tokensPerWeek[_thisWeekCursor] + _toDistribute;
         } else {
-          tokensPerWeek[_thisWeekCursor] = tokensPerWeek[_thisWeekCursor].add(
-            (_toDistribute.mul(block.timestamp.sub(_timeCursor)).div(_deltaSinceLastTimestamp))
-          );
-          console.log("else tokensPerWeek: ", tokensPerWeek[_thisWeekCursor]);
+          tokensPerWeek[_thisWeekCursor] =
+            tokensPerWeek[_thisWeekCursor] +
+            ((_toDistribute * (block.timestamp - _timeCursor)) / _deltaSinceLastTimestamp);
         }
         break;
       } else {
-        console.log("block.timestamp >= _nextWeekCursor");
         if (_deltaSinceLastTimestamp == 0 && _nextWeekCursor == _timeCursor) {
-          tokensPerWeek[_thisWeekCursor] = tokensPerWeek[_thisWeekCursor].add(_toDistribute);
-          console.log("if tokensPerWeek: ", tokensPerWeek[_thisWeekCursor]);
+          tokensPerWeek[_thisWeekCursor] = tokensPerWeek[_thisWeekCursor] + _toDistribute;
         } else {
-          tokensPerWeek[_thisWeekCursor] = tokensPerWeek[_thisWeekCursor].add(
-            (_toDistribute.mul(_nextWeekCursor.sub(_timeCursor)).div(_deltaSinceLastTimestamp))
-          );
-          console.log("else tokensPerWeek: ", tokensPerWeek[_thisWeekCursor]);
+          tokensPerWeek[_thisWeekCursor] =
+            tokensPerWeek[_thisWeekCursor] +
+            ((_toDistribute * (_nextWeekCursor - _timeCursor)) / _deltaSinceLastTimestamp);
         }
       }
       _timeCursor = _nextWeekCursor;
@@ -153,18 +133,16 @@ contract GrassHouse is Ownable, ReentrancyGuard {
   /// At launch can only be called by owner, after launch can be called
   /// by anyone if block.timestamp > lastTokenTime + TOKEN_CHECKPOINT_DEADLINE
   function checkpointToken() external nonReentrant {
-    console.log("==== checkpointToken ====");
     require(
       msg.sender == owner() ||
-        (canCheckpointToken && (block.timestamp > lastTokenTimestamp.add(TOKEN_CHECKPOINT_DEADLINE))),
+        (canCheckpointToken && (block.timestamp > lastTokenTimestamp + TOKEN_CHECKPOINT_DEADLINE)),
       "!allow"
     );
     _checkpointToken();
   }
 
-  /// @notice Record xALPACA total supply
+  /// @notice Record xALPACA total supply for each week
   function _checkpointTotalSupply() internal {
-    console.log("==== _checkpointTotalSupply ====");
     uint256 _weekCursor = weekCursor;
     uint256 _roundedTimestamp = _timestampToFloorWeek(block.timestamp);
 
@@ -182,13 +160,10 @@ contract GrassHouse is Ownable, ReentrancyGuard {
         }
         int128 _bias = _point.bias - _point.slope * _timeDelta;
         if (_bias < 0) {
-          xSupply[_weekCursor] = 0;
+          totalSupplyAt[_weekCursor] = 0;
         } else {
-          xSupply[_weekCursor] = SafeCast.toUint256(_bias);
+          totalSupplyAt[_weekCursor] = SafeCast.toUint256(_bias);
         }
-        console.log("_epoch: ", _epoch);
-        console.log("_weekCursor: ", _weekCursor);
-        console.log("xSupply[_weekCursor]: ", xSupply[_weekCursor]);
       }
       _weekCursor = _weekCursor + WEEK;
     }
@@ -206,15 +181,11 @@ contract GrassHouse is Ownable, ReentrancyGuard {
   /// @notice Claim rewardToken
   /// @dev Perform claim rewardToken
   function _claim(address _user, uint256 _maxClaimTimestamp) internal returns (uint256) {
-    console.log("==== _claim ====");
-
     uint256 _userEpoch = 0;
     uint256 _toDistribute = 0;
 
     uint256 _maxUserEpoch = IxALPACA(xALPACA).userPointEpoch(_user);
     uint256 _startWeekCursor = startWeekCursor;
-
-    console.log("_maxUserEpoch: ", _maxUserEpoch);
 
     // _maxUserEpoch = 0, meaning no lock.
     // Hence, no yield for _user
@@ -224,19 +195,13 @@ contract GrassHouse is Ownable, ReentrancyGuard {
 
     uint256 _userWeekCursor = weekCursorOf[_user];
     if (_userWeekCursor == 0) {
-      console.log("_userWeekCursor not found");
-      console.log("perform Binary search here");
       // if _user has no _userWeekCursor with GrassHouse yet
       // then we need to perform binary search
-      _userEpoch = _findTimestampUserEpoch(_user, block.timestamp, _maxUserEpoch);
+      _userEpoch = _findTimestampUserEpoch(_user, _startWeekCursor, _maxUserEpoch);
     } else {
-      console.log("_userWeekCursor of user already here");
-      console.log("find epoch directly from GrassHouse state");
       // else, _user must has epoch with GrassHouse already
       _userEpoch = userEpochOf[_user];
     }
-
-    console.log("_userEpoch: ", _userEpoch);
 
     if (_userEpoch == 0) {
       _userEpoch = 1;
@@ -247,8 +212,6 @@ contract GrassHouse is Ownable, ReentrancyGuard {
     if (_userWeekCursor == 0) {
       _userWeekCursor = ((_userPoint.timestamp + WEEK - 1) / WEEK) * WEEK;
     }
-
-    console.log("(start) _userWeekCursor: ", _userWeekCursor);
 
     // _userWeekCursor is already at/beyond _maxClaimTimestamp
     // meaning nothing to be claimed for this user.
@@ -269,8 +232,6 @@ contract GrassHouse is Ownable, ReentrancyGuard {
 
     // Go through weeks
     for (uint256 i = 0; i < 50; i++) {
-      console.log(i);
-      console.log("(loop) _userWeekCursor: ", _userWeekCursor);
       // If _userWeekCursor is iterated to be at/beyond _maxClaimTimestamp
       // This means we went through all weeks that user subject to claim rewards already
       if (_userWeekCursor >= _maxClaimTimestamp) {
@@ -294,22 +255,22 @@ contract GrassHouse is Ownable, ReentrancyGuard {
           _userPoint = IxALPACA(xALPACA).userPointHistory(_user, _userEpoch);
         }
       } else {
-        console.log("_prevUserPoint.timestamp: ", _prevUserPoint.timestamp);
         int128 _timeDelta = SafeCast.toInt128(int256(_userWeekCursor - _prevUserPoint.timestamp));
         uint256 _balanceOf = Math.max(SafeCast.toUint256(_prevUserPoint.bias - _timeDelta * _prevUserPoint.slope), 0);
         if (_balanceOf == 0 && _userEpoch > _maxUserEpoch) {
           break;
         }
-        console.log("xSupply[_userWeekCursor]: ", xSupply[_userWeekCursor]);
-        console.log("_balanceOf: ", _balanceOf);
         if (_balanceOf > 0) {
-          _toDistribute = _toDistribute + (_balanceOf * tokensPerWeek[_userWeekCursor]) / xSupply[_userWeekCursor];
+          _toDistribute =
+            _toDistribute +
+            (_balanceOf * tokensPerWeek[_userWeekCursor]) /
+            totalSupplyAt[_userWeekCursor];
         }
         _userWeekCursor = _userWeekCursor + WEEK;
       }
     }
 
-    _userEpoch = Math.min(_maxUserEpoch, _userEpoch.sub(1));
+    _userEpoch = Math.min(_maxUserEpoch, _userEpoch - 1);
     userEpochOf[_user] = _userEpoch;
     weekCursorOf[_user] = _userWeekCursor;
 
@@ -321,12 +282,10 @@ contract GrassHouse is Ownable, ReentrancyGuard {
   /// @notice Claim rewardToken for "_user"
   /// @param _user The address to claim rewards for
   function claim(address _user) external nonReentrant returns (uint256) {
-    console.log("==== claim ====");
-
     if (block.timestamp >= weekCursor) _checkpointTotalSupply();
     uint256 _lastTokenTimestamp = lastTokenTimestamp;
 
-    if (canCheckpointToken && (block.timestamp > _lastTokenTimestamp.add(TOKEN_CHECKPOINT_DEADLINE))) {
+    if (canCheckpointToken && (block.timestamp > _lastTokenTimestamp + TOKEN_CHECKPOINT_DEADLINE)) {
       _checkpointToken();
       _lastTokenTimestamp = block.timestamp;
     }
@@ -336,7 +295,7 @@ contract GrassHouse is Ownable, ReentrancyGuard {
     uint256 _amount = _claim(_user, _lastTokenTimestamp);
     if (_amount != 0) {
       rewardToken.safeTransfer(_user, _amount);
-      lastTokenBalance = lastTokenBalance.sub(_amount);
+      lastTokenBalance = lastTokenBalance - _amount;
     }
 
     return _amount;
@@ -351,7 +310,7 @@ contract GrassHouse is Ownable, ReentrancyGuard {
 
     uint256 _lastTokenTimestamp = lastTokenTimestamp;
 
-    if (canCheckpointToken && (block.timestamp > _lastTokenTimestamp.add(TOKEN_CHECKPOINT_DEADLINE))) {
+    if (canCheckpointToken && (block.timestamp > _lastTokenTimestamp + TOKEN_CHECKPOINT_DEADLINE)) {
       _checkpointToken();
       _lastTokenTimestamp = block.timestamp;
     }
@@ -360,17 +319,17 @@ contract GrassHouse is Ownable, ReentrancyGuard {
     uint256 _total = 0;
 
     for (uint256 i = 0; i < _users.length; i++) {
-      if (_users[i] == address(0)) break;
+      if (_users[i] == address(0)) continue;
 
       uint256 _amount = _claim(_users[i], _lastTokenTimestamp);
       if (_amount != 0) {
         rewardToken.safeTransfer(_users[i], _amount);
-        _total = _total.add(_amount);
+        _total = _total + _amount;
       }
     }
 
     if (_total != 0) {
-      lastTokenBalance = lastTokenBalance.sub(_total);
+      lastTokenBalance = lastTokenBalance - _total;
     }
 
     return true;
@@ -443,7 +402,7 @@ contract GrassHouse is Ownable, ReentrancyGuard {
   /// @notice Get xALPACA balance of "_user" at "_timstamp"
   /// @param _user The user address
   /// @param _timestamp The timestamp to get user's balance
-  function xBalanceAt(address _user, uint256 _timestamp) external view returns (uint256) {
+  function balanceOfAt(address _user, uint256 _timestamp) external view returns (uint256) {
     uint256 _maxUserEpoch = IxALPACA(xALPACA).userPointEpoch(_user);
     if (_maxUserEpoch == 0) {
       return 0;
@@ -461,6 +420,6 @@ contract GrassHouse is Ownable, ReentrancyGuard {
   /// @notice Round off random timestamp to week
   /// @param _timestamp The timestamp to be rounded off
   function _timestampToFloorWeek(uint256 _timestamp) internal pure returns (uint256) {
-    return (_timestamp / WEEK).mul(WEEK);
+    return (_timestamp / WEEK) * WEEK;
   }
 }
