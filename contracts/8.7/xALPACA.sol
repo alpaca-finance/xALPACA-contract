@@ -9,7 +9,7 @@
   ξ ξ ξ~～~ξ ξ ξ 
 　 ξ_ξξ_ξ　ξ_ξξ_ξ
 Alpaca Fin Corporation
-Ported to Solidity from: https://github.com/curvefi/curve-dao-contracts/blob/master/contracts/VotingEscrow.vy
+Ported to Solidity from: https://github.com/curvefi/curve-dao-contracts/blob/master/contracts/FeeDistributor.vy
 **/
 
 pragma solidity 0.8.7;
