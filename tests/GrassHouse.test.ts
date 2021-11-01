@@ -1,5 +1,5 @@
 import { ethers, waffle } from "hardhat";
-import { Signer, BigNumber } from "ethers";
+import { Signer, BigNumber, BigNumberish } from "ethers";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import {
@@ -30,6 +30,8 @@ describe("GrassHouse", () => {
 
   // Contact Instance
   let ALPACA: BEP20;
+  let DTOKEN: BEP20;
+
   let xALPACA: XALPACA;
   let grassHouse: GrassHouse;
 
@@ -53,6 +55,10 @@ describe("GrassHouse", () => {
   let ALPACAasAlice: BEP20;
   let ALPACAasBob: BEP20;
   let ALPACAasEve: BEP20;
+
+  let DTOKENasAlice: BEP20;
+  let DTOKENasBob: BEP20;
+  let DTOKENasEve: BEP20;
 
   let xALPACAasAlice: XALPACA;
   let xALPACAasBob: XALPACA;
@@ -78,10 +84,12 @@ describe("GrassHouse", () => {
     )) as MockContractContext__factory;
     contractContext = await MockContractContext.deploy();
 
-    // Deploy ALPACA
+    // Deploy ALPACA & DTOKEN
     const BEP20 = (await ethers.getContractFactory("BEP20", deployer)) as BEP20__factory;
     ALPACA = await BEP20.deploy("ALPACA", "ALPACA");
     await ALPACA.mint(deployerAddress, ethers.utils.parseEther("888888888888888"));
+    DTOKEN = await BEP20.deploy("DTOKEN", "DTOKEN");
+    await DTOKEN.mint(deployerAddress, ethers.utils.parseEther("888888888888888"));
 
     // Deploy xALPACA
     const XALPACA = (await ethers.getContractFactory("xALPACA", deployer)) as XALPACA__factory;
@@ -116,6 +124,10 @@ describe("GrassHouse", () => {
     ALPACAasAlice = BEP20__factory.connect(ALPACA.address, alice);
     ALPACAasBob = BEP20__factory.connect(ALPACA.address, bob);
     ALPACAasEve = BEP20__factory.connect(ALPACA.address, eve);
+
+    DTOKENasAlice = BEP20__factory.connect(DTOKEN.address, alice);
+    DTOKENasBob = BEP20__factory.connect(DTOKEN.address, bob);
+    DTOKENasEve = BEP20__factory.connect(DTOKEN.address, eve);
 
     xALPACAasAlice = XALPACA__factory.connect(xALPACA.address, alice);
     xALPACAasBob = XALPACA__factory.connect(xALPACA.address, bob);
@@ -210,6 +222,11 @@ describe("GrassHouse", () => {
           sleeps.push(ethers.BigNumber.from(mathHelpers.random(1, 30).toString()));
         }
 
+        // Move to next week & call checkpointTotalSupply
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+        await grassHouse.checkpointTotalSupply();
+        expect(await grassHouse.totalSupplyAt((await timeHelpers.latestTimestamp()).div(WEEK).mul(WEEK))).to.be.eq(0);
+
         // Create locks based on input
         let finalLock = ethers.BigNumber.from(0);
         for (let i = 0; i < 10; i++) {
@@ -236,6 +253,45 @@ describe("GrassHouse", () => {
 
           expect(await grassHouse.totalSupplyAt(weekEpoch)).to.be.eq(await xALPACA.totalSupplyAt(weekBlock));
         }
+      });
+    });
+
+    context("when checkpoint total supply is called after all lock expired", async () => {
+      it("should return handle correctly (totalSupplyAt(xxx) should return 0)", async () => {
+        // prepare
+        const stages: any = {};
+        const lockAmount = ethers.utils.parseEther("1000");
+        // Move blocktimestamp to start of the week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice lock her ALPACA
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(4)));
+
+        // Move time to after Alice's unlock time
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(8).mul(WEEK));
+
+        // Deploy new grass house
+        const GrassHouse = (await ethers.getContractFactory("GrassHouse", deployer)) as GrassHouse__factory;
+        const dTokenGrassHouse = await GrassHouse.deploy(
+          xALPACA.address,
+          await timeHelpers.latestTimestamp(),
+          DTOKEN.address,
+          deployerAddress
+        );
+
+        // Checkpoint total supply
+        await dTokenGrassHouse.checkpointTotalSupply();
+        expect(
+          await dTokenGrassHouse.totalSupplyAt((await timeHelpers.latestTimestamp()).div(WEEK).mul(WEEK))
+        ).to.be.eq(0);
+      });
+    });
+  });
+
+  describe("#claim", async () => {
+    context("when user with no lock try to claim", async () => {
+      it("should return 0", async () => {
+        expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
       });
     });
   });
@@ -728,9 +784,47 @@ describe("GrassHouse", () => {
         expect(totalSupply).to.be.eq(0);
       });
     });
+
+    context("when call balanceOfAt(user, unlockTime + 1)", async () => {
+      it("should return 0", async () => {
+        // prepare
+        const stages: any = {};
+        const lockAmount = ethers.utils.parseEther("1000");
+        // Move blocktimestamp to start of the week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice lock her ALPACA
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK));
+        stages["aliceUnlock"] = [(await timeHelpers.latestTimestamp()).add(WEEK)];
+
+        // Check Alice balanceOfAt unlockTime + 1 second
+        expect(await grassHouse.balanceOfAt(aliceAddress, stages["aliceUnlock"][0].add(1))).to.be.eq(0);
+      });
+    });
+
+    context("when user never lock ALPACA", async () => {
+      it("should return 0", async () => {
+        expect(await grassHouse.balanceOfAt(aliceAddress, await timeHelpers.latestTimestamp())).to.be.eq(0);
+      });
+    });
   });
 
   describe("#complex", async () => {
+    async function calExpectedRewardsAtTimestamp(
+      grassHouse: GrassHouse,
+      address: string,
+      blockTimestamp: BigNumberish
+    ): Promise<BigNumber> {
+      const rewardsAtBlockTimestamp = await grassHouse.tokensPerWeek(blockTimestamp);
+      const xALPACAbalance = await grassHouse.balanceOfAt(address, blockTimestamp);
+      const totalSupply = await grassHouse.totalSupplyAt(blockTimestamp);
+
+      let expectedRewards = ethers.BigNumber.from("0");
+      if (totalSupply.gt(0)) expectedRewards = xALPACAbalance.mul(rewardsAtBlockTimestamp).div(totalSupply);
+
+      return expectedRewards;
+    }
+
     context("when Alice lock ALPACA at the middle of W1 and W2", async () => {
       context("when deployer feed rewards at W2 only", async () => {
         it("should distribute W2-W3 rewards to Alice correctly", async () => {
@@ -753,6 +847,8 @@ describe("GrassHouse", () => {
           const stages: any = {};
           const feedAmount = ethers.utils.parseEther("100");
           const lockAmount = ethers.utils.parseEther("1");
+          // Move blocktimestamp to W1 (Assuming W1 is next week)
+          await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
           // 1. Deployer call checkpointToken to move lastTokenTimestamp to W1.
           await grassHouse.checkpointToken();
@@ -787,18 +883,26 @@ describe("GrassHouse", () => {
           expect((await grassHouse.lastTokenTimestamp()).div(WEEK).mul(WEEK)).to.be.eq(
             (await timeHelpers.latestTimestamp()).div(WEEK).mul(WEEK)
           );
+          // Alice try to claim rewards, expect that she shouldn't get anything
+          // as she hasn't stay for a full week yet
+          expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
 
           // 5. Move timestamp to W3
           await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
           // 6. Alice should get rewards on W2-W3 window at W3 as she locked ALPACA at W1 + seconds
-          const rewardsAtOneWeekAfterLock = await grassHouse.tokensPerWeek(stages["oneWeekAfterAliceLock"][0]);
-          expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(rewardsAtOneWeekAfterLock);
+          await grassHouse.checkpointTotalSupply();
+          const aliceRewards = await calExpectedRewardsAtTimestamp(
+            grassHouse,
+            aliceAddress,
+            stages["oneWeekAfterAliceLock"][0]
+          );
+          expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
           // perform actual claim
           aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
           await grassHouse.claim(aliceAddress);
           aliceAlpacaAfter = await ALPACA.balanceOf(aliceAddress);
-          expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(rewardsAtOneWeekAfterLock);
+          expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(aliceRewards);
         });
       });
 
@@ -832,6 +936,8 @@ describe("GrassHouse", () => {
           const feedAmount = ethers.utils.parseEther("100");
           const lockAmount = ethers.utils.parseEther("1");
           await ALPACA.approve(grassHouse.address, ethers.constants.MaxUint256);
+          // Move blocktimestamp to W1 (Assuming W1 is next week)
+          await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
           // 1. Deployer call checkpointToken to move lastTokenTimestamp to W1.
           await grassHouse.checkpointToken();
@@ -867,18 +973,26 @@ describe("GrassHouse", () => {
             );
             await timeHelpers.increaseTimestamp(DAY);
           }
+          // Alice try to claim rewards, expect that she shouldn't get anything
+          // as she hasn't stay for a full week yet
+          expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
 
           // c. Move timestamp to W3
           await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
           // d. Alice should get some rewardTokens as she locked ALPACA before the start of the next week
-          const rewardsAtOneWeekAfterLock = await grassHouse.tokensPerWeek(stages["oneWeekAfterAliceLock"][0]);
-          expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(rewardsAtOneWeekAfterLock);
+          await grassHouse.checkpointTotalSupply();
+          const aliceRewards = await calExpectedRewardsAtTimestamp(
+            grassHouse,
+            aliceAddress,
+            stages["oneWeekAfterAliceLock"][0]
+          );
+          expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
           // perform actual claim
           aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
           await grassHouse.claim(aliceAddress);
           aliceAlpacaAfter = await ALPACA.balanceOf(aliceAddress);
-          expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(rewardsAtOneWeekAfterLock);
+          expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(aliceRewards);
         });
       });
 
@@ -914,6 +1028,8 @@ describe("GrassHouse", () => {
           const feedAmount = ethers.utils.parseEther("100");
           const lockAmount = ethers.utils.parseEther("1");
           await ALPACA.approve(grassHouse.address, ethers.constants.MaxUint256);
+          // Move blocktimestamp to W1 (Assuming W1 is next week)
+          await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
           // 1. Deployer call checkpointToken to move lastTokenTimestamp to W1.
           await grassHouse.checkpointToken();
@@ -961,18 +1077,26 @@ describe("GrassHouse", () => {
 
             await timeHelpers.increaseTimestamp(DAY);
           }
+          // Alice try to claim rewards, expect that she shouldn't get anything
+          // as she hasn't stay for a full week yet
+          expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
 
           // e. Move timestamp to W3
           await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
           // f. Alice should get rewards on W2-W3 window at W3 as she locked ALPACA at W1 + seconds
-          const rewardsAtOneWeekAfterLock = await grassHouse.tokensPerWeek(stages["oneWeekAfterAliceLock"][0]);
-          expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(rewardsAtOneWeekAfterLock);
+          await grassHouse.checkpointTotalSupply();
+          const aliceRewards = await calExpectedRewardsAtTimestamp(
+            grassHouse,
+            aliceAddress,
+            stages["oneWeekAfterAliceLock"][0]
+          );
+          expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
           // perform actual claim
           aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
           await grassHouse.claim(aliceAddress);
           aliceAlpacaAfter = await ALPACA.balanceOf(aliceAddress);
-          expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(rewardsAtOneWeekAfterLock);
+          expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(aliceRewards);
         });
       });
 
@@ -1008,6 +1132,8 @@ describe("GrassHouse", () => {
           const feedAmount = ethers.utils.parseEther("100");
           const lockAmount = ethers.utils.parseEther("1");
           await ALPACA.approve(grassHouse.address, ethers.constants.MaxUint256);
+          // Move blocktimestamp to W1 (Assuming W1 is next week)
+          await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
           // 1. Deployer call checkpointToken to move lastTokenTimestamp to W1.
           await grassHouse.checkpointToken();
@@ -1055,14 +1181,22 @@ describe("GrassHouse", () => {
 
             await timeHelpers.increaseTimestamp(DAY);
           }
+          // Alice try to claim rewards, expect that she shouldn't get anything
+          // as she hasn't stay for a full week yet
+          expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
 
           // e. Move timestamp to W3
           await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
           // f. Alice should get rewards on W2-W3 window at W3 as she locked ALPACA at W1 + seconds
-          const rewardsAtOneWeekAfterLock = await grassHouse.tokensPerWeek(stages["oneWeekAfterAliceLock"][0]);
-          expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
-          expect(rewardsAtOneWeekAfterLock).to.be.eq(feedAmount.mul(7));
+          await grassHouse.checkpointTotalSupply();
+          const aliceRewards = await calExpectedRewardsAtTimestamp(
+            grassHouse,
+            aliceAddress,
+            stages["oneWeekAfterAliceLock"][0]
+          );
+          expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
+          expect(await ALPACA.balanceOf(grassHouse.address)).to.be.eq(feedAmount.mul(7));
         });
       });
     });
@@ -1099,6 +1233,8 @@ describe("GrassHouse", () => {
             const feedAmount = ethers.utils.parseEther("100");
             const lockAmount = ethers.utils.parseEther("1000");
             await ALPACA.approve(grassHouse.address, ethers.constants.MaxUint256);
+            // Move blocktimestamp to W1 (Assuming W1 is next week)
+            await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
             // 1. Deployer call checkpointToken to move lastTokenTimestamp to W1.
             await grassHouse.checkpointToken();
@@ -1138,6 +1274,9 @@ describe("GrassHouse", () => {
               );
               await timeHelpers.increaseTimestamp(DAY);
             }
+            // Alice try to claim rewards, expect that she shouldn't get anything
+            // as she hasn't stay for a full week yet
+            expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
 
             // c. Move timestamp to W3
             await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
@@ -1145,15 +1284,19 @@ describe("GrassHouse", () => {
             // d. Alice and Bob should get rewards on W2-W3 window at W3 porprotionally
             // Checkpoint totalSupply first so that totalSupplyAt got filled
             await grassHouse.checkpointTotalSupply();
-            const rewardsAtOneWeekAfterLock = await grassHouse.tokensPerWeek(stages["oneWeekAfterLock"][0]);
-            const alicexALPACAbalance = await grassHouse.balanceOfAt(aliceAddress, stages["oneWeekAfterLock"][0]);
-            const bobxALPACAbalance = await grassHouse.balanceOfAt(bobAddress, stages["oneWeekAfterLock"][0]);
-            const totalSupply = await grassHouse.totalSupplyAt(stages["oneWeekAfterLock"][0]);
-            const aliceExpectedRewards = alicexALPACAbalance.mul(rewardsAtOneWeekAfterLock).div(totalSupply);
-            const bobExpectedRewards = bobxALPACAbalance.mul(rewardsAtOneWeekAfterLock).div(totalSupply);
+            const aliceRewards = await calExpectedRewardsAtTimestamp(
+              grassHouse,
+              aliceAddress,
+              stages["oneWeekAfterLock"][0]
+            );
+            const bobRewards = await calExpectedRewardsAtTimestamp(
+              grassHouse,
+              bobAddress,
+              stages["oneWeekAfterLock"][0]
+            );
 
-            expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceExpectedRewards);
-            expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobExpectedRewards);
+            expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
+            expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobRewards);
 
             // perform actual claim
             aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
@@ -1161,13 +1304,13 @@ describe("GrassHouse", () => {
             await grassHouse.claimMany([aliceAddress, bobAddress]);
             aliceAlpacaAfter = await ALPACA.balanceOf(aliceAddress);
             bobAlpacaAfter = await ALPACA.balanceOf(bobAddress);
-            expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(aliceExpectedRewards);
-            expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobExpectedRewards);
+            expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(aliceRewards);
+            expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobRewards);
           });
         });
       });
 
-      context("when they alter their lock without alter it", async () => {
+      context("when they alter their lock", async () => {
         context("when one of them increase his unlock time", async () => {
           context("when they claim reward every week", async () => {
             context("when deployer feed rewards continuosly", async () => {
@@ -1204,6 +1347,8 @@ describe("GrassHouse", () => {
                 const feedAmount = ethers.utils.parseEther("100");
                 const lockAmount = ethers.utils.parseEther("1000");
                 await ALPACA.approve(grassHouse.address, ethers.constants.MaxUint256);
+                // Move blocktimestamp to W1 (Assuming W1 is next week)
+                await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
                 // 1. Deployer call checkpointToken to move lastTokenTimestamp to W1.
                 await grassHouse.checkpointToken();
@@ -1252,6 +1397,9 @@ describe("GrassHouse", () => {
 
                   await timeHelpers.increaseTimestamp(DAY);
                 }
+                // Alice try to claim rewards, expect that she shouldn't get anything
+                // as she hasn't stay for a full week yet
+                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
 
                 // d. Move timestamp to W3
                 await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
@@ -1263,15 +1411,19 @@ describe("GrassHouse", () => {
                 // e. Alice and Bob should get rewards on W2-W3 window at W3 porprotionally (50-50)
                 // Checkpoint totalSupply first so that totalSupplyAt got filled
                 await grassHouse.checkpointTotalSupply();
-                const rewardsAtOneWeekAfterLock = await grassHouse.tokensPerWeek(stages["oneWeekAfterLock"][0]);
-                let alicexALPACAbalance = await grassHouse.balanceOfAt(aliceAddress, stages["oneWeekAfterLock"][0]);
-                let bobxALPACAbalance = await grassHouse.balanceOfAt(bobAddress, stages["oneWeekAfterLock"][0]);
-                let totalSupply = await grassHouse.totalSupplyAt(stages["oneWeekAfterLock"][0]);
-                let aliceExpectedRewards = alicexALPACAbalance.mul(rewardsAtOneWeekAfterLock).div(totalSupply);
-                let bobExpectedRewards = bobxALPACAbalance.mul(rewardsAtOneWeekAfterLock).div(totalSupply);
+                let aliceRewards = await calExpectedRewardsAtTimestamp(
+                  grassHouse,
+                  aliceAddress,
+                  stages["oneWeekAfterLock"][0]
+                );
+                let bobRewards = await calExpectedRewardsAtTimestamp(
+                  grassHouse,
+                  bobAddress,
+                  stages["oneWeekAfterLock"][0]
+                );
 
-                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceExpectedRewards);
-                expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobExpectedRewards);
+                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
+                expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobRewards);
 
                 // perform actual claim
                 aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
@@ -1279,8 +1431,8 @@ describe("GrassHouse", () => {
                 await grassHouse.claimMany([aliceAddress, bobAddress]);
                 aliceAlpacaAfter = await ALPACA.balanceOf(aliceAddress);
                 bobAlpacaAfter = await ALPACA.balanceOf(bobAddress);
-                expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(aliceExpectedRewards);
-                expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobExpectedRewards);
+                expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(aliceRewards);
+                expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobRewards);
 
                 // f. Deployer feed rewards#8 for W3
                 await timeHelpers.increaseTimestamp(DAY);
@@ -1295,16 +1447,21 @@ describe("GrassHouse", () => {
                 // h. Alice should get more rewards than Bob
                 // Checkpoint totalSupply first so that totalSupplyAt got filled
                 await grassHouse.checkpointTotalSupply();
-                const rewardsAtTwoWeekAfterLock = await grassHouse.tokensPerWeek(stages["twoWeeksAfterLock"][0]);
-                alicexALPACAbalance = await grassHouse.balanceOfAt(aliceAddress, stages["twoWeeksAfterLock"][0]);
-                bobxALPACAbalance = await grassHouse.balanceOfAt(bobAddress, stages["twoWeeksAfterLock"][0]);
-                totalSupply = await grassHouse.totalSupplyAt(stages["twoWeeksAfterLock"][0]);
-                aliceExpectedRewards = alicexALPACAbalance.mul(rewardsAtTwoWeekAfterLock).div(totalSupply);
-                bobExpectedRewards = bobxALPACAbalance.mul(rewardsAtTwoWeekAfterLock).div(totalSupply);
+                aliceRewards = await calExpectedRewardsAtTimestamp(
+                  grassHouse,
+                  aliceAddress,
+                  stages["twoWeeksAfterLock"][0]
+                );
+                bobRewards = await calExpectedRewardsAtTimestamp(
+                  grassHouse,
+                  bobAddress,
+                  stages["twoWeeksAfterLock"][0]
+                );
 
-                expect(aliceExpectedRewards).to.be.gt(bobExpectedRewards);
-                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceExpectedRewards);
-                expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobExpectedRewards);
+                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
+                expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobRewards);
+
+                expect(aliceRewards).to.be.gt(bobRewards);
 
                 // perform actual claim
                 aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
@@ -1312,8 +1469,8 @@ describe("GrassHouse", () => {
                 await grassHouse.claimMany([aliceAddress, bobAddress]);
                 aliceAlpacaAfter = await ALPACA.balanceOf(aliceAddress);
                 bobAlpacaAfter = await ALPACA.balanceOf(bobAddress);
-                expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(aliceExpectedRewards);
-                expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobExpectedRewards);
+                expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(aliceRewards);
+                expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobRewards);
               });
             });
           });
@@ -1354,6 +1511,8 @@ describe("GrassHouse", () => {
                 const feedAmount = ethers.utils.parseEther("100");
                 const lockAmount = ethers.utils.parseEther("1000");
                 await ALPACA.approve(grassHouse.address, ethers.constants.MaxUint256);
+                // Move blocktimestamp to W1 (Assuming W1 is next week)
+                await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
                 // 1. Deployer call checkpointToken to move lastTokenTimestamp to W1.
                 await grassHouse.checkpointToken();
@@ -1402,6 +1561,9 @@ describe("GrassHouse", () => {
 
                   await timeHelpers.increaseTimestamp(DAY);
                 }
+                // Alice try to claim rewards, expect that she shouldn't get anything
+                // as she hasn't stay for a full week yet
+                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
 
                 // d. Move timestamp to W3
                 await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
@@ -1414,28 +1576,32 @@ describe("GrassHouse", () => {
                 // however only Bob claim the rewards.
                 // Checkpoint totalSupply first so that totalSupplyAt got filled
                 await grassHouse.checkpointTotalSupply();
-                const rewardsAtOneWeekAfterLock = await grassHouse.tokensPerWeek(stages["oneWeekAfterLock"][0]);
-                let alicexALPACAbalance = await grassHouse.balanceOfAt(aliceAddress, stages["oneWeekAfterLock"][0]);
-                let bobxALPACAbalance = await grassHouse.balanceOfAt(bobAddress, stages["oneWeekAfterLock"][0]);
-                let totalSupply = await grassHouse.totalSupplyAt(stages["oneWeekAfterLock"][0]);
-                let aliceExpectedRewards = alicexALPACAbalance.mul(rewardsAtOneWeekAfterLock).div(totalSupply);
-                let bobExpectedRewards = bobxALPACAbalance.mul(rewardsAtOneWeekAfterLock).div(totalSupply);
+                let aliceRewards = await calExpectedRewardsAtTimestamp(
+                  grassHouse,
+                  aliceAddress,
+                  stages["oneWeekAfterLock"][0]
+                );
+                let bobRewards = await calExpectedRewardsAtTimestamp(
+                  grassHouse,
+                  bobAddress,
+                  stages["oneWeekAfterLock"][0]
+                );
 
-                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceExpectedRewards);
-                expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobExpectedRewards);
+                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
+                expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobRewards);
 
                 // perform actual claim. Only Bob does that.
                 bobAlpacaBefore = await ALPACA.balanceOf(bobAddress);
                 await grassHouse.claimMany([bobAddress]);
                 bobAlpacaAfter = await ALPACA.balanceOf(bobAddress);
-                expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobExpectedRewards);
+                expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobRewards);
 
                 // f. Deployer feed rewards#8 for W3
                 await timeHelpers.increaseTimestamp(DAY);
                 await grassHouse.feed(feedAmount);
 
                 // Expect that grassHouse has feedAmount + aliceExpectedRewards due to Alice not claim her portion
-                expect(await ALPACA.balanceOf(grassHouse.address)).to.be.eq(feedAmount.add(aliceExpectedRewards));
+                expect(await ALPACA.balanceOf(grassHouse.address)).to.be.eq(feedAmount.add(aliceRewards));
                 // Expect that W3-W4 rewards get allocated correctly
                 expect(await grassHouse.tokensPerWeek(stages["twoWeeksAfterLock"][0])).to.be.eq(feedAmount);
 
@@ -1446,20 +1612,23 @@ describe("GrassHouse", () => {
                 // W2-W3 rewards + W3-W4 rewards
                 // Checkpoint totalSupply first so that totalSupplyAt got filled
                 await grassHouse.checkpointTotalSupply();
-                const aliceW2W3reward = aliceExpectedRewards;
-                const rewardsAtTwoWeekAfterLock = await grassHouse.tokensPerWeek(stages["twoWeeksAfterLock"][0]);
-                alicexALPACAbalance = await grassHouse.balanceOfAt(aliceAddress, stages["twoWeeksAfterLock"][0]);
-                bobxALPACAbalance = await grassHouse.balanceOfAt(bobAddress, stages["twoWeeksAfterLock"][0]);
-                totalSupply = await grassHouse.totalSupplyAt(stages["twoWeeksAfterLock"][0]);
-                // Alice's rewards must rollover to the next week
-                aliceExpectedRewards = aliceW2W3reward.add(
-                  alicexALPACAbalance.mul(rewardsAtTwoWeekAfterLock).div(totalSupply)
+                const aliceW2W3reward = aliceRewards;
+                aliceRewards = await calExpectedRewardsAtTimestamp(
+                  grassHouse,
+                  aliceAddress,
+                  stages["twoWeeksAfterLock"][0]
                 );
-                bobExpectedRewards = bobxALPACAbalance.mul(rewardsAtTwoWeekAfterLock).div(totalSupply);
+                bobRewards = await calExpectedRewardsAtTimestamp(
+                  grassHouse,
+                  bobAddress,
+                  stages["twoWeeksAfterLock"][0]
+                );
+                // Alice's rewards must rollover to the next week
+                aliceRewards = aliceW2W3reward.add(aliceRewards);
 
-                expect(aliceExpectedRewards.sub(aliceW2W3reward)).to.be.gt(bobExpectedRewards);
-                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceExpectedRewards);
-                expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobExpectedRewards);
+                expect(aliceRewards.sub(aliceW2W3reward)).to.be.gt(bobRewards);
+                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
+                expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobRewards);
 
                 // perform actual claim
                 aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
@@ -1467,8 +1636,8 @@ describe("GrassHouse", () => {
                 await grassHouse.claimMany([aliceAddress, bobAddress]);
                 aliceAlpacaAfter = await ALPACA.balanceOf(aliceAddress);
                 bobAlpacaAfter = await ALPACA.balanceOf(bobAddress);
-                expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(aliceExpectedRewards);
-                expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobExpectedRewards);
+                expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(aliceRewards);
+                expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobRewards);
               });
             });
           });
@@ -1508,6 +1677,8 @@ describe("GrassHouse", () => {
                 const feedAmount = ethers.utils.parseEther("100");
                 const lockAmount = ethers.utils.parseEther("1000");
                 await ALPACA.approve(grassHouse.address, ethers.constants.MaxUint256);
+                // Move blocktimestamp to W1 (Assuming W1 is next week)
+                await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
                 // 1. Deployer call checkpointToken to move lastTokenTimestamp to W1.
                 await grassHouse.checkpointToken();
@@ -1556,6 +1727,9 @@ describe("GrassHouse", () => {
 
                   await timeHelpers.increaseTimestamp(DAY);
                 }
+                // Alice try to claim rewards, expect that she shouldn't get anything
+                // as she hasn't stay for a full week yet
+                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
 
                 // c. Move timestamp to W3
                 await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
@@ -1567,15 +1741,19 @@ describe("GrassHouse", () => {
                 // d. Alice and Bob should get rewards on W2-W3 window at W3 porprotionally (50-50)
                 // Checkpoint totalSupply first so that totalSupplyAt got filled
                 await grassHouse.checkpointTotalSupply();
-                const rewardsAtOneWeekAfterLock = await grassHouse.tokensPerWeek(stages["oneWeekAfterLock"][0]);
-                let alicexALPACAbalance = await grassHouse.balanceOfAt(aliceAddress, stages["oneWeekAfterLock"][0]);
-                let bobxALPACAbalance = await grassHouse.balanceOfAt(bobAddress, stages["oneWeekAfterLock"][0]);
-                let totalSupply = await grassHouse.totalSupplyAt(stages["oneWeekAfterLock"][0]);
-                let aliceExpectedRewards = alicexALPACAbalance.mul(rewardsAtOneWeekAfterLock).div(totalSupply);
-                let bobExpectedRewards = bobxALPACAbalance.mul(rewardsAtOneWeekAfterLock).div(totalSupply);
+                let aliceRewards = await calExpectedRewardsAtTimestamp(
+                  grassHouse,
+                  aliceAddress,
+                  stages["oneWeekAfterLock"][0]
+                );
+                let bobRewards = await calExpectedRewardsAtTimestamp(
+                  grassHouse,
+                  bobAddress,
+                  stages["oneWeekAfterLock"][0]
+                );
 
-                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceExpectedRewards);
-                expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobExpectedRewards);
+                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
+                expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobRewards);
 
                 // perform actual claim
                 aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
@@ -1583,8 +1761,8 @@ describe("GrassHouse", () => {
                 await grassHouse.claimMany([aliceAddress, bobAddress]);
                 aliceAlpacaAfter = await ALPACA.balanceOf(aliceAddress);
                 bobAlpacaAfter = await ALPACA.balanceOf(bobAddress);
-                expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(aliceExpectedRewards);
-                expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobExpectedRewards);
+                expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(aliceRewards);
+                expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobRewards);
 
                 // e. Deployer feed rewards#7 for W3
                 await timeHelpers.increaseTimestamp(DAY);
@@ -1599,16 +1777,20 @@ describe("GrassHouse", () => {
                 // g. Alice should get more rewards than Bob
                 // Checkpoint totalSupply first so that totalSupplyAt got filled
                 await grassHouse.checkpointTotalSupply();
-                const rewardsAtTwoWeekAfterLock = await grassHouse.tokensPerWeek(stages["twoWeeksAfterLock"][0]);
-                alicexALPACAbalance = await grassHouse.balanceOfAt(aliceAddress, stages["twoWeeksAfterLock"][0]);
-                bobxALPACAbalance = await grassHouse.balanceOfAt(bobAddress, stages["twoWeeksAfterLock"][0]);
-                totalSupply = await grassHouse.totalSupplyAt(stages["twoWeeksAfterLock"][0]);
-                aliceExpectedRewards = alicexALPACAbalance.mul(rewardsAtTwoWeekAfterLock).div(totalSupply);
-                bobExpectedRewards = bobxALPACAbalance.mul(rewardsAtTwoWeekAfterLock).div(totalSupply);
+                aliceRewards = await calExpectedRewardsAtTimestamp(
+                  grassHouse,
+                  aliceAddress,
+                  stages["twoWeeksAfterLock"][0]
+                );
+                bobRewards = await calExpectedRewardsAtTimestamp(
+                  grassHouse,
+                  bobAddress,
+                  stages["twoWeeksAfterLock"][0]
+                );
 
-                expect(aliceExpectedRewards).to.be.gt(bobExpectedRewards);
-                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceExpectedRewards);
-                expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobExpectedRewards);
+                expect(aliceRewards).to.be.gt(bobRewards);
+                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
+                expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobRewards);
 
                 // perform actual claim
                 aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
@@ -1616,8 +1798,8 @@ describe("GrassHouse", () => {
                 await grassHouse.claimMany([aliceAddress, bobAddress]);
                 aliceAlpacaAfter = await ALPACA.balanceOf(aliceAddress);
                 bobAlpacaAfter = await ALPACA.balanceOf(bobAddress);
-                expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(aliceExpectedRewards);
-                expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobExpectedRewards);
+                expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(aliceRewards);
+                expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobRewards);
               });
             });
           });
@@ -1657,6 +1839,8 @@ describe("GrassHouse", () => {
                 const feedAmount = ethers.utils.parseEther("100");
                 const lockAmount = ethers.utils.parseEther("1000");
                 await ALPACA.approve(grassHouse.address, ethers.constants.MaxUint256);
+                // Move blocktimestamp to W1 (Assuming W1 is next week)
+                await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
                 // 1. Deployer call checkpointToken to move lastTokenTimestamp to W1.
                 await grassHouse.checkpointToken();
@@ -1705,6 +1889,9 @@ describe("GrassHouse", () => {
 
                   await timeHelpers.increaseTimestamp(DAY);
                 }
+                // Alice try to claim rewards, expect that she shouldn't get anything
+                // as she hasn't stay for a full week yet
+                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
 
                 // c. Move timestamp to W3
                 await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
@@ -1717,28 +1904,32 @@ describe("GrassHouse", () => {
                 // however only Bob claim the rewards.
                 // Checkpoint totalSupply first so that totalSupplyAt got filled
                 await grassHouse.checkpointTotalSupply();
-                const rewardsAtOneWeekAfterLock = await grassHouse.tokensPerWeek(stages["oneWeekAfterLock"][0]);
-                let alicexALPACAbalance = await grassHouse.balanceOfAt(aliceAddress, stages["oneWeekAfterLock"][0]);
-                let bobxALPACAbalance = await grassHouse.balanceOfAt(bobAddress, stages["oneWeekAfterLock"][0]);
-                let totalSupply = await grassHouse.totalSupplyAt(stages["oneWeekAfterLock"][0]);
-                let aliceExpectedRewards = alicexALPACAbalance.mul(rewardsAtOneWeekAfterLock).div(totalSupply);
-                let bobExpectedRewards = bobxALPACAbalance.mul(rewardsAtOneWeekAfterLock).div(totalSupply);
+                let aliceRewards = await calExpectedRewardsAtTimestamp(
+                  grassHouse,
+                  aliceAddress,
+                  stages["oneWeekAfterLock"][0]
+                );
+                let bobRewards = await calExpectedRewardsAtTimestamp(
+                  grassHouse,
+                  bobAddress,
+                  stages["oneWeekAfterLock"][0]
+                );
 
-                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceExpectedRewards);
-                expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobExpectedRewards);
+                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
+                expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobRewards);
 
                 // perform actual claim. Only Bob does that.
                 bobAlpacaBefore = await ALPACA.balanceOf(bobAddress);
                 await grassHouse.claimMany([bobAddress]);
                 bobAlpacaAfter = await ALPACA.balanceOf(bobAddress);
-                expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobExpectedRewards);
+                expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobRewards);
 
                 // e. Deployer feed rewards#7 for W3
                 await timeHelpers.increaseTimestamp(DAY);
                 await grassHouse.feed(feedAmount);
 
                 // Expect that grassHouse has feedAmount + aliceExpectedRewards due to Alice not claim her portion
-                expect(await ALPACA.balanceOf(grassHouse.address)).to.be.eq(feedAmount.add(aliceExpectedRewards));
+                expect(await ALPACA.balanceOf(grassHouse.address)).to.be.eq(feedAmount.add(aliceRewards));
                 // Expect that W3-W4 rewards get allocated correctly
                 expect(await grassHouse.tokensPerWeek(stages["twoWeeksAfterLock"][0])).to.be.eq(feedAmount);
 
@@ -1749,20 +1940,23 @@ describe("GrassHouse", () => {
                 // W2-W3 rewards + W3-W4 rewards
                 // Checkpoint totalSupply first so that totalSupplyAt got filled
                 await grassHouse.checkpointTotalSupply();
-                const aliceW2W3reward = aliceExpectedRewards;
-                const rewardsAtTwoWeekAfterLock = await grassHouse.tokensPerWeek(stages["twoWeeksAfterLock"][0]);
-                alicexALPACAbalance = await grassHouse.balanceOfAt(aliceAddress, stages["twoWeeksAfterLock"][0]);
-                bobxALPACAbalance = await grassHouse.balanceOfAt(bobAddress, stages["twoWeeksAfterLock"][0]);
-                totalSupply = await grassHouse.totalSupplyAt(stages["twoWeeksAfterLock"][0]);
-                // Alice's rewards must rollover to the next week
-                aliceExpectedRewards = aliceW2W3reward.add(
-                  alicexALPACAbalance.mul(rewardsAtTwoWeekAfterLock).div(totalSupply)
+                const aliceW2W3reward = aliceRewards;
+                aliceRewards = await calExpectedRewardsAtTimestamp(
+                  grassHouse,
+                  aliceAddress,
+                  stages["twoWeeksAfterLock"][0]
                 );
-                bobExpectedRewards = bobxALPACAbalance.mul(rewardsAtTwoWeekAfterLock).div(totalSupply);
+                bobRewards = await calExpectedRewardsAtTimestamp(
+                  grassHouse,
+                  bobAddress,
+                  stages["twoWeeksAfterLock"][0]
+                );
+                // Alice's rewards must rollover to the next week
+                aliceRewards = aliceW2W3reward.add(aliceRewards);
 
-                expect(aliceExpectedRewards.sub(aliceW2W3reward)).to.be.gt(bobExpectedRewards);
-                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceExpectedRewards);
-                expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobExpectedRewards);
+                expect(aliceRewards.sub(aliceW2W3reward)).to.be.gt(bobRewards);
+                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
+                expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobRewards);
 
                 // perform actual claim
                 aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
@@ -1770,12 +1964,220 @@ describe("GrassHouse", () => {
                 await grassHouse.claimMany([aliceAddress, bobAddress]);
                 aliceAlpacaAfter = await ALPACA.balanceOf(aliceAddress);
                 bobAlpacaAfter = await ALPACA.balanceOf(bobAddress);
-                expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(aliceExpectedRewards);
-                expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobExpectedRewards);
+                expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(aliceRewards);
+                expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobRewards);
               });
             });
           });
         });
+      });
+    });
+
+    context("when there are multiple GrassHouses", async () => {
+      it("should allow Alice and Bob claim rewards from multiple GrassHouse", async () => {
+        // Steps:
+        // 1. Deployer call checkpointToken to move lastTokenTimestamp to W1.
+        // 2. Alice and Bob lock ALPACA at [W1 + 1 day]
+        // 3. Move timestamp to W2
+        // 4. Deployer deploy DTOKEN GrassHouse
+        // 5. [DTOKEN GrassHouse] Deployer transfer rewards directly and call checkpoint to perform
+        // the actual DTOKEN allocation for W2, do this week to force checkpointToken.
+        // Then deployer enable canCheckpointToken.
+        // 6. [ALPACA GrassHouse] Deployer call checkpoint to move lastTokenTimestamp to W2 to allocate rewards to W2 only
+        // At this point user can call checkpointToken, hence Deployer enable canCheckpointToken.
+        // 7. [ALPACA GrassHouse] Deployer feed rewards#1
+        // 8. [ALPACA GrassHouse] Deployer feed rewards#2
+        // 9. [ALPACA GrassHouse] Deployer feed rewards#3
+        // a. [ALPACA GrassHouse] Deployer feed rewards#4
+        // b. [ALPACA GrassHouse] Deployer feed rewards#5
+        // c. [ALPACA GrassHouse] Deployer feed rewards#6
+        // d. [ALPACA GrassHouse] Deployer feed rewards#7
+        // e. Move timestamp to W3
+        // f. Alice and Bob should get rewards on W2-W3 window at W3 porprotionally from both DTOKEN GrassHouse and ALPACA GrassHouse
+        // Timeline:
+        //                            3
+        //                            4
+        //                            5
+        //                            6             e
+        //              1 2           7 8 9 a b c d f
+        //  ─ ─ ─ ─ ─ ─ + ─ ─ ─ ─ ─ ─ + ─ ─ ─ ─ ─ ─ + ─ ─ ─ ─ ─ ─▶ Time (DAY)
+        //              W1            W2            W3
+
+        // Preparation
+        const stages: any = {};
+        const feedAmount = ethers.utils.parseEther("100");
+        const lockAmount = ethers.utils.parseEther("1000");
+        await ALPACA.approve(grassHouse.address, ethers.constants.MaxUint256);
+        // Move blocktimestamp to W1 (Assuming W1 is next week)
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // 1. Deployer call checkpointToken to move lastTokenTimestamp to W1.
+        await grassHouse.checkpointToken();
+
+        // 2. Alice and Bob lock ALPACA at [W1 + 1 day]
+        await timeHelpers.increaseTimestamp(DAY);
+        let aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(3)));
+        let aliceAlpacaAfter = await ALPACA.balanceOf(aliceAddress);
+        // Expect that Alice's ALPACA get locked and she has xALPACA balance
+        expect(aliceAlpacaBefore.sub(aliceAlpacaAfter)).to.be.eq(lockAmount);
+        expect(await xALPACA.balanceOf(aliceAddress)).to.be.gt(0);
+
+        let bobAlpacaBefore = await ALPACA.balanceOf(bobAddress);
+        await xALPACAasBob.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(2)));
+        let bobAlpacaAfter = await ALPACA.balanceOf(bobAddress);
+        // Expect that Bob's ALPACA get locked and he has xALPACA balance
+        expect(bobAlpacaBefore.sub(bobAlpacaAfter)).to.be.eq(lockAmount);
+        expect(await xALPACA.balanceOf(bobAddress)).to.be.gt(0);
+
+        // 3. Move timestamp to W2
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Snapshot block.timestamp and block.number of one week after lock
+        stages["oneWeekAfterLock"] = [await timeHelpers.latestTimestamp(), await timeHelpers.latestBlockNumber()];
+
+        // 4. Deployer deploy DTOKEN GrassHouse
+        const GrassHouse = (await ethers.getContractFactory("GrassHouse", deployer)) as GrassHouse__factory;
+        const dTokenGrassHouse = await GrassHouse.deploy(
+          xALPACA.address,
+          await timeHelpers.latestTimestamp(),
+          DTOKEN.address,
+          deployerAddress
+        );
+        await DTOKEN.approve(dTokenGrassHouse.address, ethers.constants.MaxUint256);
+
+        // 5. [DTOKEN GrassHouse] Deployer transfer rewards directly and call checkpoint to perform
+        // the actual DTOKEN allocation for W2. Then deployer enable canCheckpointToken.
+        await DTOKEN.transfer(dTokenGrassHouse.address, feedAmount);
+        await dTokenGrassHouse.checkpointToken();
+        await dTokenGrassHouse.setCanCheckpointToken(true);
+
+        // 6. [ALPACA GrassHouse] Deployer call checkpoint to move lastTokenTimestamp to W2 to allocate rewards to W2 only
+        // At this point user can call checkpointToken, hence Deployer enable canCheckpointToken.
+        await grassHouse.checkpointToken();
+        await grassHouse.setCanCheckpointToken(true);
+
+        // Steps 7-d
+        for (let i = 0; i < 7; i++) {
+          await grassHouse.feed(feedAmount);
+          expect(await ALPACA.balanceOf(grassHouse.address)).to.be.eq(feedAmount.mul(i + 1));
+          expect((await grassHouse.lastTokenTimestamp()).div(WEEK).mul(WEEK)).to.be.eq(
+            (await timeHelpers.latestTimestamp()).div(WEEK).mul(WEEK)
+          );
+          await timeHelpers.increaseTimestamp(DAY);
+        }
+        // Alice try to claim rewards, expect that she shouldn't get anything
+        // as she hasn't stay for a full week yet
+        expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
+        expect(await dTokenGrassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
+
+        // e. Move timestamp to W3
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // f. Alice and Bob should get rewards on W2-W3 window at W3 porprotionally
+        // Checkpoint totalSupply first so that totalSupplyAt got filled
+        await grassHouse.checkpointTotalSupply();
+        await dTokenGrassHouse.checkpointTotalSupply();
+        // ALPACA GrassHouse
+        const aliceAlpacaGrassHouseRewards = await calExpectedRewardsAtTimestamp(
+          grassHouse,
+          aliceAddress,
+          stages["oneWeekAfterLock"][0]
+        );
+        const bobAlpacaGrassHouseRewards = await calExpectedRewardsAtTimestamp(
+          grassHouse,
+          bobAddress,
+          stages["oneWeekAfterLock"][0]
+        );
+
+        expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceAlpacaGrassHouseRewards);
+        expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobAlpacaGrassHouseRewards);
+
+        // perform actual claim
+        aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
+        bobAlpacaBefore = await ALPACA.balanceOf(bobAddress);
+        await grassHouse.claimMany([aliceAddress, bobAddress]);
+        aliceAlpacaAfter = await ALPACA.balanceOf(aliceAddress);
+        bobAlpacaAfter = await ALPACA.balanceOf(bobAddress);
+        expect(aliceAlpacaAfter.sub(aliceAlpacaBefore)).to.be.eq(aliceAlpacaGrassHouseRewards);
+        expect(bobAlpacaAfter.sub(bobAlpacaBefore)).to.be.eq(bobAlpacaGrassHouseRewards);
+
+        // DTOKEN GrassHouse
+        expect(await dTokenGrassHouse.tokensPerWeek(stages["oneWeekAfterLock"][0])).to.be.eq(feedAmount);
+        const aliceDtokenGrassHouseRewards = await calExpectedRewardsAtTimestamp(
+          dTokenGrassHouse,
+          aliceAddress,
+          stages["oneWeekAfterLock"][0]
+        );
+        const bobDtokenGrassHouseRewards = await calExpectedRewardsAtTimestamp(
+          dTokenGrassHouse,
+          bobAddress,
+          stages["oneWeekAfterLock"][0]
+        );
+
+        expect(await dTokenGrassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceDtokenGrassHouseRewards);
+        expect(await dTokenGrassHouse.callStatic.claim(bobAddress)).to.be.eq(bobDtokenGrassHouseRewards);
+      });
+    });
+
+    context("when grass house deploy after xALPACA for weeks", async () => {
+      it("should handle reward distribution properly", async () => {
+        // Steps:
+        // 1. Alice lock ALPACA at [W1 + 1 day]
+        // 2. Deployer deploy DTOKEN GrassHouse
+        // 3. Deployer feed DTOKEN
+        // 4. Alice claim DTOKEN. Expected to get rewards during W3-W4 only.
+        // Timeline
+        //                                          2
+        //                1                         3             4
+        //  ─ ─ ─ ─ ─ ─ + ─ ─ ─ ─ ─ ─ + ─ ─ ─ ─ ─ ─ + ─ ─ ─ ─ ─ ─ + ─ ─ ─ ─ ─ ─▶ Time (DAY)
+        //              W1            W2            W3            W4
+        // Preparation
+        const stages: any = {};
+        const feedAmount = ethers.utils.parseEther("100");
+        const lockAmount = ethers.utils.parseEther("1000");
+        await ALPACA.approve(grassHouse.address, ethers.constants.MaxUint256);
+        // Move blocktimestamp to W1 (Assuming W1 is next week)
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // 1. Alice lock ALPACA at [W1 + 1 day]
+        await timeHelpers.increaseTimestamp(DAY);
+        let aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(8)));
+        let aliceAlpacaAfter = await ALPACA.balanceOf(aliceAddress);
+        // Expect that Alice's ALPACA get locked and she has xALPACA balance
+        expect(aliceAlpacaBefore.sub(aliceAlpacaAfter)).to.be.eq(lockAmount);
+        expect(await xALPACA.balanceOf(aliceAddress)).to.be.gt(0);
+
+        // 2. Deployer deploy DTOKEN GrassHouse
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(2).mul(WEEK));
+        stages["dTokenGrassHouseDeployed"] = [
+          await timeHelpers.latestTimestamp(),
+          await timeHelpers.latestBlockNumber(),
+        ];
+        const GrassHouse = (await ethers.getContractFactory("GrassHouse")) as GrassHouse__factory;
+        const dTokenGrassHouse = await GrassHouse.deploy(
+          xALPACA.address,
+          await timeHelpers.latestTimestamp(),
+          DTOKEN.address,
+          deployerAddress
+        );
+
+        // 3. Deployer feed DTOKEN
+        await DTOKEN.transfer(dTokenGrassHouse.address, feedAmount);
+        await dTokenGrassHouse.checkpointToken();
+        await dTokenGrassHouse.setCanCheckpointToken(true);
+
+        // 4. Alice claim DTOKEN. Expected to get rewards during W3-W4 only.
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+        await dTokenGrassHouse.checkpointTotalSupply();
+        const aliceRewards = await calExpectedRewardsAtTimestamp(
+          dTokenGrassHouse,
+          aliceAddress,
+          stages["dTokenGrassHouseDeployed"][0]
+        );
+        expect(aliceRewards).to.be.eq(feedAmount);
+        expect(await dTokenGrassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
       });
     });
   });
