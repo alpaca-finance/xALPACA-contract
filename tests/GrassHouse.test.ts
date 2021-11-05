@@ -179,10 +179,15 @@ describe("GrassHouse", () => {
       context("when canCheckpointToken is allow", async () => {
         context("when block.timstamp <= lastTokenTimestamp + 1 day", async () => {
           it("should revert", async () => {
+            // Set canCheckpointToken to true
             await grassHouse.setCanCheckpointToken(true);
 
-            let latestTimestamp = await timeHelpers.latestTimestamp();
-            await ALPACA.transfer(grassHouse.address, ethers.utils.parseEther("888"));
+            // Move to start of the week and call checkpoint to move lastTokenTimestamp
+            await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+            await grassHouse.checkpointToken();
+
+            // Alice call checkpointToken immediately
+            // Expect to be reverted as block.timestamp <= lastTokenTimestamp + 1 day
             await expect(grassHouseAsAlice.checkpointToken()).to.be.revertedWith("!allow");
           });
         });
@@ -922,7 +927,8 @@ describe("GrassHouse", () => {
           // 9. Deployer feed rewards#5
           // a. Deployer feed rewards#6
           // b. Deployer feed rewards#7
-          // c. Move timestamp to W3
+          // c. At this point, we are already at W3. Increase timestamp by 1 hour
+          // as we are already at W3 to make it pass from TOKEN_CHECKPOINT_DEADLINE
           // d. Alice should get rewards on W2-W3 window at W3 as she locked ALPACA at W1 + seconds
           // Timeline:
           //                            3
@@ -973,12 +979,10 @@ describe("GrassHouse", () => {
             );
             await timeHelpers.increaseTimestamp(DAY);
           }
-          // Alice try to claim rewards, expect that she shouldn't get anything
-          // as she hasn't stay for a full week yet
-          expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
 
-          // c. Move timestamp to W3
-          await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+          // c. At this point, we are already at W3. Increase timestamp by 1 hour
+          // as we are already at W3 to make it pass from TOKEN_CHECKPOINT_DEADLINE
+          await timeHelpers.increaseTimestamp(timeHelpers.HOUR);
 
           // d. Alice should get some rewardTokens as she locked ALPACA before the start of the next week
           await grassHouse.checkpointTotalSupply();
@@ -987,6 +991,7 @@ describe("GrassHouse", () => {
             aliceAddress,
             stages["oneWeekAfterAliceLock"][0]
           );
+          expect(aliceRewards).to.be.gt(0);
           expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
           // perform actual claim
           aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
@@ -1014,7 +1019,8 @@ describe("GrassHouse", () => {
           // b. Alice withdraw from xALPACA
           // c. Deployer feed rewards#6
           // d. Deployer feed rewards#7
-          // e. Move timestamp to W3
+          // e. At this point, we are already at W3. Increase timestamp by 1 hour
+          // as we are already at W3 to make it pass from TOKEN_CHECKPOINT_DEADLINE
           // f. Alice should get rewards on W2-W3 window at W3 as she locked ALPACA at W1 + seconds
           // Timeline:
           //                            3
@@ -1077,14 +1083,13 @@ describe("GrassHouse", () => {
 
             await timeHelpers.increaseTimestamp(DAY);
           }
-          // Alice try to claim rewards, expect that she shouldn't get anything
-          // as she hasn't stay for a full week yet
-          expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
 
-          // e. Move timestamp to W3
-          await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+          // e. At this point, we are already at W3. Increase timestamp by 1 hour
+          // as we are already at W3 to make it pass from TOKEN_CHECKPOINT_DEADLINE
+          await timeHelpers.increaseTimestamp(timeHelpers.HOUR);
 
           // f. Alice should get rewards on W2-W3 window at W3 as she locked ALPACA at W1 + seconds
+          await timeHelpers.increaseTimestamp(timeHelpers.DAY);
           await grassHouse.checkpointTotalSupply();
           const aliceRewards = await calExpectedRewardsAtTimestamp(
             grassHouse,
@@ -1118,7 +1123,8 @@ describe("GrassHouse", () => {
           // b. Deployer feed rewards#5
           // c. Deployer feed rewards#6
           // d. Deployer feed rewards#7
-          // e. Move timestamp to W3
+          // e. At this point, we are already at W3. Increase timestamp by 1 hour
+          // as we are already at W3 to make it pass from TOKEN_CHECKPOINT_DEADLINE
           // f. Alice should get rewards on W2-W3 window at W3 as she locked ALPACA at W1 + seconds
           // Timeline:
           //                            5
@@ -1181,12 +1187,10 @@ describe("GrassHouse", () => {
 
             await timeHelpers.increaseTimestamp(DAY);
           }
-          // Alice try to claim rewards, expect that she shouldn't get anything
-          // as she hasn't stay for a full week yet
-          expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
 
-          // e. Move timestamp to W3
-          await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+          // e. At this point, we are already at W3. Increase timestamp by 1 hour
+          // as we are already at W3 to make it pass from TOKEN_CHECKPOINT_DEADLINE
+          await timeHelpers.increaseTimestamp(timeHelpers.HOUR);
 
           // f. Alice should get rewards on W2-W3 window at W3 as she locked ALPACA at W1 + seconds
           await grassHouse.checkpointTotalSupply();
@@ -1195,6 +1199,7 @@ describe("GrassHouse", () => {
             aliceAddress,
             stages["oneWeekAfterAliceLock"][0]
           );
+          expect(aliceRewards).to.be.eq(0);
           expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
           expect(await ALPACA.balanceOf(grassHouse.address)).to.be.eq(feedAmount.mul(7));
         });
@@ -1219,7 +1224,8 @@ describe("GrassHouse", () => {
             // 9. Deployer feed rewards#5
             // a. Deployer feed rewards#6
             // b. Deployer feed rewards#7
-            // c. Move timestamp to W3
+            // c. At this point, we are already at W3. Increase timestamp by 1 hour
+            // as we are already at W3 to make it pass from
             // d. Alice and Bob should get rewards on W2-W3 window at W3 porprotionally
             // Timeline:
             //                            3
@@ -1274,12 +1280,11 @@ describe("GrassHouse", () => {
               );
               await timeHelpers.increaseTimestamp(DAY);
             }
-            // Alice try to claim rewards, expect that she shouldn't get anything
-            // as she hasn't stay for a full week yet
-            expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
 
-            // c. Move timestamp to W3
-            await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+            // c. At this point, we are already at W3. Increase timestamp by 1 hour
+            // as we are already at W3 to make it pass from TOKEN_CHECKPOINT_DEADLINE
+            stages["twoWeeksAfterLock"] = [(await timeHelpers.latestTimestamp()).div(WEEK).mul(WEEK)];
+            await timeHelpers.increaseTimestamp(timeHelpers.HOUR);
 
             // d. Alice and Bob should get rewards on W2-W3 window at W3 porprotionally
             // Checkpoint totalSupply first so that totalSupplyAt got filled
@@ -1295,6 +1300,8 @@ describe("GrassHouse", () => {
               stages["oneWeekAfterLock"][0]
             );
 
+            expect(aliceRewards).to.be.gt(0);
+            expect(bobRewards).to.be.gt(0);
             expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
             expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobRewards);
 
@@ -1330,7 +1337,8 @@ describe("GrassHouse", () => {
                 // a. Deployer feed rewards#5 for W2
                 // b. Deployer feed rewards#6 for W2
                 // c. Deployer feed rewards#7 for W2
-                // d. Move timestamp to W3
+                // d. At this point, we are already at W3. Increase timestamp by 1 hour
+                // as we are already at W3 to make it pass from TOKEN_CHECKPOINT_DEADLINE
                 // e. Alice and Bob should get rewards on W2-W3 window at W3 porprotionally (50-50)
                 // f. Deployer feed rewards#8 for W3
                 // g. Move timestamp to W4
@@ -1397,16 +1405,11 @@ describe("GrassHouse", () => {
 
                   await timeHelpers.increaseTimestamp(DAY);
                 }
-                // Alice try to claim rewards, expect that she shouldn't get anything
-                // as she hasn't stay for a full week yet
-                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
 
-                // d. Move timestamp to W3
-                await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
-                stages["twoWeeksAfterLock"] = [
-                  await timeHelpers.latestTimestamp(),
-                  await timeHelpers.latestBlockNumber(),
-                ];
+                // d. At this point, we are already at W3. Increase timestamp by 1 hour
+                // as we are already at W3 to make it pass from TOKEN_CHECKPOINT_DEADLINE
+                stages["twoWeeksAfterLock"] = [(await timeHelpers.latestTimestamp()).div(WEEK).mul(WEEK)];
+                await timeHelpers.increaseTimestamp(timeHelpers.HOUR);
 
                 // e. Alice and Bob should get rewards on W2-W3 window at W3 porprotionally (50-50)
                 // Checkpoint totalSupply first so that totalSupplyAt got filled
@@ -1422,6 +1425,8 @@ describe("GrassHouse", () => {
                   stages["oneWeekAfterLock"][0]
                 );
 
+                expect(aliceRewards).to.be.gt(0);
+                expect(bobRewards).to.be.gt(0);
                 expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
                 expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobRewards);
 
@@ -1458,6 +1463,8 @@ describe("GrassHouse", () => {
                   stages["twoWeeksAfterLock"][0]
                 );
 
+                expect(aliceRewards).to.be.gt(0);
+                expect(bobRewards).to.be.gt(0);
                 expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
                 expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobRewards);
 
@@ -1493,7 +1500,8 @@ describe("GrassHouse", () => {
                 // a. Deployer feed rewards#5 for W2
                 // b. Deployer feed rewards#6 for W2
                 // c. Deployer feed rewards#7 for W2
-                // d. Move timestamp to W3
+                // d. At this point, we are already at W3. Increase timestamp by 1 hour
+                // as we are already at W3 to make it pass from TOKEN_CHECKPOINT_DEADLINE
                 // e. Alice and Bob should get rewards on W2-W3 window at W3 porprotionally (50-50),
                 // however only Bob claim the rewards.
                 // f. Deployer feed rewards#8 for W3
@@ -1561,16 +1569,11 @@ describe("GrassHouse", () => {
 
                   await timeHelpers.increaseTimestamp(DAY);
                 }
-                // Alice try to claim rewards, expect that she shouldn't get anything
-                // as she hasn't stay for a full week yet
-                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
 
-                // d. Move timestamp to W3
-                await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
-                stages["twoWeeksAfterLock"] = [
-                  await timeHelpers.latestTimestamp(),
-                  await timeHelpers.latestBlockNumber(),
-                ];
+                // d. At this point, we are already at W3. Increase timestamp by 1 hour
+                // as we are already at W3 to make it pass from TOKEN_CHECKPOINT_DEADLINE
+                stages["twoWeeksAfterLock"] = [(await timeHelpers.latestTimestamp()).div(WEEK).mul(WEEK)];
+                await timeHelpers.increaseTimestamp(timeHelpers.HOUR);
 
                 // e. Alice and Bob should get rewards on W2-W3 window at W3 porprotionally (50-50),
                 // however only Bob claim the rewards.
@@ -1587,6 +1590,8 @@ describe("GrassHouse", () => {
                   stages["oneWeekAfterLock"][0]
                 );
 
+                expect(aliceRewards).to.be.gt(0);
+                expect(bobRewards).to.be.gt(0);
                 expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
                 expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobRewards);
 
@@ -1626,6 +1631,8 @@ describe("GrassHouse", () => {
                 // Alice's rewards must rollover to the next week
                 aliceRewards = aliceW2W3reward.add(aliceRewards);
 
+                expect(aliceRewards).to.be.gt(0);
+                expect(bobRewards).to.be.gt(0);
                 expect(aliceRewards.sub(aliceW2W3reward)).to.be.gt(bobRewards);
                 expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
                 expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobRewards);
@@ -1661,7 +1668,8 @@ describe("GrassHouse", () => {
                 // 9. Alice increase her amount
                 // a. Deployer feed rewards#5 for W2
                 // b. Deployer feed rewards#6 for W2
-                // c. Move timestamp to W3
+                // c. At this point, we are already at W3. Increase timestamp by 1 hour
+                // as we are already at W3 to make it pass from TOKEN_CHECKPOINT_DEADLINE
                 // d. Alice and Bob should get rewards on W2-W3 window at W3 porprotionally (50-50)
                 // e. Deployer feed rewards#7 for W3
                 // f. Move timestamp to W4
@@ -1727,16 +1735,11 @@ describe("GrassHouse", () => {
 
                   await timeHelpers.increaseTimestamp(DAY);
                 }
-                // Alice try to claim rewards, expect that she shouldn't get anything
-                // as she hasn't stay for a full week yet
-                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
 
-                // c. Move timestamp to W3
-                await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
-                stages["twoWeeksAfterLock"] = [
-                  await timeHelpers.latestTimestamp(),
-                  await timeHelpers.latestBlockNumber(),
-                ];
+                // c. At this point, we are already at W3. Increase timestamp by 1 hour
+                // as we are already at W3 to make it pass from TOKEN_CHECKPOINT_DEADLINE
+                stages["twoWeeksAfterLock"] = [(await timeHelpers.latestTimestamp()).div(WEEK).mul(WEEK)];
+                await timeHelpers.increaseTimestamp(timeHelpers.HOUR);
 
                 // d. Alice and Bob should get rewards on W2-W3 window at W3 porprotionally (50-50)
                 // Checkpoint totalSupply first so that totalSupplyAt got filled
@@ -1752,6 +1755,8 @@ describe("GrassHouse", () => {
                   stages["oneWeekAfterLock"][0]
                 );
 
+                expect(aliceRewards).to.be.gt(0);
+                expect(bobRewards).to.be.gt(0);
                 expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
                 expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobRewards);
 
@@ -1788,6 +1793,8 @@ describe("GrassHouse", () => {
                   stages["twoWeeksAfterLock"][0]
                 );
 
+                expect(aliceRewards).to.be.gt(0);
+                expect(bobRewards).to.be.gt(0);
                 expect(aliceRewards).to.be.gt(bobRewards);
                 expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
                 expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobRewards);
@@ -1821,7 +1828,8 @@ describe("GrassHouse", () => {
                 // 9. Alice increase her lock amount
                 // a. Deployer feed rewards#5 for W2
                 // b. Deployer feed rewards#6 for W2
-                // c. Move timestamp to W3
+                // c. At this point, we are already at W3. Increase timestamp by 1 hour
+                // as we are already at W3 to make it pass from TOKEN_CHECKPOINT_DEADLINE
                 // d. Alice and Bob should get rewards on W2-W3 window at W3 porprotionally (50-50),
                 // however only Bob claim the rewards.
                 // e. Deployer feed rewards#7 for W3
@@ -1889,16 +1897,11 @@ describe("GrassHouse", () => {
 
                   await timeHelpers.increaseTimestamp(DAY);
                 }
-                // Alice try to claim rewards, expect that she shouldn't get anything
-                // as she hasn't stay for a full week yet
-                expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
 
-                // c. Move timestamp to W3
-                await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
-                stages["twoWeeksAfterLock"] = [
-                  await timeHelpers.latestTimestamp(),
-                  await timeHelpers.latestBlockNumber(),
-                ];
+                // c. At this point, we are already at W3. Increase timestamp by 1 hour
+                // as we are already at W3 to make it pass from TOKEN_CHECKPOINT_DEADLINE
+                stages["twoWeeksAfterLock"] = [(await timeHelpers.latestTimestamp()).div(WEEK).mul(WEEK)];
+                await timeHelpers.increaseTimestamp(timeHelpers.HOUR);
 
                 // d. Alice and Bob should get rewards on W2-W3 window at W3 porprotionally (50-50),
                 // however only Bob claim the rewards.
@@ -1915,6 +1918,8 @@ describe("GrassHouse", () => {
                   stages["oneWeekAfterLock"][0]
                 );
 
+                expect(aliceRewards).to.be.gt(0);
+                expect(bobRewards).to.be.gt(0);
                 expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
                 expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobRewards);
 
@@ -1955,6 +1960,8 @@ describe("GrassHouse", () => {
                 aliceRewards = aliceW2W3reward.add(aliceRewards);
 
                 expect(aliceRewards.sub(aliceW2W3reward)).to.be.gt(bobRewards);
+                expect(aliceRewards).to.be.gt(0);
+                expect(bobRewards).to.be.gt(0);
                 expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
                 expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobRewards);
 
@@ -1992,7 +1999,8 @@ describe("GrassHouse", () => {
         // b. [ALPACA GrassHouse] Deployer feed rewards#5
         // c. [ALPACA GrassHouse] Deployer feed rewards#6
         // d. [ALPACA GrassHouse] Deployer feed rewards#7
-        // e. Move timestamp to W3
+        // e. At this point, we are already at W3. Increase timestamp by 1 hour
+        // as we are already at W3 to make it pass from TOKEN_CHECKPOINT_DEADLINE
         // f. Alice and Bob should get rewards on W2-W3 window at W3 porprotionally from both DTOKEN GrassHouse and ALPACA GrassHouse
         // Timeline:
         //                            3
@@ -2066,13 +2074,10 @@ describe("GrassHouse", () => {
           );
           await timeHelpers.increaseTimestamp(DAY);
         }
-        // Alice try to claim rewards, expect that she shouldn't get anything
-        // as she hasn't stay for a full week yet
-        expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
-        expect(await dTokenGrassHouse.callStatic.claim(aliceAddress)).to.be.eq(0);
 
-        // e. Move timestamp to W3
-        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+        // e. At this point, we are already at W3. Increase timestamp by 1 hour
+        // as we are already at W3 to make it pass from TOKEN_CHECKPOINT_DEADLINE
+        await timeHelpers.increaseTimestamp(timeHelpers.HOUR);
 
         // f. Alice and Bob should get rewards on W2-W3 window at W3 porprotionally
         // Checkpoint totalSupply first so that totalSupplyAt got filled
@@ -2090,6 +2095,8 @@ describe("GrassHouse", () => {
           stages["oneWeekAfterLock"][0]
         );
 
+        expect(aliceAlpacaGrassHouseRewards).to.be.gt(0);
+        expect(bobAlpacaGrassHouseRewards).to.be.gt(0);
         expect(await grassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceAlpacaGrassHouseRewards);
         expect(await grassHouse.callStatic.claim(bobAddress)).to.be.eq(bobAlpacaGrassHouseRewards);
 
@@ -2115,6 +2122,8 @@ describe("GrassHouse", () => {
           stages["oneWeekAfterLock"][0]
         );
 
+        expect(aliceDtokenGrassHouseRewards).to.be.gt(0);
+        expect(bobDtokenGrassHouseRewards).to.be.gt(0);
         expect(await dTokenGrassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceDtokenGrassHouseRewards);
         expect(await dTokenGrassHouse.callStatic.claim(bobAddress)).to.be.eq(bobDtokenGrassHouseRewards);
       });

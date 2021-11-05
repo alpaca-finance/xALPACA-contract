@@ -135,6 +135,11 @@ contract GrassHouse is Ownable, ReentrancyGuard {
   /// At launch can only be called by owner, after launch can be called
   /// by anyone if block.timestamp > lastTokenTime + TOKEN_CHECKPOINT_DEADLINE
   function checkpointToken() external nonReentrant {
+    console.log("canCheckpointToken: ", canCheckpointToken);
+    console.log("block.timestamp: ", block.timestamp);
+    console.log("lastTokenTimestamp: ", lastTokenTimestamp);
+    console.log("TOKEN_CHECKPOINT_DEADLINE: ", TOKEN_CHECKPOINT_DEADLINE);
+    console.log("lastTokenTimestamp + TOKEN_CHECKPOIN_DEADLINE: ", lastTokenTimestamp + TOKEN_CHECKPOINT_DEADLINE);
     require(
       msg.sender == owner() ||
         (canCheckpointToken && (block.timestamp > lastTokenTimestamp + TOKEN_CHECKPOINT_DEADLINE)),

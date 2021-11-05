@@ -1,10 +1,10 @@
 import { BigNumber, BigNumberish } from "ethers";
 import { ethers } from "hardhat";
 
-const HOUR = ethers.BigNumber.from(3600);
-const DAY = ethers.BigNumber.from(86400);
-const WEEK = DAY.mul(7);
-const YEAR = DAY.mul(365);
+export const HOUR = ethers.BigNumber.from(3600);
+export const DAY = ethers.BigNumber.from(86400);
+export const WEEK = DAY.mul(7);
+export const YEAR = DAY.mul(365);
 
 export function timestampFloorWeek(t: BigNumberish): BigNumber {
   const bt = BigNumber.from(t);
