@@ -1,4 +1,4 @@
-import { ethers, waffle } from "hardhat";
+import { ethers, waffle, upgrades } from "hardhat";
 import { Signer, BigNumber } from "ethers";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
@@ -7,8 +7,10 @@ import {
   BEP20__factory,
   MockContractContext,
   MockContractContext__factory,
-  XALPACA,
-  XALPACA__factory,
+  MockGrassHouse,
+  MockGrassHouse__factory,
+  AlpacaFeeder,
+  AlpacaFeeder__factory,
 } from "../typechain";
 import * as timeHelpers from "./helpers/time";
 import * as assertHelpers from "./helpers/assert";
@@ -18,10 +20,16 @@ chai.use(solidity);
 const { expect } = chai;
 
 describe("AlpacaFeeder", () => {
+  // Constants
+  const fairLuancePoolId = 123;
+
   // Contact Instance
   let ALPACA: BEP20;
 
   let contractContext: MockContractContext;
+
+  let mockGrassHouse: MockGrassHouse;
+  let feeder: AlpacaFeeder;
 
   // Accounts
   let deployer: Signer;
@@ -64,6 +72,21 @@ describe("AlpacaFeeder", () => {
     await ALPACA.mint(eveAddress, ethers.utils.parseEther("8888888"));
     await ALPACA.mint(contractContext.address, ethers.utils.parseEther("8888888"));
 
+    // Deploy GrassHouse
+    const MOCKGRASSHOUSE = (await ethers.getContractFactory("MockGrassHouse", deployer)) as MockGrassHouse__factory;
+    mockGrassHouse = await MOCKGRASSHOUSE.deploy(ALPACA.address);
+
+    // Deploy feeder
+
+    const ALCAPAFEEDER = (await ethers.getContractFactory("AlpacaFeeder", deployer)) as AlpacaFeeder__factory;
+    const alpacaFeeder = (await upgrades.deployProxy(ALCAPAFEEDER, [
+      ALPACA.address,
+      contractContext.address,
+      fairLuancePoolId,
+      mockGrassHouse.address,
+    ])) as AlpacaFeeder;
+    feeder = await alpacaFeeder.deployed();
+
     // Approve xALPACA to transferFrom contractContext
     // await contractContext.executeTransaction(
     //   ALPACA.address,
@@ -84,11 +107,26 @@ describe("AlpacaFeeder", () => {
 
   describe("#initialized", async () => {
     it("should initialized correctly", async () => {
-      const pointHistory0 = await xALPACA.pointHistory(0);
-      expect(pointHistory0.bias).to.be.eq(0);
-      expect(pointHistory0.slope).to.be.eq(0);
-      expect(pointHistory0.timestamp).to.be.gt(0);
-      expect(pointHistory0.blockNumber).to.be.gt(0);
+      expect(await feeder.fairLaunch()).to.be.eq(contractContext.address);
+      expect(await feeder.grassHouse()).to.be.eq(mockGrassHouse.address);
+    });
+  });
+
+  describe("#feedGrassHouse", async () => {
+    it("should work correctly", async () => {
+      await ALPACAasAlice.transfer(feeder.address, ethers.utils.parseEther("20"));
+      expect(await ALPACA.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("20"));
+      await expect(feeder.feedGrassHouse(ethers.utils.parseEther("20"))).to.be.emit(feeder, "LogFeedGrassHouse");
+      expect(await ALPACA.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("0"));
+      expect(await ALPACA.balanceOf(mockGrassHouse.address)).to.be.eq(ethers.utils.parseEther("20"));
+    });
+
+    context("when token amount is not enough to feed", () => {
+      it("should revert", async () => {
+        await ALPACAasAlice.transfer(feeder.address, ethers.utils.parseEther("20"));
+        expect(await ALPACA.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("20"));
+        await expect(feeder.feedGrassHouse(ethers.utils.parseEther("30"))).to.be.revertedWith("insufficient amount");
+      });
     });
   });
 });
