@@ -171,7 +171,7 @@ contract GrassHouse is Ownable, ReentrancyGuard {
     weekCursor = _weekCursor;
   }
 
-  /// @notice Update xALPACA total supply checkpint
+  /// @notice Update xALPACA total supply checkpoint
   /// @dev This function can be called independently or at the first claim of
   /// the new epoch week.
   function checkpointTotalSupply() external nonReentrant {
