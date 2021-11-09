@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "scripts": {
     "compile": "hardhat typechain --config hardhat.config.ts",
+    "compile6": "hardhat typechain --config hardhat.config.6.ts",
     "mainnet": "hardhat console --no-compile --network mainnet",
     "badges": "istanbul-badges-readme --coverageDir=./",
     "test:case": "mocha --require hardhat/register --extension ts -g",
@@ -19,6 +20,8 @@
     "@nomiclabs/hardhat-etherscan": "^2.1.1",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@openzeppelin/contracts": "4.3.2",
+    "@openzeppelin/contracts-upgradeable": "4.3.2",
+    "@openzeppelin/hardhat-upgrades": "^1.9.0",
     "@typechain/ethers-v5": "^5.0.0",
     "@types/chai": "^4.2.15",
     "@types/mocha": "^8.2.0",
