@@ -11,7 +11,8 @@
     "testnet": "hardhat console --no-compile --network testnet",
     "coverage": "hardhat coverage",
     "solhint": "./node_modules/.bin/solhint -f table contracts/**/*.sol",
-    "prettier:solidity": "./node_modules/.bin/prettier --write contracts/**/*.sol"
+    "prettier:solidity": "./node_modules/.bin/prettier --write contracts/**/*.sol",
+    "deploy:testnet:000:xalpaca": "hardhat --network testnet deploy --no-compile --reset --tags TestnetDeployXAlpaca"
   },
   "devDependencies": {
     "@ethersproject/bignumber": "^5.0.14",
