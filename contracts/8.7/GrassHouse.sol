@@ -33,6 +33,7 @@ contract GrassHouse is Ownable, ReentrancyGuard {
   event LogSetCanCheckpointToken(bool _toggleFlag);
   event LogCheckpointToken(uint256 _timestamp, uint256 _tokens);
   event LogClaimed(address indexed _recipient, uint256 _amount, uint256 _claimEpoch, uint256 _maxEpoch);
+  event LogKilled();
 
   /// @dev Time-related constants
   uint256 public constant WEEK = 1 weeks;
@@ -56,6 +57,7 @@ contract GrassHouse is Ownable, ReentrancyGuard {
   bool public canCheckpointToken;
 
   /// @dev address to get token when contract is emergency stop
+  bool public isKilled;
   address public emergencyReturn;
 
   /// @notice Constructor to instaniate GrassHouse
@@ -76,6 +78,29 @@ contract GrassHouse is Ownable, ReentrancyGuard {
     rewardToken = _rewardToken;
     xALPACA = _xALPACA;
     emergencyReturn = _emergencyReturn;
+  }
+
+  modifier onlyLive() {
+    require(!isKilled, "killed");
+    _;
+  }
+
+  /// @notice Get xALPACA balance of "_user" at "_timstamp"
+  /// @param _user The user address
+  /// @param _timestamp The timestamp to get user's balance
+  function balanceOfAt(address _user, uint256 _timestamp) external view returns (uint256) {
+    uint256 _maxUserEpoch = IxALPACA(xALPACA).userPointEpoch(_user);
+    if (_maxUserEpoch == 0) {
+      return 0;
+    }
+
+    uint256 _epoch = _findTimestampUserEpoch(_user, _timestamp, _maxUserEpoch);
+    Point memory _point = IxALPACA(xALPACA).userPointHistory(_user, _epoch);
+    int128 _bias = _point.bias - _point.slope * SafeCast.toInt128(int256(_timestamp - _point.timestamp));
+    if (_bias < 0) {
+      return 0;
+    }
+    return SafeCast.toUint256(_bias);
   }
 
   /// @notice Record token distribution checkpoint
@@ -281,7 +306,7 @@ contract GrassHouse is Ownable, ReentrancyGuard {
 
   /// @notice Claim rewardToken for "_user"
   /// @param _user The address to claim rewards for
-  function claim(address _user) external nonReentrant returns (uint256) {
+  function claim(address _user) external nonReentrant onlyLive returns (uint256) {
     if (block.timestamp >= weekCursor) _checkpointTotalSupply();
     uint256 _lastTokenTimestamp = lastTokenTimestamp;
 
@@ -303,7 +328,7 @@ contract GrassHouse is Ownable, ReentrancyGuard {
 
   /// @notice Claim rewardToken for multiple users
   /// @param _users The array of addresses to claim reward for
-  function claimMany(address[] calldata _users) external nonReentrant returns (bool) {
+  function claimMany(address[] calldata _users) external nonReentrant onlyLive returns (bool) {
     require(_users.length <= 20, "!over 20 users");
 
     if (block.timestamp >= weekCursor) _checkpointTotalSupply();
@@ -319,7 +344,7 @@ contract GrassHouse is Ownable, ReentrancyGuard {
     uint256 _total = 0;
 
     for (uint256 i = 0; i < _users.length; i++) {
-      if (_users[i] == address(0)) continue;
+      require(_users[i] != address(0), "bad user");
 
       uint256 _amount = _claim(_users[i], _lastTokenTimestamp);
       if (_amount != 0) {
@@ -336,7 +361,7 @@ contract GrassHouse is Ownable, ReentrancyGuard {
   }
 
   /// @notice Receive rewardTokens into the contract and trigger token checkpoint
-  function feed(uint256 _amount) external nonReentrant returns (bool) {
+  function feed(uint256 _amount) external nonReentrant onlyLive returns (bool) {
     rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
 
     if (canCheckpointToken && (block.timestamp > lastTokenTimestamp + TOKEN_CHECKPOINT_DEADLINE)) {
@@ -392,29 +417,18 @@ contract GrassHouse is Ownable, ReentrancyGuard {
     return _min;
   }
 
+  function kill() external onlyOwner {
+    isKilled = true;
+    rewardToken.safeTransfer(emergencyReturn, rewardToken.myBalance());
+
+    emit LogKilled();
+  }
+
   /// @notice Set canCheckpointToken to allow random callers to call checkpointToken
   /// @param _newCanCheckpointToken The new canCheckpointToken flag
   function setCanCheckpointToken(bool _newCanCheckpointToken) external onlyOwner {
     canCheckpointToken = _newCanCheckpointToken;
     emit LogSetCanCheckpointToken(_newCanCheckpointToken);
-  }
-
-  /// @notice Get xALPACA balance of "_user" at "_timstamp"
-  /// @param _user The user address
-  /// @param _timestamp The timestamp to get user's balance
-  function balanceOfAt(address _user, uint256 _timestamp) external view returns (uint256) {
-    uint256 _maxUserEpoch = IxALPACA(xALPACA).userPointEpoch(_user);
-    if (_maxUserEpoch == 0) {
-      return 0;
-    }
-
-    uint256 _epoch = _findTimestampUserEpoch(_user, _timestamp, _maxUserEpoch);
-    Point memory _point = IxALPACA(xALPACA).userPointHistory(_user, _epoch);
-    int128 _bias = _point.bias - _point.slope * SafeCast.toInt128(int256(_timestamp - _point.timestamp));
-    if (_bias < 0) {
-      return 0;
-    }
-    return SafeCast.toUint256(_bias);
   }
 
   /// @notice Round off random timestamp to week

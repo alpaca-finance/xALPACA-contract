@@ -180,7 +180,7 @@ contract xALPACA is Ownable, ReentrancyGuard {
     Point memory _userNewPoint = Point({ slope: 0, bias: 0, timestamp: 0, blockNumber: 0 });
 
     int128 _prevSlopeDelta = 0;
-    int128 _newSlopeDelta = 1;
+    int128 _newSlopeDelta = 0;
     uint256 _epoch = epoch;
 
     // if not 0x0, then update user's point
