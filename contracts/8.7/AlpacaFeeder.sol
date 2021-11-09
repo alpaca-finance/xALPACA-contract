@@ -38,13 +38,13 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
   event LogFeedGrassHouse(uint256 _feedAmount);
 
   /// @notice State
-  /// TODO: whitelist ??
-  /// QUESTION: alpaca token ??
-  /// QUESTION: fair launch pool id should be fixed constant ??
   IFairLaunch public fairLaunch;
   IGrassHouse public grassHouse;
   uint256 public fairLaunchPoolId;
 
+  /// @dev Attributes for AlcapaFeeder
+  /// token - address of the token to be deposited in this contract
+  /// proxyToken - just a simple ERC20 token for staking with FairLaunch
   address public override token;
   address public proxyToken;
 
@@ -64,18 +64,27 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
     SafeToken.safeApprove(proxyToken, _fairLaunchAddress, type(uint256).max);
   }
 
+  /// @notice Stake token in FairLaunch
   function fairLaunchDeposit(uint256 _amount) external onlyOwner {
-    fairLaunch.deposit(address(this), fairLaunchPoolId, _amount);
+    // fairLaunch.deposit(address(this), fairLaunchPoolId, _amount);
   }
 
+  /// @notice Un stake token in FairLaunch
+  function fairLaunchWithdraw(uint256 _amount) external onlyOwner {
+    // fairLaunch.withdraw(address(this), fairLaunchPoolId, _amount);
+  }
+
+  /// @notice Receive reward from FairLaunch
   function fairLaunchHarvest() external {
     _fairLaunchHarvest();
   }
 
+  /// @notice Receive reward from FairLaunch
   function _fairLaunchHarvest() internal {
     (bool success, ) = address(fairLaunch).call(abi.encodeWithSelector(0xddc63262, fairLaunchPoolId));
   }
 
+  /// @notice Harvest reward from FairLaunch and Feed token to a GrassHouse
   function feedGrassHouse() external {
     _fairLaunchHarvest();
     SafeToken.safeApprove(token, address(grassHouse), token.myBalance());
@@ -84,6 +93,7 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
     emit LogFeedGrassHouse(token.myBalance());
   }
 
+  /// @notice Withdraw alpaca token
   function withdraw(address _to, uint256 _amount) external onlyOwner {
     token.safeTransfer(_to, _amount);
   }
