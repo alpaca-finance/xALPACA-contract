@@ -21,45 +21,48 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./interfaces/IBEP20.sol";
 import "./interfaces/IFairLaunch.sol";
+import "./interfaces/IGrassHouse.sol";
 
 import "./SafeToken.sol";
 
-/// @title XALPACAFeeder - The goverance token of Alpaca Finance
+/// @title AlpacaFeeder - The goverance token of Alpaca Finance
 // solhint-disable not-rely-on-time
 // solhint-disable-next-line contract-name-camelcase
 
-contract XALPACAFeeder is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeable {
+contract AlpacaFeeder is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeable {
   /// @notice Libraries
-
   using SafeToken for address;
 
   /// @notice Events
 
-  // fair lunch / master chef
-  // grass house
+  /// @notice State
+  /// TODO: whitelist ??
+  /// QUESTION: alpaca token ??
+  /// QUESTION: fair launch pool id should be fixed constant ??
   IFairLaunch fairLaunch;
+  IGrassHouse grassHouse;
 
-  function initialize(
-    address _fairLaunchAddress,
-    uint256 _fairLaunchPoolId,
-    address _grasshouse
-  ) public initializer {
+  address public token;
+
+  function initialize(address _fairLaunchAddress, address _grasshouseAddress) public initializer {
     fairLaunch = IFairLaunch(_fairLaunchAddress);
+    grassHouse = IGrassHouse(_grasshouseAddress);
   }
 
-  function fairLaunchDeposit(uint256 _amount) external {
-    fairLaunch.deposit(address(this), fairLaunchPoolId, _amount);
+  function fairLaunchDeposit(uint256 _poolId, uint256 _amount) external onlyOwner {
+    fairLaunch.deposit(address(this), _poolId, _amount);
   }
 
-  function fairLaunchHarvest() external {
-    fairLaunch.harvest(fairLaunchPoolId);
+  function fairLaunchHarvest(uint256 _poolId) external onlyOwner {
+    fairLaunch.harvest(_poolId);
   }
 
-  function feedGrasshouse() external {}
+  function feedGrasshouse() external {
+    uint256 _toTransfer = token.balanceOf(address(this));
+    grassHouse.feed(_toTransfer);
+  }
 
-  // Deposit LP tokens to MasterChef for SUSHI allocation.
-  function deposit(uint256 _pid, uint256 _amount) external {}
-
-  // Withdraw LP tokens from MasterChef.
-  function withdraw(uint256 _pid, uint256 _amount) external {}
+  function withdraw(address _to, uint256 _amount) external onlyOwner {
+    token.safeTransfer(_to, _amount);
+  }
 }
