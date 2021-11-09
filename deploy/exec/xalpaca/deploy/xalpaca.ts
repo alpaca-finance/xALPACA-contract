@@ -6,7 +6,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BEP20, BEP20__factory, XALPACA__factory, XALPACA } from "../../../../typechain";
 
 
-const func: DeployFunction =  async function(hre: HardhatRuntimeEnvironment){
+const func: DeployFunction = async function(hre: HardhatRuntimeEnvironment){
     let ALPACA : BEP20
 
     const BEP20 = (await ethers.getContractFactory("BEP20", (await ethers.getSigners())[0])) as BEP20__factory;
@@ -19,7 +19,7 @@ const func: DeployFunction =  async function(hre: HardhatRuntimeEnvironment){
 
     console.log('ALPACA address',ALPACA.address)
 
-    const xAlpaca =  await XALPACA.deploy(ALPACA.address,{  gasLimit: 500000});
+    const xAlpaca =  await XALPACA.deploy(ALPACA.address,{  gasLimit: 5000000});
    
     console.log('xAlpaca address',xAlpaca.address)
     console.log("✅ Done");

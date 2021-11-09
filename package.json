@@ -2,6 +2,9 @@
   "name": "@alpaca-finance/xalpaca-contract",
   "version": "0.0.1",
   "scripts": {
+    "prepublish": "yarn build",
+    "build": "yarn run build:cjs",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
     "compile": "hardhat typechain --config hardhat.config.ts",
     "mainnet": "hardhat console --no-compile --network mainnet",
     "badges": "istanbul-badges-readme --coverageDir=./",
@@ -13,6 +16,8 @@
     "solhint": "./node_modules/.bin/solhint -f table contracts/**/*.sol",
     "prettier:solidity": "./node_modules/.bin/prettier --write contracts/**/*.sol",
     "deploy:testnet:000:xalpaca": "hardhat --network testnet deploy --no-compile --reset --tags TestnetDeployXAlpaca"
+    
+
   },
   "devDependencies": {
     "@ethersproject/bignumber": "^5.0.14",
