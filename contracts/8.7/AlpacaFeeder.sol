@@ -34,32 +34,44 @@ contract AlpacaFeeder is Initializable, ReentrancyGuardUpgradeable, OwnableUpgra
   using SafeToken for address;
 
   /// @notice Events
+  event LogFeedGrassHouse(uint256 _feedAmount);
 
   /// @notice State
   /// TODO: whitelist ??
   /// QUESTION: alpaca token ??
   /// QUESTION: fair launch pool id should be fixed constant ??
-  IFairLaunch fairLaunch;
-  IGrassHouse grassHouse;
+  IFairLaunch public fairLaunch;
+  IGrassHouse public grassHouse;
+  uint256 public fairLaunchPoolId;
 
   address public token;
 
-  function initialize(address _fairLaunchAddress, address _grasshouseAddress) public initializer {
+  function initialize(
+    address _token,
+    address _fairLaunchAddress,
+    uint256 _fairLaunchPoolId,
+    address _grasshouseAddress
+  ) public initializer {
+    token = _token;
+    fairLaunchPoolId = _fairLaunchPoolId;
     fairLaunch = IFairLaunch(_fairLaunchAddress);
     grassHouse = IGrassHouse(_grasshouseAddress);
   }
 
-  function fairLaunchDeposit(uint256 _poolId, uint256 _amount) external onlyOwner {
-    fairLaunch.deposit(address(this), _poolId, _amount);
+  function fairLaunchDeposit(uint256 _amount) external onlyOwner {
+    fairLaunch.deposit(address(this), fairLaunchPoolId, _amount);
   }
 
-  function fairLaunchHarvest(uint256 _poolId) external onlyOwner {
-    fairLaunch.harvest(_poolId);
+  function fairLaunchHarvest() external onlyOwner {
+    fairLaunch.harvest(fairLaunchPoolId);
   }
 
-  function feedGrasshouse() external {
-    uint256 _toTransfer = token.balanceOf(address(this));
-    grassHouse.feed(_toTransfer);
+  function feedGrassHouse(uint256 _amount) external {
+    require(token.myBalance() >= _amount, "insufficient amount");
+    SafeToken.safeApprove(token, address(grassHouse), _amount);
+    grassHouse.feed(_amount);
+    SafeToken.safeApprove(token, address(grassHouse), 0);
+    emit LogFeedGrassHouse(_amount);
   }
 
   function withdraw(address _to, uint256 _amount) external onlyOwner {
