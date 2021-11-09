@@ -69,7 +69,7 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
     // fairLaunch.deposit(address(this), fairLaunchPoolId, _amount);
   }
 
-  /// @notice Un stake token in FairLaunch
+  /// @notice Un stake token from FairLaunch
   function fairLaunchWithdraw(uint256 _amount) external onlyOwner {
     // fairLaunch.withdraw(address(this), fairLaunchPoolId, _amount);
   }
