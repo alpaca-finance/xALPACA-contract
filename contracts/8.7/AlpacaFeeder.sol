@@ -23,6 +23,7 @@ import "./interfaces/IBEP20.sol";
 import "./interfaces/IFairLaunch.sol";
 import "./interfaces/IGrassHouse.sol";
 import "./interfaces/IVault.sol";
+import "./interfaces/IDebtToken.sol";
 
 import "./SafeToken.sol";
 
@@ -46,7 +47,7 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
   /// token - address of the token to be deposited in this contract
   /// proxyToken - just a simple ERC20 token for staking with FairLaunch
   address public override token;
-  address public proxyToken;
+  IDebtToken public proxyToken;
 
   function initialize(
     address _token,
@@ -56,22 +57,22 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
     address _grasshouseAddress
   ) public initializer {
     token = _token;
-    proxyToken = _proxyToken;
+    proxyToken = IDebtToken(_proxyToken);
     fairLaunchPoolId = _fairLaunchPoolId;
     fairLaunch = IFairLaunch(_fairLaunchAddress);
     grassHouse = IGrassHouse(_grasshouseAddress);
 
     SafeToken.safeApprove(proxyToken, _fairLaunchAddress, type(uint256).max);
+
+    proxyToken.setOkHolders([address(this), _fairLaunchAddress], true);
+
+    proxyToken.mint(address(this), 1e18);
+    fairLaunch.deposit(address(this), fairLaunchPoolId, 1e18);
   }
 
-  /// @notice Stake token in FairLaunch
-  function fairLaunchDeposit(uint256 _amount) external onlyOwner {
-    // fairLaunch.deposit(address(this), fairLaunchPoolId, _amount);
-  }
-
-  /// @notice Un stake token from FairLaunch
+  /// @notice Withdraw all staked token from FairLaunch
   function fairLaunchWithdraw(uint256 _amount) external onlyOwner {
-    // fairLaunch.withdraw(address(this), fairLaunchPoolId, _amount);
+    (bool success, ) = address(fairLaunch).call(abi.encodeWithSelector(0xcc6dbc27, fairLaunchPoolId));
   }
 
   /// @notice Receive reward from FairLaunch
