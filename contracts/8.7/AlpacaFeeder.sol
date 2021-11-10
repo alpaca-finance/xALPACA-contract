@@ -62,16 +62,19 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
     fairLaunch = IFairLaunch(_fairLaunchAddress);
     grassHouse = IGrassHouse(_grasshouseAddress);
 
-    SafeToken.safeApprove(proxyToken, _fairLaunchAddress, type(uint256).max);
+    SafeToken.safeApprove(address(proxyToken), _fairLaunchAddress, type(uint256).max);
 
-    proxyToken.setOkHolders([address(this), _fairLaunchAddress], true);
+    address[] memory okHolders = new address[](2);
+    okHolders[0] = address(this);
+    okHolders[1] = _fairLaunchAddress;
+    proxyToken.setOkHolders(okHolders, true);
 
     proxyToken.mint(address(this), 1e18);
     fairLaunch.deposit(address(this), fairLaunchPoolId, 1e18);
   }
 
   /// @notice Withdraw all staked token from FairLaunch
-  function fairLaunchWithdraw(uint256 _amount) external onlyOwner {
+  function fairLaunchWithdraw() external onlyOwner {
     (bool success, ) = address(fairLaunch).call(abi.encodeWithSelector(0xcc6dbc27, fairLaunchPoolId));
   }
 
