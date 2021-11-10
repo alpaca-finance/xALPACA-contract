@@ -13,7 +13,7 @@ Alpaca Fin Corporation
 
 pragma solidity 0.8.7;
 
-interface IDebtToken {
+interface IProxyToken {
   function setOkHolders(address[] calldata _okHolders, bool _isOk) external;
 
   function mint(address to, uint256 amount) external;

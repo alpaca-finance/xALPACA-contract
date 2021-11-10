@@ -14,7 +14,6 @@ Ported to Solidity from: https://github.com/curvefi/curve-dao-contracts/blob/mas
 
 pragma solidity 0.8.7;
 
-import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -23,20 +22,20 @@ import "./interfaces/IBEP20.sol";
 import "./interfaces/IFairLaunch.sol";
 import "./interfaces/IGrassHouse.sol";
 import "./interfaces/IVault.sol";
-import "./interfaces/IDebtToken.sol";
+import "./interfaces/IProxyToken.sol";
 
 import "./SafeToken.sol";
 
-/// @title AlpacaFeeder - The goverance token of Alpaca Finance
-// solhint-disable not-rely-on-time
-// solhint-disable-next-line contract-name-camelcase
-
+/// @title AlpacaFeeder
 contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeable {
   /// @notice Libraries
   using SafeToken for address;
 
   /// @notice Events
   event LogFeedGrassHouse(uint256 _feedAmount);
+  event LogFairLaunchDeposit();
+  event LogFairLaunchWithdraw();
+  event LogFairLaunchHarvest(address _caller, uint256 _harvestAmount);
 
   /// @notice State
   IFairLaunch public fairLaunch;
@@ -47,7 +46,7 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
   /// token - address of the token to be deposited in this contract
   /// proxyToken - just a simple ERC20 token for staking with FairLaunch
   address public override token;
-  IDebtToken public proxyToken;
+  address public proxyToken;
 
   function initialize(
     address _token,
@@ -57,7 +56,7 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
     address _grasshouseAddress
   ) public initializer {
     token = _token;
-    proxyToken = IDebtToken(_proxyToken);
+    proxyToken = _proxyToken;
     fairLaunchPoolId = _fairLaunchPoolId;
     fairLaunch = IFairLaunch(_fairLaunchAddress);
     grassHouse = IGrassHouse(_grasshouseAddress);
@@ -66,15 +65,18 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
   }
 
   /// @notice Deposit token to FairLaunch
-  function fairLaunchDeposit() external {
-    proxyToken.mint(address(this), 1e18);
+  function fairLaunchDeposit() external onlyOwner {
+    require(IBEP20(proxyToken).balanceOf(address(fairLaunch)) > 0, "already deposit");
+    IProxyToken(proxyToken).mint(address(this), 1e18);
     fairLaunch.deposit(address(this), fairLaunchPoolId, 1e18);
+    emit LogFairLaunchDeposit();
   }
 
   /// @notice Withdraw all staked token from FairLaunch
-  function fairLaunchWithdraw() external {
-    (bool success, ) = address(fairLaunch).call(abi.encodeWithSelector(0xcc6dbc27, fairLaunchPoolId));
-    if (success) proxyToken.burn(address(this), SafeToken.myBalance(address(proxyToken)));
+  function fairLaunchWithdraw() external onlyOwner {
+    fairLaunch.withdrawAll(address(this), fairLaunchPoolId);
+    IProxyToken(proxyToken).burn(address(this), proxyToken.myBalance());
+    emit LogFairLaunchWithdraw();
   }
 
   /// @notice Receive reward from FairLaunch
@@ -84,7 +86,9 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
 
   /// @notice Receive reward from FairLaunch
   function _fairLaunchHarvest() internal {
+    uint256 before = token.myBalance();
     (bool success, ) = address(fairLaunch).call(abi.encodeWithSelector(0xddc63262, fairLaunchPoolId));
+    if (success) emit LogFairLaunchHarvest(address(this), token.myBalance() - before);
   }
 
   /// @notice Harvest reward from FairLaunch and Feed token to a GrassHouse
@@ -94,10 +98,5 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
     grassHouse.feed(token.myBalance());
     SafeToken.safeApprove(token, address(grassHouse), 0);
     emit LogFeedGrassHouse(token.myBalance());
-  }
-
-  /// @notice Withdraw alpaca token
-  function withdraw(address _to, uint256 _amount) external onlyOwner {
-    token.safeTransfer(_to, _amount);
   }
 }
