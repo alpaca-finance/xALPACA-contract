@@ -49,7 +49,6 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
   address public override token;
   IDebtToken public proxyToken;
 
-  /// @notice
   function initialize(
     address _token,
     address _proxyToken,
@@ -67,13 +66,13 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
   }
 
   /// @notice Deposit token to FairLaunch
-  function fairLaunchDeposit() external onlyOwner {
+  function fairLaunchDeposit() external {
     proxyToken.mint(address(this), 1e18);
     fairLaunch.deposit(address(this), fairLaunchPoolId, 1e18);
   }
 
   /// @notice Withdraw all staked token from FairLaunch
-  function fairLaunchWithdraw() external onlyOwner {
+  function fairLaunchWithdraw() external {
     (bool success, ) = address(fairLaunch).call(abi.encodeWithSelector(0xcc6dbc27, fairLaunchPoolId));
     if (success) proxyToken.burn(address(this), SafeToken.myBalance(address(proxyToken)));
   }
