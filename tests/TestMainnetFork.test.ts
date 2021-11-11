@@ -14,14 +14,14 @@ const Deployer = "0xC44f82b07Ab3E691F826951a6E335E1bC1bB0B51";
 
 async function main() {
   if (network.name !== "mainnetfork") throw new Error("not mainnet fork");
-  const [deployer, alice] = await ethers.getSigners();
+  const [deployer] = await ethers.getSigners();
   const eta = 1636774728;
   await network.provider.request({
     method: "hardhat_impersonateAccount",
     params: [Deployer],
   });
-  // const deployer = await ethers.getSigner(Deployer);
-  const timelockAsDeployer = Timelock__factory.connect(TIME_LOCK, deployer);
+  const deployerMain = await ethers.getSigner(Deployer);
+  const timelockAsDeployer = Timelock__factory.connect(TIME_LOCK, deployerMain);
 
   console.log(`>> Deploying proxyToken`);
   const PROXY_TOKEN = (await ethers.getContractFactory("ProxyToken", deployer)) as ProxyToken__factory;
@@ -29,13 +29,14 @@ async function main() {
   await proxyToken.deployed();
   console.log(`>> Deployed at ${proxyToken.address}`);
 
-  await timelockAsDeployer.queueTransaction(
+  const queue = await timelockAsDeployer.queueTransaction(
     FAIR_LAUNCH,
     "0",
     "addPool(uint256,address,bool)",
     ethers.utils.defaultAbiCoder.encode(["uint256", "address", "bool"], [100, proxyToken.address, false]),
-    0
+    eta
   );
+  console.log(`>> Queue success ${queue.hash}`);
 }
 main()
   .then(() => process.exit(0))

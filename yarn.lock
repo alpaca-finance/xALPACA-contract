@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@alpaca-finance/alpaca-contract@1.2.23":
+  version "1.2.23"
+  resolved "https://registry.yarnpkg.com/@alpaca-finance/alpaca-contract/-/alpaca-contract-1.2.23.tgz#c61df2fe0f0088c42ef755d3a3d8bd5b4d15fe28"
+  integrity sha512-i3kwlCr/d3u1ZY8cHpN+OeuyF0788ZQgMRTAvY85MGKaOWs1HaJ9iq/qiWEY5kzREqsQphMgLmH14JzmzG+TuQ==
+
 "@babel/code-frame@^7.0.0":
   version "7.14.5"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.14.5.tgz#23b08d740e83f49c5e59945fbf1b43e80bbf4edb"

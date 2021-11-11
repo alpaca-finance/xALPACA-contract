@@ -17,6 +17,7 @@
     "prettier:solidity": "./node_modules/.bin/prettier --write contracts/**/*.sol"
   },
   "devDependencies": {
+    "@alpaca-finance/alpaca-contract": "1.2.23",
     "@ethersproject/bignumber": "^5.0.14",
     "@nomiclabs/hardhat-ethers": "^2.0.1",
     "@nomiclabs/hardhat-etherscan": "^2.1.1",
