@@ -114,7 +114,7 @@ contract xALPACA is Ownable, ReentrancyGuard {
   /// @notice Return the balance of xALPACA at a given "_blockNumber"
   /// @param _user The address to get a balance of xALPACA
   /// @param _blockNumber The speicific block number that you want to check the balance of xALPACA
-  function balanceOfAt(address _user, uint256 _blockNumber) public view returns (uint256) {
+  function balanceOfAt(address _user, uint256 _blockNumber) external view returns (uint256) {
     require(_blockNumber <= block.number, "bad _blockNumber");
 
     // Get most recent user Point to block
@@ -152,7 +152,7 @@ contract xALPACA is Ownable, ReentrancyGuard {
 
   /// @notice Return the voting weight of a givne user
   /// @param _user The address of a user
-  function balanceOf(address _user) public view returns (uint256) {
+  function balanceOf(address _user) external view returns (uint256) {
     uint256 _epoch = userPointEpoch[_user];
     if (_epoch == 0) {
       return 0;
@@ -176,11 +176,11 @@ contract xALPACA is Ownable, ReentrancyGuard {
     LockedBalance memory _prevLocked,
     LockedBalance memory _newLocked
   ) internal {
-    Point memory _userPrevPoint;
-    Point memory _userNewPoint;
+    Point memory _userPrevPoint = Point({ slope: 0, bias: 0, timestamp: 0, blockNumber: 0 });
+    Point memory _userNewPoint = Point({ slope: 0, bias: 0, timestamp: 0, blockNumber: 0 });
 
     int128 _prevSlopeDelta = 0;
-    int128 _newSlopeDelta = 1;
+    int128 _newSlopeDelta = 0;
     uint256 _epoch = epoch;
 
     // if not 0x0, then update user's point
@@ -357,7 +357,7 @@ contract xALPACA is Ownable, ReentrancyGuard {
 
   /// @notice Trigger global checkpoint
   function checkpoint() external {
-    LockedBalance memory empty;
+    LockedBalance memory empty = LockedBalance({ amount: 0, end: 0 });
     _checkpoint(address(0), empty, empty);
   }
 

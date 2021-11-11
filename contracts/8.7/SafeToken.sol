@@ -13,7 +13,15 @@ Alpaca Fin Corporation
 
 pragma solidity 0.8.7;
 
+interface ERC20Interface {
+  function balanceOf(address user) external view returns (uint256);
+}
+
 library SafeToken {
+  function myBalance(address token) internal view returns (uint256) {
+    return ERC20Interface(token).balanceOf(address(this));
+  }
+
   function safeTransfer(
     address token,
     address to,
