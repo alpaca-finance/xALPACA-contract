@@ -17,7 +17,24 @@ module.exports = {
       blockGasLimit: 0x1fffffffffffff,
       allowUnlimitedContractSize: true,
       timeout: 1800000,
-      accounts: { mnemonic: "test test test test test test test test test test test junk" },
+      accounts: [
+        {
+          privateKey: process.env.LOCAL_PRIVATE_KEY_1,
+          balance: "10000000000000000000000",
+        },
+        {
+          privateKey: process.env.LOCAL_PRIVATE_KEY_2,
+          balance: "10000000000000000000000",
+        },
+        {
+          privateKey: process.env.LOCAL_PRIVATE_KEY_3,
+          balance: "10000000000000000000000",
+        },
+        {
+          privateKey: process.env.LOCAL_PRIVATE_KEY_4,
+          balance: "10000000000000000000000",
+        },
+      ],
     },
     testnet: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
@@ -26,6 +43,11 @@ module.exports = {
     mainnet: {
       url: process.env.BSC_MAINNET_RPC,
       accounts: [process.env.BSC_MAINNET_PRIVATE_KEY],
+    },
+    mainnetfork: {
+      url: "http://127.0.0.1:8545",
+      accounts: [process.env.BSC_MAINNET_PRIVATE_KEY, process.env.QA_PRIVATE_KEY],
+      timeout: 500000,
     },
   },
   namedAccounts: {
