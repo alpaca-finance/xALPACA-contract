@@ -14,8 +14,6 @@ Alpaca Fin Corporation
 pragma solidity 0.8.7;
 
 interface IFairLaunch {
-  // function pendingAlpaca(uint256 _pid, address _user) external view returns (uint256);
-
   function deposit(
     address _for,
     uint256 _pid,

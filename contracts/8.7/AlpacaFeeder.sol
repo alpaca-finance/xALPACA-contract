@@ -9,13 +9,11 @@
   ξ ξ ξ~～~ξ ξ ξ 
 　 ξ_ξξ_ξ　ξ_ξξ_ξ
 Alpaca Fin Corporation
-Ported to Solidity from: https://github.com/curvefi/curve-dao-contracts/blob/master/contracts/VotingEscrow.vy
 **/
 
 pragma solidity 0.8.7;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./interfaces/IBEP20.sol";
@@ -27,7 +25,7 @@ import "./interfaces/IProxyToken.sol";
 import "./SafeToken.sol";
 
 /// @title AlpacaFeeder
-contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeable {
+contract AlpacaFeeder is IVault, Initializable, OwnableUpgradeable {
   /// @notice Libraries
   using SafeToken for address;
 
@@ -56,7 +54,6 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
     address _grasshouseAddress
   ) public initializer {
     OwnableUpgradeable.__Ownable_init();
-    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
     token = _token;
     proxyToken = _proxyToken;
@@ -64,7 +61,7 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
     fairLaunch = IFairLaunch(_fairLaunchAddress);
     grassHouse = IGrassHouse(_grasshouseAddress);
 
-    SafeToken.safeApprove(address(proxyToken), _fairLaunchAddress, type(uint256).max);
+    proxyToken.safeApprove(_fairLaunchAddress, type(uint256).max);
   }
 
   /// @notice Deposit token to FairLaunch
@@ -89,17 +86,17 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
 
   /// @notice Receive reward from FairLaunch
   function _fairLaunchHarvest() internal {
-    uint256 before = token.myBalance();
-    (bool success, ) = address(fairLaunch).call(abi.encodeWithSelector(0xddc63262, fairLaunchPoolId));
-    if (success) emit LogFairLaunchHarvest(address(this), token.myBalance() - before);
+    uint256 _before = token.myBalance();
+    (bool _success, ) = address(fairLaunch).call(abi.encodeWithSelector(0xddc63262, fairLaunchPoolId));
+    if (_success) emit LogFairLaunchHarvest(address(this), token.myBalance() - _before);
   }
 
   /// @notice Harvest reward from FairLaunch and Feed token to a GrassHouse
   function feedGrassHouse() external {
     _fairLaunchHarvest();
-    SafeToken.safeApprove(token, address(grassHouse), token.myBalance());
+    token.safeApprove(address(grassHouse), token.myBalance());
     grassHouse.feed(token.myBalance());
-    SafeToken.safeApprove(token, address(grassHouse), 0);
+    token.safeApprove(address(grassHouse), 0);
     emit LogFeedGrassHouse(token.myBalance());
   }
 }
