@@ -32,18 +32,18 @@ contract MockProxyToken is IProxyToken, ERC20Upgradeable, OwnableUpgradeable {
   }
 
   function setOkHolders(address[] memory _okHolders, bool _isOk) public override onlyOwner {
-    for (uint256 idx = 0; idx < _okHolders.length; idx++) {
-      okHolders[_okHolders[idx]] = _isOk;
+    for (uint256 _idx = 0; _idx < _okHolders.length; _idx++) {
+      okHolders[_okHolders[_idx]] = _isOk;
     }
   }
 
-  function mint(address to, uint256 amount) public override onlyOwner {
-    require(okHolders[to], "debtToken::mint:: unapproved holder");
-    _mint(to, amount);
+  function mint(address _to, uint256 _amount) public override onlyOwner {
+    require(okHolders[_to], "debtToken::mint:: unapproved holder");
+    _mint(_to, _amount);
   }
 
-  function burn(address from, uint256 amount) public override onlyOwner {
-    require(okHolders[from], "debtToken::burn:: unapproved holder");
-    _burn(from, amount);
+  function burn(address _from, uint256 _amount) public override onlyOwner {
+    require(okHolders[_from], "debtToken::burn:: unapproved holder");
+    _burn(_from, _amount);
   }
 }

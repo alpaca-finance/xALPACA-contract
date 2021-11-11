@@ -14,9 +14,6 @@ import {
   MockProxyToken,
   MockProxyToken__factory,
 } from "../typechain";
-// import * as timeHelpers from "./helpers/time";
-// import * as assertHelpers from "./helpers/assert";
-// import * as mathHelpers from "./helpers/math";
 
 chai.use(solidity);
 const { expect } = chai;
@@ -109,14 +106,16 @@ describe("AlpacaFeeder", () => {
       expect(await proxyToken.balanceOf(fairLaunch.address)).to.be.eq(ethers.utils.parseEther("1"));
     });
 
-    context("revert on deposit", () => {
-      it("should revert if we already deposit proxy token in fair launch", async () => {
+    context("when already deposit proxy token in fair launch", () => {
+      it("should revert", async () => {
         await expect(feeder.fairLaunchDeposit()).to.be.emit(feeder, "LogFairLaunchDeposit");
         expect(await proxyToken.balanceOf(fairLaunch.address)).to.be.eq(ethers.utils.parseEther("1"));
         await expect(feeder.fairLaunchDeposit()).to.be.revertedWith("already deposit");
       });
+    });
 
-      it("should revert if who is not owner try deposit", async () => {
+    context("when other address try call fairLaunchDeposit", () => {
+      it("should revert", async () => {
         await expect(feederAsAlice.fairLaunchDeposit()).to.be.revertedWith("Ownable: caller is not the owner");
       });
     });
@@ -130,8 +129,8 @@ describe("AlpacaFeeder", () => {
       expect(await proxyToken.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("0"));
     });
 
-    context("revert on withdraw", () => {
-      it("should revert if who is not owner try withdraw", async () => {
+    context("when other address try call fairLaunchWithdraw", () => {
+      it("should revert", async () => {
         await expect(feederAsAlice.fairLaunchWithdraw()).to.be.revertedWith("Ownable: caller is not the owner");
       });
     });
