@@ -22,10 +22,12 @@ contract MockFairLaunch is IFairLaunch {
 
   // The Alpaca TOKEN!
   address public alpaca;
+  address public proxyToken;
   uint256 public constant DEFAULT_HARVEST_AMOUNT = 10 * 1e18;
 
-  constructor(address _alpaca) {
+  constructor(address _alpaca, address _proxyToken) {
     alpaca = _alpaca;
+    proxyToken = _proxyToken;
   }
 
   // Deposit Staking tokens to FairLaunchToken for ALPACA allocation.
@@ -34,52 +36,17 @@ contract MockFairLaunch is IFairLaunch {
     uint256 _pid,
     uint256 _amount
   ) external override {
-    // PoolInfo storage pool = poolInfo[_pid];
-    // UserInfo storage user = userInfo[_pid][_for];
-    // if (user.fundedBy != address(0)) require(user.fundedBy == msg.sender, "bad sof");
-    // require(pool.stakeToken != address(0), "deposit: not accept deposit");
-    // updatePool(_pid);
-    // if (user.amount > 0) _harvest(_for, _pid);
-    // if (user.fundedBy == address(0)) user.fundedBy = msg.sender;
-    // IERC20(pool.stakeToken).safeTransferFrom(address(msg.sender), address(this), _amount);
-    // user.amount = user.amount.add(_amount);
-    // user.rewardDebt = user.amount.mul(pool.accAlpacaPerShare).div(1e12);
-    // user.bonusDebt = user.amount.mul(pool.accAlpacaPerShareTilBonusEnd).div(1e12);
-    // emit Deposit(msg.sender, _pid, _amount);
-  }
-
-  // Withdraw Staking tokens from FairLaunchToken.
-  function withdraw(
-    address _for,
-    uint256 _pid,
-    uint256 _amount
-  ) external override {
-    _withdraw(_for, _pid, _amount);
+    SafeToken.safeApprove(proxyToken, _for, _amount);
+    proxyToken.safeTransferFrom(_for, address(this), _amount);
+    SafeToken.safeApprove(proxyToken, _for, 0);
   }
 
   function withdrawAll(address _for, uint256 _pid) external override {
-    _withdraw(_for, _pid, 0);
-  }
-
-  function _withdraw(
-    address _for,
-    uint256 _pid,
-    uint256 _amount
-  ) internal {
-    // PoolInfo storage pool = poolInfo[_pid];
-    // UserInfo storage user = userInfo[_pid][_for];
-    // require(user.fundedBy == msg.sender, "only funder");
-    // require(user.amount >= _amount, "withdraw: not good");
-    // updatePool(_pid);
-    // _harvest(_for, _pid);
-    // user.amount = user.amount.sub(_amount);
-    // user.rewardDebt = user.amount.mul(pool.accAlpacaPerShare).div(1e12);
-    // user.bonusDebt = user.amount.mul(pool.accAlpacaPerShareTilBonusEnd).div(1e12);
-    // if (user.amount == 0) user.fundedBy = address(0);
-    // if (pool.stakeToken != address(0)) {
-    //   IERC20(pool.stakeToken).safeTransfer(address(msg.sender), _amount);
-    // }
-    // emit Withdraw(msg.sender, _pid, user.amount);
+    if (proxyToken.myBalance() > 0) {
+      SafeToken.safeApprove(proxyToken, _for, proxyToken.myBalance());
+      proxyToken.safeTransfer(_for, proxyToken.myBalance());
+      SafeToken.safeApprove(proxyToken, _for, 0);
+    }
   }
 
   // Harvest ALPACAs earn from the pool.
