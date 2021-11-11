@@ -21,8 +21,10 @@ async function main() {
   if (network.name !== "mainnetfork") throw new Error("not mainnet fork");
   const [deployer, qa] = await ethers.getSigners();
   const fairLaunch = IFairLaunch__factory.connect("0xA625AB01B08ce023B2a342Dbb12a16f2C8489A8F", deployer);
-  const alpacaToken = ERC20__factory.connect("0x8F0528cE5eF7B51152A59745bEfDD91D97091d2F", deployer);
-  console.log("======================================================================");
+  const alpacaTokenAsDeployer = BEP20__factory.connect("0x8F0528cE5eF7B51152A59745bEfDD91D97091d2F", deployer);
+  const totalSupply = await alpacaTokenAsDeployer.totalSupply();
+  const balance = await alpacaTokenAsDeployer.balanceOf("0x2DD872C6f7275DAD633d7Deb1083EDA561E9B96b");
+  console.log(balance);
 }
 main()
   .then(() => process.exit(0))
