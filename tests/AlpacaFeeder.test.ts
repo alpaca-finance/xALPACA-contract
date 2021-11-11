@@ -11,6 +11,8 @@ import {
   AlpacaFeeder__factory,
   MockFairLaunch,
   MockFairLaunch__factory,
+  MockProxyToken,
+  MockProxyToken__factory,
 } from "../typechain";
 // import * as timeHelpers from "./helpers/time";
 // import * as assertHelpers from "./helpers/assert";
@@ -24,113 +26,143 @@ describe("AlpacaFeeder", () => {
   const fairLuancePoolId = 123;
 
   // Contact Instance
-  let ALPACA: BEP20;
-  let DEBTTOKEN: BEP20;
+  let alpaca: BEP20;
+  let proxyToken: MockProxyToken;
 
-  let mockFairLaunch: MockFairLaunch;
-  let mockGrassHouse: MockGrassHouse;
   let feeder: AlpacaFeeder;
+  let fairLaunch: MockFairLaunch;
+  let grassHouse: MockGrassHouse;
 
   // Accounts
   let deployer: Signer;
   let alice: Signer;
-  let bob: Signer;
-  let eve: Signer;
 
   let deployerAddress: string;
   let aliceAddress: string;
-  let bobAddress: string;
-  let eveAddress: string;
 
   // Contract Signer
-  let ALPACAasAlice: BEP20;
-  let ALPACAasBob: BEP20;
-  let ALPACAasEve: BEP20;
+  let alpacaAsAlice: BEP20;
+
+  let feederAsAlice: AlpacaFeeder;
 
   async function fixture() {
-    [deployer, alice, bob, eve] = await ethers.getSigners();
-    [deployerAddress, aliceAddress, bobAddress, eveAddress] = await Promise.all([
-      deployer.getAddress(),
-      alice.getAddress(),
-      bob.getAddress(),
-      eve.getAddress(),
-    ]);
+    [deployer, alice] = await ethers.getSigners();
+    [deployerAddress, aliceAddress] = await Promise.all([deployer.getAddress(), alice.getAddress()]);
 
     // Deploy ALPACA
     const BEP20 = (await ethers.getContractFactory("BEP20", deployer)) as BEP20__factory;
-    ALPACA = await BEP20.deploy("ALPACA", "ALPACA");
+    alpaca = await BEP20.deploy("ALPACA", "ALPACA");
+
+    // Deploy PROXYTOKEN
+    const MOCKPROXYTOKEN = (await ethers.getContractFactory("MockProxyToken", deployer)) as MockProxyToken__factory;
+    const mockProxyToken = (await upgrades.deployProxy(MOCKPROXYTOKEN, ["PROXYTOKEN", "PROXYTOKEN"])) as MockProxyToken;
+    proxyToken = await mockProxyToken.deployed();
 
     // Deploy GrassHouse
     const MOCKFAIRLAUNCH = (await ethers.getContractFactory("MockFairLaunch", deployer)) as MockFairLaunch__factory;
-    mockFairLaunch = await MOCKFAIRLAUNCH.deploy(ALPACA.address);
-
-    // Deploy DEBTTOKEN
-    DEBTTOKEN = await BEP20.deploy("DEBTTOKEN", "DEBTTOKEN");
+    fairLaunch = await MOCKFAIRLAUNCH.deploy(alpaca.address, proxyToken.address);
 
     // Deploy GrassHouse
     const MOCKGRASSHOUSE = (await ethers.getContractFactory("MockGrassHouse", deployer)) as MockGrassHouse__factory;
-    mockGrassHouse = await MOCKGRASSHOUSE.deploy(ALPACA.address);
+    grassHouse = await MOCKGRASSHOUSE.deploy(alpaca.address);
 
     // Deploy feeder
     const ALCAPAFEEDER = (await ethers.getContractFactory("AlpacaFeeder", deployer)) as AlpacaFeeder__factory;
     const alpacaFeeder = (await upgrades.deployProxy(ALCAPAFEEDER, [
-      ALPACA.address,
-      DEBTTOKEN.address,
-      mockFairLaunch.address,
+      alpaca.address,
+      proxyToken.address,
+      fairLaunch.address,
       fairLuancePoolId,
-      mockGrassHouse.address,
+      grassHouse.address,
     ])) as AlpacaFeeder;
     feeder = await alpacaFeeder.deployed();
 
+    await proxyToken.setOkHolders([alpacaFeeder.address, fairLaunch.address], true);
+    await proxyToken.transferOwnership(alpacaFeeder.address);
+
     // MINT
-    await ALPACA.mint(deployerAddress, ethers.utils.parseEther("8888888"));
-    await ALPACA.mint(aliceAddress, ethers.utils.parseEther("8888888"));
-    await ALPACA.mint(bobAddress, ethers.utils.parseEther("8888888"));
-    await ALPACA.mint(eveAddress, ethers.utils.parseEther("8888888"));
+    await alpaca.mint(deployerAddress, ethers.utils.parseEther("8888888"));
+    await alpaca.mint(aliceAddress, ethers.utils.parseEther("8888888"));
 
     // Assign contract signer
-    ALPACAasAlice = BEP20__factory.connect(ALPACA.address, alice);
-    ALPACAasBob = BEP20__factory.connect(ALPACA.address, bob);
-    ALPACAasEve = BEP20__factory.connect(ALPACA.address, eve);
+    alpacaAsAlice = BEP20__factory.connect(alpaca.address, alice);
+
+    feederAsAlice = AlpacaFeeder__factory.connect(feeder.address, alice);
   }
 
   beforeEach(async () => {
     await waffle.loadFixture(fixture);
   });
 
-  describe("#initialized", async () => {
+  describe("#initialize", () => {
     it("should initialized correctly", async () => {
-      expect(await feeder.fairLaunch()).to.be.eq(mockFairLaunch.address);
-      expect(await feeder.grassHouse()).to.be.eq(mockGrassHouse.address);
+      expect(await feeder.owner()).to.be.eq(deployerAddress);
+      expect(await feeder.fairLaunch()).to.be.eq(fairLaunch.address);
+      expect(await feeder.grassHouse()).to.be.eq(grassHouse.address);
+      expect(await feeder.proxyToken()).to.be.eq(proxyToken.address);
     });
   });
 
-  describe("#feedGrassHouse", async () => {
-    it("should work correctly", async () => {
-      await ALPACAasAlice.transfer(mockFairLaunch.address, ethers.utils.parseEther("10"));
-      await ALPACAasAlice.transfer(feeder.address, ethers.utils.parseEther("20"));
-      expect(await ALPACA.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("20"));
-      await expect(feeder.feedGrassHouse()).to.be.emit(feeder, "LogFeedGrassHouse");
-      expect(await ALPACA.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("0"));
-      expect(await ALPACA.balanceOf(mockGrassHouse.address)).to.be.eq(ethers.utils.parseEther("30"));
+  describe("#fairLaunchDeposit", async () => {
+    it("should able to deposit 1 proxy token to fairlaunch", async () => {
+      await expect(feeder.fairLaunchDeposit()).to.be.emit(feeder, "LogFairLaunchDeposit");
+      expect(await proxyToken.balanceOf(fairLaunch.address)).to.be.eq(ethers.utils.parseEther("1"));
     });
 
-    context("revert on harvest", () => {
-      it("should continue feed", async () => {
-        await ALPACAasAlice.transfer(feeder.address, ethers.utils.parseEther("20"));
-        expect(await ALPACA.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("20"));
-        await expect(feeder.feedGrassHouse()).to.be.emit(feeder, "LogFeedGrassHouse");
-        expect(await ALPACA.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("0"));
-        expect(await ALPACA.balanceOf(mockGrassHouse.address)).to.be.eq(ethers.utils.parseEther("20"));
+    context("revert on deposit", () => {
+      it("should revert if we already deposit proxy token in fair launch", async () => {
+        await expect(feeder.fairLaunchDeposit()).to.be.emit(feeder, "LogFairLaunchDeposit");
+        expect(await proxyToken.balanceOf(fairLaunch.address)).to.be.eq(ethers.utils.parseEther("1"));
+        await expect(feeder.fairLaunchDeposit()).to.be.revertedWith("already deposit");
+      });
+
+      it("should revert if who is not owner try deposit", async () => {
+        await expect(feederAsAlice.fairLaunchDeposit()).to.be.revertedWith("Ownable: caller is not the owner");
+      });
+    });
+  });
+
+  describe("#fairLaunchWithdraw", async () => {
+    it("should able to withdraw 1 proxy token from fairlaunch, and burn", async () => {
+      await feeder.fairLaunchDeposit();
+      await expect(feeder.fairLaunchWithdraw()).to.be.emit(feeder, "LogFairLaunchWithdraw");
+      expect(await proxyToken.balanceOf(fairLaunch.address)).to.be.eq(ethers.utils.parseEther("0"));
+      expect(await proxyToken.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("0"));
+    });
+
+    context("revert on withdraw", () => {
+      it("should revert if who is not owner try withdraw", async () => {
+        await expect(feederAsAlice.fairLaunchWithdraw()).to.be.revertedWith("Ownable: caller is not the owner");
       });
     });
   });
 
   describe("#fairLaunchHarvest", async () => {
     it("should work correctly", async () => {
-      await ALPACAasAlice.transfer(mockFairLaunch.address, ethers.utils.parseEther("10"));
+      await alpacaAsAlice.transfer(fairLaunch.address, ethers.utils.parseEther("10"));
       await feeder.fairLaunchHarvest();
-      expect(await ALPACA.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("10"));
+      expect(await alpaca.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("10"));
+    });
+  });
+
+  describe("#feedGrassHouse", async () => {
+    it("should work correctly", async () => {
+      await alpacaAsAlice.transfer(fairLaunch.address, ethers.utils.parseEther("10"));
+      await alpacaAsAlice.transfer(feeder.address, ethers.utils.parseEther("20"));
+      expect(await alpaca.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("20"));
+      await expect(feeder.feedGrassHouse()).to.be.emit(feeder, "LogFeedGrassHouse");
+      expect(await alpaca.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("0"));
+      expect(await alpaca.balanceOf(grassHouse.address)).to.be.eq(ethers.utils.parseEther("30"));
+    });
+
+    context("revert on harvest", () => {
+      it("should continue feed", async () => {
+        await alpacaAsAlice.transfer(feeder.address, ethers.utils.parseEther("20"));
+        expect(await alpaca.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("20"));
+        await expect(feeder.feedGrassHouse()).to.be.emit(feeder, "LogFeedGrassHouse");
+        expect(await alpaca.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("0"));
+        expect(await alpaca.balanceOf(grassHouse.address)).to.be.eq(ethers.utils.parseEther("20"));
+      });
     });
   });
 });

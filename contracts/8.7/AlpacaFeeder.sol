@@ -55,6 +55,9 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
     uint256 _fairLaunchPoolId,
     address _grasshouseAddress
   ) public initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     token = _token;
     proxyToken = _proxyToken;
     fairLaunchPoolId = _fairLaunchPoolId;
@@ -66,7 +69,7 @@ contract AlpacaFeeder is IVault, Initializable, ReentrancyGuardUpgradeable, Owna
 
   /// @notice Deposit token to FairLaunch
   function fairLaunchDeposit() external onlyOwner {
-    require(IBEP20(proxyToken).balanceOf(address(fairLaunch)) > 0, "already deposit");
+    require(IBEP20(proxyToken).balanceOf(address(fairLaunch)) == 0, "already deposit");
     IProxyToken(proxyToken).mint(address(this), 1e18);
     fairLaunch.deposit(address(this), fairLaunchPoolId, 1e18);
     emit LogFairLaunchDeposit();
