@@ -94,9 +94,10 @@ contract AlpacaFeeder is IVault, Initializable, OwnableUpgradeable {
   /// @notice Harvest reward from FairLaunch and Feed token to a GrassHouse
   function feedGrassHouse() external {
     _fairLaunchHarvest();
-    token.safeApprove(address(grassHouse), token.myBalance());
-    grassHouse.feed(token.myBalance());
+    uint256 _feedAmount = token.myBalance();
+    token.safeApprove(address(grassHouse), _feedAmount);
+    grassHouse.feed(_feedAmount);
     token.safeApprove(address(grassHouse), 0);
-    emit LogFeedGrassHouse(token.myBalance());
+    emit LogFeedGrassHouse(_feedAmount);
   }
 }
