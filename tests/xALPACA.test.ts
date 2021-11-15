@@ -22,7 +22,7 @@ describe("xALPACA", () => {
   const HOUR = ethers.BigNumber.from(3600);
   const DAY = ethers.BigNumber.from(86400);
   const WEEK = DAY.mul(7);
-  const MAX_LOCK = ethers.BigNumber.from(126144000);
+  const MAX_LOCK = ethers.BigNumber.from(31536000); // seconds in 1 year (60 * 60 * 24 * 365)
 
   // Contact Instance
   let ALPACA: BEP20;
