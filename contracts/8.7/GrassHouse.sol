@@ -13,28 +13,28 @@ Alpaca Fin Corporation
 
 pragma solidity 0.8.7;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 
 import "./interfaces/IxALPACA.sol";
 import "./interfaces/IBEP20.sol";
 
 import "./SafeToken.sol";
 
-import "hardhat/console.sol";
-
 /// @title GrassHouse - Where Alpaca eats
 // solhint-disable not-rely-on-time
 // solhint-disable-next-line contract-name-camelcase
-contract GrassHouse is Ownable, ReentrancyGuard {
+contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeable {
   using SafeToken for address;
 
   /// @dev Events
   event LogSetCanCheckpointToken(bool _toggleFlag);
   event LogCheckpointToken(uint256 _timestamp, uint256 _tokens);
   event LogClaimed(address indexed _recipient, uint256 _amount, uint256 _claimEpoch, uint256 _maxEpoch);
+  event LogKilled();
 
   /// @dev Time-related constants
   uint256 public constant WEEK = 1 weeks;
@@ -58,19 +58,23 @@ contract GrassHouse is Ownable, ReentrancyGuard {
   bool public canCheckpointToken;
 
   /// @dev address to get token when contract is emergency stop
+  bool public isKilled;
   address public emergencyReturn;
 
-  /// @notice Constructor to instaniate GrassHouse
+  /// @notice Initialize GrassHouse
   /// @param _xALPACA The address of xALPACA
   /// @param _startTime Time to be started
   /// @param _rewardToken The token to be distributed
   /// @param _emergencyReturn The address to return token when emergency stop
-  constructor(
+  function initialize(
     address _xALPACA,
     uint256 _startTime,
     address _rewardToken,
     address _emergencyReturn
-  ) {
+  ) public initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     uint256 _startTimeFloorWeek = _timestampToFloorWeek(_startTime);
     startWeekCursor = _startTimeFloorWeek;
     lastTokenTimestamp = _startTimeFloorWeek;
@@ -78,6 +82,29 @@ contract GrassHouse is Ownable, ReentrancyGuard {
     rewardToken = _rewardToken;
     xALPACA = _xALPACA;
     emergencyReturn = _emergencyReturn;
+  }
+
+  modifier onlyLive() {
+    require(!isKilled, "killed");
+    _;
+  }
+
+  /// @notice Get xALPACA balance of "_user" at "_timstamp"
+  /// @param _user The user address
+  /// @param _timestamp The timestamp to get user's balance
+  function balanceOfAt(address _user, uint256 _timestamp) external view returns (uint256) {
+    uint256 _maxUserEpoch = IxALPACA(xALPACA).userPointEpoch(_user);
+    if (_maxUserEpoch == 0) {
+      return 0;
+    }
+
+    uint256 _epoch = _findTimestampUserEpoch(_user, _timestamp, _maxUserEpoch);
+    Point memory _point = IxALPACA(xALPACA).userPointHistory(_user, _epoch);
+    int128 _bias = _point.bias - _point.slope * SafeCastUpgradeable.toInt128(int256(_timestamp - _point.timestamp));
+    if (_bias < 0) {
+      return 0;
+    }
+    return SafeCastUpgradeable.toUint256(_bias);
   }
 
   /// @notice Record token distribution checkpoint
@@ -135,11 +162,6 @@ contract GrassHouse is Ownable, ReentrancyGuard {
   /// At launch can only be called by owner, after launch can be called
   /// by anyone if block.timestamp > lastTokenTime + TOKEN_CHECKPOINT_DEADLINE
   function checkpointToken() external nonReentrant {
-    console.log("canCheckpointToken: ", canCheckpointToken);
-    console.log("block.timestamp: ", block.timestamp);
-    console.log("lastTokenTimestamp: ", lastTokenTimestamp);
-    console.log("TOKEN_CHECKPOINT_DEADLINE: ", TOKEN_CHECKPOINT_DEADLINE);
-    console.log("lastTokenTimestamp + TOKEN_CHECKPOIN_DEADLINE: ", lastTokenTimestamp + TOKEN_CHECKPOINT_DEADLINE);
     require(
       msg.sender == owner() ||
         (canCheckpointToken && (block.timestamp > lastTokenTimestamp + TOKEN_CHECKPOINT_DEADLINE)),
@@ -163,13 +185,13 @@ contract GrassHouse is Ownable, ReentrancyGuard {
         Point memory _point = IxALPACA(xALPACA).pointHistory(_epoch);
         int128 _timeDelta = 0;
         if (_weekCursor > _point.timestamp) {
-          _timeDelta = SafeCast.toInt128(int256(_weekCursor - _point.timestamp));
+          _timeDelta = SafeCastUpgradeable.toInt128(int256(_weekCursor - _point.timestamp));
         }
         int128 _bias = _point.bias - _point.slope * _timeDelta;
         if (_bias < 0) {
           totalSupplyAt[_weekCursor] = 0;
         } else {
-          totalSupplyAt[_weekCursor] = SafeCast.toUint256(_bias);
+          totalSupplyAt[_weekCursor] = SafeCastUpgradeable.toUint256(_bias);
         }
       }
       _weekCursor = _weekCursor + WEEK;
@@ -262,8 +284,11 @@ contract GrassHouse is Ownable, ReentrancyGuard {
           _userPoint = IxALPACA(xALPACA).userPointHistory(_user, _userEpoch);
         }
       } else {
-        int128 _timeDelta = SafeCast.toInt128(int256(_userWeekCursor - _prevUserPoint.timestamp));
-        uint256 _balanceOf = Math.max(SafeCast.toUint256(_prevUserPoint.bias - _timeDelta * _prevUserPoint.slope), 0);
+        int128 _timeDelta = SafeCastUpgradeable.toInt128(int256(_userWeekCursor - _prevUserPoint.timestamp));
+        uint256 _balanceOf = MathUpgradeable.max(
+          SafeCastUpgradeable.toUint256(_prevUserPoint.bias - _timeDelta * _prevUserPoint.slope),
+          0
+        );
         if (_balanceOf == 0 && _userEpoch > _maxUserEpoch) {
           break;
         }
@@ -277,7 +302,7 @@ contract GrassHouse is Ownable, ReentrancyGuard {
       }
     }
 
-    _userEpoch = Math.min(_maxUserEpoch, _userEpoch - 1);
+    _userEpoch = MathUpgradeable.min(_maxUserEpoch, _userEpoch - 1);
     userEpochOf[_user] = _userEpoch;
     weekCursorOf[_user] = _userWeekCursor;
 
@@ -288,7 +313,7 @@ contract GrassHouse is Ownable, ReentrancyGuard {
 
   /// @notice Claim rewardToken for "_user"
   /// @param _user The address to claim rewards for
-  function claim(address _user) external nonReentrant returns (uint256) {
+  function claim(address _user) external nonReentrant onlyLive returns (uint256) {
     if (block.timestamp >= weekCursor) _checkpointTotalSupply();
     uint256 _lastTokenTimestamp = lastTokenTimestamp;
 
@@ -310,7 +335,7 @@ contract GrassHouse is Ownable, ReentrancyGuard {
 
   /// @notice Claim rewardToken for multiple users
   /// @param _users The array of addresses to claim reward for
-  function claimMany(address[] calldata _users) external nonReentrant returns (bool) {
+  function claimMany(address[] calldata _users) external nonReentrant onlyLive returns (bool) {
     require(_users.length <= 20, "!over 20 users");
 
     if (block.timestamp >= weekCursor) _checkpointTotalSupply();
@@ -326,7 +351,7 @@ contract GrassHouse is Ownable, ReentrancyGuard {
     uint256 _total = 0;
 
     for (uint256 i = 0; i < _users.length; i++) {
-      if (_users[i] == address(0)) continue;
+      require(_users[i] != address(0), "bad user");
 
       uint256 _amount = _claim(_users[i], _lastTokenTimestamp);
       if (_amount != 0) {
@@ -343,7 +368,7 @@ contract GrassHouse is Ownable, ReentrancyGuard {
   }
 
   /// @notice Receive rewardTokens into the contract and trigger token checkpoint
-  function feed(uint256 _amount) external nonReentrant returns (bool) {
+  function feed(uint256 _amount) external nonReentrant onlyLive returns (bool) {
     rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
 
     if (canCheckpointToken && (block.timestamp > lastTokenTimestamp + TOKEN_CHECKPOINT_DEADLINE)) {
@@ -399,29 +424,18 @@ contract GrassHouse is Ownable, ReentrancyGuard {
     return _min;
   }
 
+  function kill() external onlyOwner {
+    isKilled = true;
+    rewardToken.safeTransfer(emergencyReturn, rewardToken.myBalance());
+
+    emit LogKilled();
+  }
+
   /// @notice Set canCheckpointToken to allow random callers to call checkpointToken
   /// @param _newCanCheckpointToken The new canCheckpointToken flag
   function setCanCheckpointToken(bool _newCanCheckpointToken) external onlyOwner {
     canCheckpointToken = _newCanCheckpointToken;
     emit LogSetCanCheckpointToken(_newCanCheckpointToken);
-  }
-
-  /// @notice Get xALPACA balance of "_user" at "_timstamp"
-  /// @param _user The user address
-  /// @param _timestamp The timestamp to get user's balance
-  function balanceOfAt(address _user, uint256 _timestamp) external view returns (uint256) {
-    uint256 _maxUserEpoch = IxALPACA(xALPACA).userPointEpoch(_user);
-    if (_maxUserEpoch == 0) {
-      return 0;
-    }
-
-    uint256 _epoch = _findTimestampUserEpoch(_user, _timestamp, _maxUserEpoch);
-    Point memory _point = IxALPACA(xALPACA).userPointHistory(_user, _epoch);
-    int128 _bias = _point.bias - _point.slope * SafeCast.toInt128(int256(_timestamp - _point.timestamp));
-    if (_bias < 0) {
-      return 0;
-    }
-    return SafeCast.toUint256(_bias);
   }
 
   /// @notice Round off random timestamp to week

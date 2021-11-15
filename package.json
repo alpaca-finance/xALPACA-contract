@@ -9,6 +9,7 @@
     "test:parallel": "mocha --require hardhat/register --recursive --parallel --extension ts --exit",
     "test": "hardhat test",
     "test:feeder": "hardhat test ./tests/AlpacaFeeder.test.ts",
+    "test:xAlpaca": "hardhat test ./tests/xALPACA.test.ts",
     "test:grassHouse": "hardhat test ./tests/GrassHouse.test.ts",
     "testnet": "hardhat console --no-compile --network testnet",
     "coverage": "hardhat coverage",
@@ -30,7 +31,7 @@
     "chai": "^4.3.0",
     "chai-bn": "^0.2.1",
     "dotenv": "^8.2.0",
-    "ethereum-waffle": "^3.2.2",
+    "ethereum-waffle": "^3.4.0",
     "ethereumjs-util": "^7.0.10",
     "ethers": "^5.0.31",
     "hardhat": "^2.0.10",
@@ -45,13 +46,7 @@
     "ts-generator": "^0.1.1",
     "ts-node": "^9.1.1",
     "typechain": "^4.0.1",
-    "typescript": "^4.1.5",
-    "lodash": "4.17.21",
-    "ansi-regex": "5.0.1",
-    "set-value": "4.0.1",
-    "underscore": "1.12.1",
-    "yargs-parser": "5.0.1",
-    "node-fetch": "2.6.1"
+    "typescript": "^4.1.5"
   },
   "files": [
     "typechain",
