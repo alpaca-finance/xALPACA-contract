@@ -12,7 +12,7 @@
     "test:xAlpaca": "hardhat test ./tests/xALPACA.test.ts",
     "test:grassHouse": "hardhat test ./tests/GrassHouse.test.ts",
     "testnet": "hardhat console --no-compile --network testnet",
-    "test:mainnetfork:test": "hardhat --network mainnetfork run --no-compile ./tests/TestMainnetFork.test.ts",
+    "mainnetfork:test": "hardhat test --no-compile ./tests/TestMainnetFork.test.ts --config hardhat.config.forking.ts",
     "coverage": "hardhat coverage",
     "solhint": "./node_modules/.bin/solhint -f table contracts/**/*.sol",
     "prettier:solidity": "./node_modules/.bin/prettier --write contracts/**/*.sol"

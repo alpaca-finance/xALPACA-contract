@@ -17,6 +17,9 @@ module.exports = {
       allowUnlimitedContractSize: true,
       timeout: 1800000,
       accounts: { mnemonic: "test test test test test test test test test test test junk" },
+      forking: {
+        url: "https://weathered-billowing-resonance.bsc.quiknode.pro/f98a121ea42a5f4b6b3a7ef736880f1db9018146/",
+      },
     },
     testnet: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
@@ -52,6 +55,6 @@ module.exports = {
     target: "ethers-v5",
   },
   mocha: {
-    timeout: 50000,
+    timeout: 100000,
   },
 };
