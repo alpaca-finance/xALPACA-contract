@@ -1,4 +1,4 @@
-import { ethers, waffle } from "hardhat";
+import { ethers, waffle, upgrades } from "hardhat";
 import { Signer, BigNumber, BigNumberish } from "ethers";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
@@ -25,7 +25,7 @@ describe("GrassHouse", () => {
   const DAY = ethers.BigNumber.from(86400);
   const WEEK = DAY.mul(7);
   const YEAR = DAY.mul(365);
-  const MAX_LOCK = ethers.BigNumber.from(126144000);
+  const MAX_LOCK = ethers.BigNumber.from(31536000); // seconds in 1 year (60 * 60 * 24 * 365)
   const TOKEN_CHECKPOINT_DEADLINE = DAY;
 
   // Contact Instance
@@ -93,7 +93,8 @@ describe("GrassHouse", () => {
 
     // Deploy xALPACA
     const XALPACA = (await ethers.getContractFactory("xALPACA", deployer)) as XALPACA__factory;
-    xALPACA = await XALPACA.deploy(ALPACA.address);
+    xALPACA = (await upgrades.deployProxy(XALPACA, [ALPACA.address])) as XALPACA;
+    await xALPACA.deployed();
 
     // Distribute ALPACA and approve xALPACA to do "transferFrom"
     for (let i = 0; i < 10; i++) {
@@ -105,12 +106,13 @@ describe("GrassHouse", () => {
     // Deploy GrassHouse
     startWeekCursor = (await timeHelpers.latestTimestamp()).div(WEEK).mul(WEEK);
     const GrassHouse = (await ethers.getContractFactory("GrassHouse", deployer)) as GrassHouse__factory;
-    grassHouse = await GrassHouse.deploy(
+    grassHouse = (await upgrades.deployProxy(GrassHouse, [
       xALPACA.address,
       await timeHelpers.latestTimestamp(),
       ALPACA.address,
-      deployerAddress
-    );
+      deployerAddress,
+    ])) as GrassHouse;
+    await grassHouse.deployed();
 
     // Approve xALPACA to transferFrom contractContext
     await contractContext.executeTransaction(
@@ -277,12 +279,14 @@ describe("GrassHouse", () => {
 
         // Deploy new grass house
         const GrassHouse = (await ethers.getContractFactory("GrassHouse", deployer)) as GrassHouse__factory;
-        const dTokenGrassHouse = await GrassHouse.deploy(
+        const dTokenGrassHouse = (await upgrades.deployProxy(GrassHouse, [
           xALPACA.address,
           await timeHelpers.latestTimestamp(),
           DTOKEN.address,
-          deployerAddress
-        );
+          deployerAddress,
+        ])) as GrassHouse;
+
+        await dTokenGrassHouse.deployed();
 
         // Checkpoint total supply
         await dTokenGrassHouse.checkpointTotalSupply();
@@ -2046,12 +2050,14 @@ describe("GrassHouse", () => {
 
         // 4. Deployer deploy DTOKEN GrassHouse
         const GrassHouse = (await ethers.getContractFactory("GrassHouse", deployer)) as GrassHouse__factory;
-        const dTokenGrassHouse = await GrassHouse.deploy(
+        const dTokenGrassHouse = (await upgrades.deployProxy(GrassHouse, [
           xALPACA.address,
           await timeHelpers.latestTimestamp(),
           DTOKEN.address,
-          deployerAddress
-        );
+          deployerAddress,
+        ])) as GrassHouse;
+        await dTokenGrassHouse.deployed();
+
         await DTOKEN.approve(dTokenGrassHouse.address, ethers.constants.MaxUint256);
 
         // 5. [DTOKEN GrassHouse] Deployer transfer rewards directly and call checkpoint to perform
@@ -2165,12 +2171,13 @@ describe("GrassHouse", () => {
           await timeHelpers.latestBlockNumber(),
         ];
         const GrassHouse = (await ethers.getContractFactory("GrassHouse")) as GrassHouse__factory;
-        const dTokenGrassHouse = await GrassHouse.deploy(
+        const dTokenGrassHouse = (await upgrades.deployProxy(GrassHouse, [
           xALPACA.address,
           await timeHelpers.latestTimestamp(),
           DTOKEN.address,
-          deployerAddress
-        );
+          deployerAddress,
+        ])) as GrassHouse;
+        await dTokenGrassHouse.deployed();
 
         // 3. Deployer feed DTOKEN
         await DTOKEN.transfer(dTokenGrassHouse.address, feedAmount);
