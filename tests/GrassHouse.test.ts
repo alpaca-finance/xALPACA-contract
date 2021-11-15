@@ -25,7 +25,7 @@ describe("GrassHouse", () => {
   const DAY = ethers.BigNumber.from(86400);
   const WEEK = DAY.mul(7);
   const YEAR = DAY.mul(365);
-  const MAX_LOCK = ethers.BigNumber.from(126144000);
+  const MAX_LOCK = ethers.BigNumber.from(31536000); // seconds in 1 year (60 * 60 * 24 * 365)
   const TOKEN_CHECKPOINT_DEADLINE = DAY;
 
   // Contact Instance

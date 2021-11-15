@@ -61,7 +61,7 @@ contract xALPACA is Ownable, ReentrancyGuard {
   uint256 public constant ACTION_INCREASE_UNLOCK_TIME = 3;
 
   uint256 public constant WEEK = 7 days;
-  uint256 public constant MAX_LOCK = 4 * 365 days;
+  uint256 public constant MAX_LOCK = 365 days;
   uint256 public constant MULTIPLIER = 10**18;
 
   /// @dev Token to be locked (ALPACA)
@@ -241,7 +241,7 @@ contract xALPACA is Ownable, ReentrancyGuard {
       // else _lastPoint should an empty point
       _lastPoint = pointHistory[_epoch];
     }
-    // _lastCheckpoin => timestamp of the latest point
+    // _lastCheckpoint => timestamp of the latest point
     // if no history, _lastCheckpoint should be block.timestamp
     // else _lastCheckpoint should be the timestamp of latest pointHistory
     uint256 _lastCheckpoint = _lastPoint.timestamp;
@@ -287,11 +287,11 @@ contract xALPACA is Ownable, ReentrancyGuard {
       _lastPoint.bias = _lastPoint.bias - _biasDelta;
       _lastPoint.slope = _lastPoint.slope + _slopeDelta;
       if (_lastPoint.bias < 0) {
-        // This can be happened
+        // This can happen
         _lastPoint.bias = 0;
       }
       if (_lastPoint.slope < 0) {
-        // This cannot be happened, just make sure
+        // This cannot happen, just make sure
         _lastPoint.slope = 0;
       }
       // Update _lastPoint to the new one
@@ -312,13 +312,13 @@ contract xALPACA is Ownable, ReentrancyGuard {
         pointHistory.push(_lastPoint);
       }
     }
-    // Now pointHistory is filled until current timestamp (round off by week)
+    // Now, each week pointHistory has been filled until current timestamp (round off by week)
     // Update epoch to be the latest state
     epoch = _epoch;
 
     if (_address != address(0)) {
-      // If last point was in the block, the slope change has been applied already
-      // But in such case we have 0 slope(s)
+      // If the last point was in the block, the slope change should have been applied already
+      // But in such case slope shall be 0
       _lastPoint.slope = _lastPoint.slope + _userNewPoint.slope - _userPrevPoint.slope;
       _lastPoint.bias = _lastPoint.bias + _userNewPoint.bias - _userPrevPoint.bias;
       if (_lastPoint.slope < 0) {
@@ -330,25 +330,26 @@ contract xALPACA is Ownable, ReentrancyGuard {
     }
 
     // Record the new point to pointHistory
-    // This should be the latest point for global epoch
+    // This would be the latest point for global epoch
     pointHistory.push(_lastPoint);
 
     if (_address != address(0)) {
-      // Schedule the slope changes (slope is going down)
+      // Schedule the slope changes (slope is going downward)
       // We substract _newSlopeDelta from `_newLocked.end`
       // and add _prevSlopeDelta to `_prevLocked.end`
       if (_prevLocked.end > block.timestamp) {
-        // _prevSlopeDelta was <something> - _userPrevPoint.slope, so we cancel that
+        // _prevSlopeDelta was <something> - _userPrevPoint.slope, so we offset that first
         _prevSlopeDelta = _prevSlopeDelta + _userPrevPoint.slope;
         if (_newLocked.end == _prevLocked.end) {
-          // Handle the new deposit. Not increase lock.
+          // Handle the new deposit. Not increasing lock.
           _prevSlopeDelta = _prevSlopeDelta - _userNewPoint.slope;
         }
         slopeChanges[_prevLocked.end] = _prevSlopeDelta;
       }
       if (_newLocked.end > block.timestamp) {
         if (_newLocked.end > _prevLocked.end) {
-          _newSlopeDelta = _newSlopeDelta - _userNewPoint.slope; // At this line old slope should gone
+          // At this line, the old slope should gone
+          _newSlopeDelta = _newSlopeDelta - _userNewPoint.slope; 
           slopeChanges[_newLocked.end] = _newSlopeDelta;
         }
       }
