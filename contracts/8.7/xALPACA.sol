@@ -382,7 +382,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     require(_amount > 0, "bad amount");
     require(_locked.amount == 0, "already lock");
     require(_unlockTime > block.timestamp, "can only lock until future");
-    require(_unlockTime <= block.timestamp + MAX_LOCK, "can only lock 4 years max");
+    require(_unlockTime <= block.timestamp + MAX_LOCK, "can only lock 1 year max");
 
     _depositFor(msg.sender, _amount, _unlockTime, _locked, ACTION_CREATE_LOCK);
   }
@@ -503,7 +503,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     require(_lock.amount > 0, "!lock existed");
     require(_lock.end > block.timestamp, "lock expired. please withdraw");
     require(_newUnlockTime > _lock.end, "only extend lock");
-    require(_newUnlockTime <= block.timestamp + MAX_LOCK, "4 years max");
+    require(_newUnlockTime <= block.timestamp + MAX_LOCK, "1 year max");
 
     _depositFor(msg.sender, 0, _newUnlockTime, _lock, ACTION_INCREASE_UNLOCK_TIME);
   }
