@@ -20,6 +20,7 @@ import {
 import * as timeHelpers from "./helpers/time";
 import { BigNumber, Signer } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { formatEther } from "@ethersproject/units";
 
 chai.use(solidity);
 const { expect } = chai;
@@ -31,56 +32,6 @@ const DEPLOYER = "0xC44f82b07Ab3E691F826951a6E335E1bC1bB0B51";
 const SHIELD = "0x1963f84395c8cf464e5483de7f2f434c3f1b4656";
 const ALPACA = "0x8F0528cE5eF7B51152A59745bEfDD91D97091d2F";
 const BNB = "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c";
-// const ProxyAdmin = "0x5379F32C8D5F663EACb61eeF63F722950294f452";
-
-// constants
-const RPC_URL = "http://localhost:8545";
-const HOUR = 3600; // HOUR in seconds
-const DAY = 24 * HOUR; // DAY in seconds: 86400
-// async function main() {
-//   if (network.name !== "mainnetfork") throw new Error("not mainnet fork");
-//   const eta = 1636774728;
-//   await network.provider.request({
-//     method: "hardhat_impersonateAccount",
-//     params: [DEPLOYER],
-//   });
-//   const deployerMain = await ethers.getSigner(DEPLOYER);
-//   const timelockAsDeployer = Timelock__factory.connect(TIME_LOCK, deployerMain);
-//   const fairLaunch = IFairLaunch__factory.connect(FAIR_LAUNCH, deployerMain);
-//   const len1 = await fairLaunch.poolLength();
-
-//   console.log(`>> Deploying proxyToken`);
-//   const PROXY_TOKEN = (await ethers.getContractFactory("ProxyToken", deployerMain)) as ProxyToken__factory;
-//   const proxyToken = (await upgrades.deployProxy(PROXY_TOKEN, [`proxyToken`, `proxyToken`, TIME_LOCK])) as ProxyToken;
-//   await proxyToken.deployed();
-//   console.log(`>> Deployed at ${proxyToken.address}`);
-
-//   const queue = await timelockAsDeployer.queueTransaction(
-//     SHIELD,
-//     "0",
-//     "addPool(uint256,address,bool)",
-//     ethers.utils.defaultAbiCoder.encode(["uint256", "address", "bool"], [100, proxyToken.address, false]),
-//     eta
-//   );
-//   console.log(`>> Queue success ${queue.hash}`);
-//   await timeHelpers.setTimestamp(ethers.BigNumber.from(eta));
-//   const exe = await timelockAsDeployer.executeTransaction(
-//     SHIELD,
-//     "0",
-//     "addPool(uint256,address,bool)",
-//     ethers.utils.defaultAbiCoder.encode(["uint256", "address", "bool"], [100, proxyToken.address, false]),
-//     eta
-//   );
-//   console.log(`>> Exe success ${queue.hash}`);
-//   const len2 = await fairLaunch.poolLength();
-
-//   console.log(len1, len2);
-// }
-
-const currentTimestamp = async () => {
-  const block = await ethers.provider.getBlock("latest");
-  return block.timestamp;
-};
 
 describe("AlpacaFeeder - Integration test", () => {
   let deployer: SignerWithAddress;
@@ -90,23 +41,18 @@ describe("AlpacaFeeder - Integration test", () => {
   // setting
   let poolId: BigNumber;
 
-  let bnb: BEP20;
   let alpaca: BEP20;
 
-  let proxyToken: ProxyToken;
-
   // contracts
-  let xALPACA: XALPACA;
+  let xalpaca: XALPACA;
   let fairlaunch: IFairLaunch;
   let timelock: Timelock;
   let alpacaFeeder: AlpacaFeeder;
+  let proxyToken: ProxyToken;
   let grassHouse: GrassHouse;
 
-  // connected
-  let alpacaFeederAsDeployer: AlpacaFeeder;
-
   async function fixture() {
-    const [bot, lyf] = await ethers.getSigners();
+    // const [bot, lyf] = await ethers.getSigners();
 
     await network.provider.request({
       method: "hardhat_impersonateAccount",
@@ -121,32 +67,30 @@ describe("AlpacaFeeder - Integration test", () => {
     // connect fairlaunch
     fairlaunch = await IFairLaunch__factory.connect(FAIR_LAUNCH, deployer);
 
-    console.log("Deploy xAlpaca");
+    // console.log("Deploy xAlpaca");
     const XALPACA = (await ethers.getContractFactory("xALPACA", deployer)) as XALPACA__factory;
-    xALPACA = (await upgrades.deployProxy(XALPACA, [alpaca.address])) as XALPACA;
-    await xALPACA.deployed();
+    xalpaca = (await upgrades.deployProxy(XALPACA, [alpaca.address])) as XALPACA;
+    await xalpaca.deployed();
 
-    console.log("Deploy PROXY Token");
+    // console.log("Deploy PROXY Token");
     const PROXY_TOKEN = (await ethers.getContractFactory("ProxyToken", deployer)) as ProxyToken__factory;
-    const proxyTokenDeployer = (await upgrades.deployProxy(PROXY_TOKEN, [
-      `proxyToken`,
-      `proxyToken`,
-      TIME_LOCK,
-    ])) as ProxyToken;
-    proxyToken = await proxyTokenDeployer.deployed();
+    proxyToken = (await upgrades.deployProxy(PROXY_TOKEN, [`proxyToken`, `proxyToken`, TIME_LOCK])) as ProxyToken;
+    await proxyToken.deployed();
 
-    console.log("Deploy Grasshouse");
+    // console.log("Deploy Grasshouse");
     const GrassHouse = (await ethers.getContractFactory("GrassHouse", deployer)) as GrassHouse__factory;
-    const grassHouseDeployer = (await upgrades.deployProxy(GrassHouse, [
-      xALPACA.address,
+    grassHouse = (await upgrades.deployProxy(GrassHouse, [
+      xalpaca.address,
       await timeHelpers.latestTimestamp(),
       alpaca.address,
       deployer.address,
     ])) as GrassHouse;
-    grassHouse = await grassHouseDeployer.deployed();
+    await grassHouse.deployed();
 
     poolId = await fairlaunch.poolLength();
-    const executeTime = (await currentTimestamp()) + DAY + HOUR;
+    const executeTime = (await timeHelpers.latestTimestamp())
+      .add(timeHelpers.duration.days(BigNumber.from(2)))
+      .toNumber();
     await timelock.queueTransaction(
       SHIELD,
       "0",
@@ -155,7 +99,7 @@ describe("AlpacaFeeder - Integration test", () => {
       executeTime
     );
 
-    await timeHelpers.setTimestamp(ethers.BigNumber.from(executeTime));
+    await timeHelpers.increaseTimestamp(timeHelpers.duration.days(ethers.BigNumber.from(2)));
     await timelock.executeTransaction(
       SHIELD,
       "0",
@@ -164,67 +108,74 @@ describe("AlpacaFeeder - Integration test", () => {
       executeTime
     );
 
-    console.log("Deploy AlpacaFeeder");
-    const ALCAPAFEEDER = (await ethers.getContractFactory("AlpacaFeeder", deployer)) as AlpacaFeeder__factory;
-    const alpacaFeederDeployer = (await upgrades.deployProxy(ALCAPAFEEDER, [
+    // console.log("Deploy AlpacaFeeder");
+    const AlpacaFeeder = (await ethers.getContractFactory("AlpacaFeeder", deployer)) as AlpacaFeeder__factory;
+    alpacaFeeder = (await upgrades.deployProxy(AlpacaFeeder, [
       alpaca.address,
       proxyToken.address,
       fairlaunch.address,
       poolId,
       grassHouse.address,
     ])) as AlpacaFeeder;
-    alpacaFeeder = await alpacaFeederDeployer.deployed();
+    await alpacaFeeder.deployed();
     await proxyToken.setOkHolders([alpacaFeeder.address, fairlaunch.address], true);
     await proxyToken.transferOwnership(alpacaFeeder.address);
   }
 
   beforeEach(async () => {
-    // await network.provider.request({
-    //   method: "hardhat_reset",
-    //   params: [
-    //     {
-    //       forking: {
-    //         jsonRpcUrl:
-    //           "https://weathered-billowing-resonance.bsc.quiknode.pro/f98a121ea42a5f4b6b3a7ef736880f1db9018146/",
-    //       },
-    //     },
-    //   ],
-    // });
-
     await waffle.loadFixture(fixture);
   });
 
-  context("when harvest from fairlaunch", () => {
-    it("should work", async () => {
-      const balance = await alpaca.balanceOf(alpacaFeeder.address);
-      await expect(alpacaFeeder.fairLaunchDeposit()).to.be.emit(alpacaFeeder, "LogFairLaunchDeposit");
-      // advance block for 1 week
-      const targetTime = (await currentTimestamp()) + 7 * DAY;
-      await timeHelpers.setTimestamp(ethers.BigNumber.from(targetTime));
-      await expect(alpacaFeeder.fairLaunchHarvest()).to.be.emit(alpacaFeeder, "LogFairLaunchHarvest");
+  describe("AlpacaFeeder", () => {
+    context("when try feed alpaca to grasshouse", () => {
+      context("when feeder not staking alpaca on fairlaunch", () => {
+        context("when feeder has 10 alpaca", () => {
+          it("grasshouse should receive alpaca equal with alpaca balance on feeder", async () => {
+            /**
+             * 1. transfer 10 alpaca to feeder
+             * 2. feed to grasshouse
+             * 3. check grasshouse balance should be 10
+             */
+            await alpaca.transfer(alpacaFeeder.address, ethers.utils.parseEther("10"));
+            const alpacaBalance = await alpaca.balanceOf(alpacaFeeder.address);
+            await expect(alpacaFeeder.feedGrassHouse()).to.be.emit(alpacaFeeder, "LogFeedGrassHouse");
+            expect(await alpaca.balanceOf(grassHouse.address)).to.be.eq(alpacaBalance);
+          });
+        });
 
-      expect(await alpaca.balanceOf(alpacaFeeder.address)).to.be.greaterThan(balance);
+        context("when feeder balance is zero", () => {
+          it("shoud not revert and grasshouse will not received any alpaca", async () => {
+            /**
+             * 1. feed to grasshouse
+             * 2. check grasshouse balance should be 0
+             * NOTE: shoud not revert
+             */
+            const alpacaBalance = await alpaca.balanceOf(alpacaFeeder.address);
+            await expect(alpacaFeeder.feedGrassHouse()).to.be.emit(alpacaFeeder, "LogFeedGrassHouse");
+            expect(await alpaca.balanceOf(grassHouse.address)).to.be.eq(alpacaBalance);
+          });
+        });
+      });
+
+      context("when feeder staking alpaca on fairlaunch", () => {
+        context("when feeder has 10 alpaca", () => {
+          it("grasshouse should receive alpaca greater than alpaca balance on feeder", async () => {
+            /**
+             * 1. transfer 10 alpaca to feeder
+             * 2. deposit proxytoken to fairlaunch
+             * 3. advance block for 1 week
+             * 4. feed to grasshouse
+             * 5. check grasshouse balance should be 10
+             */
+            await alpaca.transfer(alpacaFeeder.address, ethers.utils.parseEther("10"));
+            const alpacaBalance = await alpaca.balanceOf(alpacaFeeder.address);
+            await alpacaFeeder.fairLaunchDeposit();
+            await timeHelpers.increaseTimestamp(timeHelpers.duration.days(BigNumber.from(7)));
+            await expect(alpacaFeeder.feedGrassHouse()).to.be.emit(alpacaFeeder, "LogFeedGrassHouse");
+            expect(await alpaca.balanceOf(grassHouse.address)).to.be.gt(alpacaBalance);
+          });
+        });
+      });
     });
   });
-
-  context("when harvest reward from fairlaunch and feed to grasshouse", () => {});
-
-  context("when receive alpaca from LYF (play as alice)", () => {});
 });
-
-// main()
-//   .then(() => process.exit(0))
-//   .catch((error) => {
-//     console.error(error);
-//     process.exit(1);
-//   });
-
-// test scenario on feeder
-// try feed to grasshouse by bot
-// - assert harvest from fairlaunch before feed
-// - correct feed amount
-// - check emit event Harvest / Feed
-// - grasshouse balance should be increased
-// - if worker give alpaca feed amount should be increased
-// - confirmed we can receive alpaca from worker or someone
-// - try test feed in case of fairlaunch valid / not valid
