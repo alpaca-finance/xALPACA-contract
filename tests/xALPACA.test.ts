@@ -166,7 +166,7 @@ describe("xALPACA", () => {
       it("should revert", async () => {
         await expect(
           xALPACA.createLock("1", (await timeHelpers.latestTimestamp()).add(MAX_LOCK.add(WEEK)))
-        ).to.be.revertedWith("can only lock 4 years max");
+        ).to.be.revertedWith("can only lock 1 year max");
       });
     });
 
@@ -371,7 +371,7 @@ describe("xALPACA", () => {
       });
     });
 
-    context("when new unlock time after than 4 years", async () => {
+    context("when new unlock time after than 1 year", async () => {
       it("should revert", async () => {
         const lockAmount = ethers.utils.parseEther("10");
         await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
@@ -382,10 +382,10 @@ describe("xALPACA", () => {
         // Alice create lock with expire in 1 week
         await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK));
 
-        // Alice try to increaseUnlockTime to more than 4 years, this should revert
+        // Alice try to increaseUnlockTime to more than 1 year, this should revert
         await expect(
           xALPACAasAlice.increaseUnlockTime((await timeHelpers.latestTimestamp()).add(MAX_LOCK).add(WEEK))
-        ).to.be.revertedWith("4 years max");
+        ).to.be.revertedWith("1 year max");
       });
     });
 
