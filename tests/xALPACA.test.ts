@@ -1,4 +1,4 @@
-import { ethers, waffle } from "hardhat";
+import { ethers, waffle, upgrades } from "hardhat";
 import { Signer, BigNumber } from "ethers";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
@@ -77,7 +77,8 @@ describe("xALPACA", () => {
 
     // Deploy xALPACA
     const XALPACA = (await ethers.getContractFactory("xALPACA", deployer)) as XALPACA__factory;
-    xALPACA = await XALPACA.deploy(ALPACA.address);
+    xALPACA = (await upgrades.deployProxy(XALPACA, [ALPACA.address])) as XALPACA;
+    await xALPACA.deployed();
 
     // Approve xALPACA to transferFrom contractContext
     await contractContext.executeTransaction(
