@@ -18,9 +18,9 @@ const func: DeployFunction = async function(hre: HardhatRuntimeEnvironment){
     )) as XALPACA__factory;
 
     console.log('ALPACA address',ALPACA.address)
+    const xAlpaca = await XALPACA.deploy();
 
-    const xAlpaca =  await XALPACA.deploy(ALPACA.address,{  gasLimit: 5000000});
-   
+    xAlpaca.initialize(ALPACA.address)
     console.log('xAlpaca address',xAlpaca.address)
     console.log("✅ Done");
 }
