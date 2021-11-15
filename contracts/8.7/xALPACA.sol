@@ -14,10 +14,11 @@ Ported to Solidity from: https://github.com/curvefi/curve-dao-contracts/blob/mas
 
 pragma solidity 0.8.7;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 
 import "./interfaces/IBEP20.sol";
 
@@ -26,9 +27,9 @@ import "./SafeToken.sol";
 /// @title xALPACA - The goverance token of Alpaca Finance
 // solhint-disable not-rely-on-time
 // solhint-disable-next-line contract-name-camelcase
-contract xALPACA is Ownable, ReentrancyGuard {
+contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeable {
   using SafeToken for address;
-  using SafeMath for uint256;
+  using SafeMathUpgradeable for uint256;
 
   /// @dev Events
   event LogDeposit(
@@ -91,9 +92,12 @@ contract xALPACA is Ownable, ReentrancyGuard {
   string public symbol;
   uint256 public decimals;
 
-  /// @notice Constructor to instaniate xALPACA
+  /// @notice Initialize xALPACA
   /// @param _token The address of ALPACA token
-  constructor(address _token) {
+  function initialize(address _token) public initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     token = _token;
 
     pointHistory.push(Point({ bias: 0, slope: 0, timestamp: block.timestamp, blockNumber: block.number }));
@@ -142,12 +146,12 @@ contract xALPACA is Ownable, ReentrancyGuard {
       _blockTime += (_timeDelta * (_blockNumber - _point0.blockNumber)) / _blockDelta;
     }
 
-    _userPoint.bias -= _userPoint.slope * SafeCast.toInt128(int256(_blockTime - _userPoint.timestamp));
+    _userPoint.bias -= _userPoint.slope * SafeCastUpgradeable.toInt128(int256(_blockTime - _userPoint.timestamp));
     if (_userPoint.bias < 0) {
       return 0;
     }
 
-    return SafeCast.toUint256(_userPoint.bias);
+    return SafeCastUpgradeable.toUint256(_userPoint.bias);
   }
 
   /// @notice Return the voting weight of a givne user
@@ -160,11 +164,11 @@ contract xALPACA is Ownable, ReentrancyGuard {
     Point memory _lastPoint = userPointHistory[_user][_epoch];
     _lastPoint.bias =
       _lastPoint.bias -
-      (_lastPoint.slope * SafeCast.toInt128(int256(block.timestamp - _lastPoint.timestamp)));
+      (_lastPoint.slope * SafeCastUpgradeable.toInt128(int256(block.timestamp - _lastPoint.timestamp)));
     if (_lastPoint.bias < 0) {
       _lastPoint.bias = 0;
     }
-    return SafeCast.toUint256(_lastPoint.bias);
+    return SafeCastUpgradeable.toUint256(_lastPoint.bias);
   }
 
   /// @notice Record global and per-user slope to checkpoint
@@ -191,13 +195,17 @@ contract xALPACA is Ownable, ReentrancyGuard {
       // Kept at zero when they have to
       if (_prevLocked.end > block.timestamp && _prevLocked.amount > 0) {
         // Calculate slope and bias for the prev point
-        _userPrevPoint.slope = _prevLocked.amount / SafeCast.toInt128(int256(MAX_LOCK));
-        _userPrevPoint.bias = _userPrevPoint.slope * SafeCast.toInt128(int256(_prevLocked.end - block.timestamp));
+        _userPrevPoint.slope = _prevLocked.amount / SafeCastUpgradeable.toInt128(int256(MAX_LOCK));
+        _userPrevPoint.bias =
+          _userPrevPoint.slope *
+          SafeCastUpgradeable.toInt128(int256(_prevLocked.end - block.timestamp));
       }
       if (_newLocked.end > block.timestamp && _newLocked.amount > 0) {
         // Calculate slope and bias for the new point
-        _userNewPoint.slope = _newLocked.amount / SafeCast.toInt128(int256(MAX_LOCK));
-        _userNewPoint.bias = _userNewPoint.slope * SafeCast.toInt128(int256(_newLocked.end - block.timestamp));
+        _userNewPoint.slope = _newLocked.amount / SafeCastUpgradeable.toInt128(int256(MAX_LOCK));
+        _userNewPoint.bias =
+          _userNewPoint.slope *
+          SafeCastUpgradeable.toInt128(int256(_newLocked.end - block.timestamp));
       }
 
       // Handle user history here
@@ -283,7 +291,7 @@ contract xALPACA is Ownable, ReentrancyGuard {
         _slopeDelta = slopeChanges[_weekCursor];
       }
       // Calculate _biasDelta = _lastPoint.slope * (_weekCursor - _lastCheckpoint)
-      int128 _biasDelta = _lastPoint.slope * SafeCast.toInt128(int256((_weekCursor.sub(_lastCheckpoint))));
+      int128 _biasDelta = _lastPoint.slope * SafeCastUpgradeable.toInt128(int256((_weekCursor.sub(_lastCheckpoint))));
       _lastPoint.bias = _lastPoint.bias - _biasDelta;
       _lastPoint.slope = _lastPoint.slope + _slopeDelta;
       if (_lastPoint.bias < 0) {
@@ -374,7 +382,7 @@ contract xALPACA is Ownable, ReentrancyGuard {
     require(_amount > 0, "bad amount");
     require(_locked.amount == 0, "already lock");
     require(_unlockTime > block.timestamp, "can only lock until future");
-    require(_unlockTime <= block.timestamp + MAX_LOCK, "can only lock 4 years max");
+    require(_unlockTime <= block.timestamp + MAX_LOCK, "can only lock 1 year max");
 
     _depositFor(msg.sender, _amount, _unlockTime, _locked, ACTION_CREATE_LOCK);
   }
@@ -416,7 +424,7 @@ contract xALPACA is Ownable, ReentrancyGuard {
 
     // Adding new lock to existing lock, or if lock is expired
     // - creating a new one
-    _newLocked.amount = _newLocked.amount + SafeCast.toInt128(int256(_amount));
+    _newLocked.amount = _newLocked.amount + SafeCastUpgradeable.toInt128(int256(_amount));
     if (_unlockTime != 0) {
       _newLocked.end = _unlockTime;
     }
@@ -495,7 +503,7 @@ contract xALPACA is Ownable, ReentrancyGuard {
     require(_lock.amount > 0, "!lock existed");
     require(_lock.end > block.timestamp, "lock expired. please withdraw");
     require(_newUnlockTime > _lock.end, "only extend lock");
-    require(_newUnlockTime <= block.timestamp + MAX_LOCK, "4 years max");
+    require(_newUnlockTime <= block.timestamp + MAX_LOCK, "1 year max");
 
     _depositFor(msg.sender, 0, _newUnlockTime, _lock, ACTION_INCREASE_UNLOCK_TIME);
   }
@@ -560,7 +568,7 @@ contract xALPACA is Ownable, ReentrancyGuard {
       // Update bias at _weekCursor
       _lastPoint.bias =
         _lastPoint.bias -
-        (_lastPoint.slope * SafeCast.toInt128(int256(_weekCursor - _lastPoint.timestamp)));
+        (_lastPoint.slope * SafeCastUpgradeable.toInt128(int256(_weekCursor - _lastPoint.timestamp)));
       if (_weekCursor == _timestamp) {
         break;
       }
@@ -573,7 +581,7 @@ contract xALPACA is Ownable, ReentrancyGuard {
       _lastPoint.bias = 0;
     }
 
-    return SafeCast.toUint256(_lastPoint.bias);
+    return SafeCastUpgradeable.toUint256(_lastPoint.bias);
   }
 
   /// @notice Set breaker
@@ -591,7 +599,7 @@ contract xALPACA is Ownable, ReentrancyGuard {
 
     if (breaker == 0) require(block.timestamp >= _lock.end, "!lock expired");
 
-    uint256 amount = SafeCast.toUint256(_lock.amount);
+    uint256 amount = SafeCastUpgradeable.toUint256(_lock.amount);
 
     LockedBalance memory _prevLock = LockedBalance({ end: _lock.end, amount: _lock.amount });
     _lock.end = 0;
