@@ -13,7 +13,7 @@ import {
   MockFairLaunch__factory,
   MockProxyToken,
   MockProxyToken__factory,
-} from "../typechain";
+} from "../../typechain";
 
 chai.use(solidity);
 const { expect } = chai;

@@ -38,7 +38,7 @@ module.exports = {
   },
   paths: {
     sources: "./contracts/8.7",
-    tests: "./tests",
+    tests: "./tests/integration",
     cache: "./cache",
     artifacts: "./artifacts",
   },

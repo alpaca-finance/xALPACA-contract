@@ -12,14 +12,14 @@ import {
   XALPACA__factory,
   GrassHouse__factory,
   AlpacaFeeder__factory,
-} from "../typechain";
+} from "../../typechain";
 import {
   Timelock,
   Timelock__factory,
   FairLaunch__factory,
   FairLaunch,
 } from "@alpaca-finance/alpaca-contract/typechain";
-import * as timeHelpers from "./helpers/time";
+import * as timeHelpers from "../helpers/time";
 import { BigNumber, Signer } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
