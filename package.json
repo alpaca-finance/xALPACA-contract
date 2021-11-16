@@ -14,6 +14,7 @@
     "test:grassHouse": "hardhat test ./tests/GrassHouse.test.ts",
     "testnet": "hardhat console --no-compile --network testnet",
     "integration-test:feeder-fairlaunch": "hardhat test --no-compile ./tests/integration/AlpacaFeederWithFairLaunch.test.ts --config hardhat.config.forking.ts",
+    "integration-test:feeder-worker": "hardhat test --no-compile ./tests/integration/AlpacaFeederWithWorker.test.ts --config hardhat.config.forking.ts",
     "coverage": "hardhat coverage",
     "solhint": "./node_modules/.bin/solhint -f table contracts/**/*.sol",
     "prettier:solidity": "./node_modules/.bin/prettier --write contracts/**/*.sol"
