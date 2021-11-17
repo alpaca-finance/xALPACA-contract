@@ -1,7 +1,10 @@
 {
   "name": "@alpaca-finance/xalpaca-contract",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "scripts": {
+    "prepublish": "yarn build",
+    "build": "yarn run build:cjs",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
     "compile": "hardhat typechain --config hardhat.config.ts",
     "mainnet": "hardhat console --no-compile --network mainnet",
     "badges": "istanbul-badges-readme --coverageDir=./",
