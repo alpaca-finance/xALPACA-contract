@@ -8,6 +8,7 @@
     "test:case": "mocha tests --require hardhat/register --extension ts -g",
     "test:parallel": "mocha --require hardhat/register --recursive --parallel --extension ts --exit",
     "test": "hardhat test",
+    "test:feeder": "hardhat test ./tests/AlpacaFeeder.test.ts",
     "test:xAlpaca": "hardhat test ./tests/xALPACA.test.ts",
     "test:grassHouse": "hardhat test ./tests/GrassHouse.test.ts",
     "testnet": "hardhat console --no-compile --network testnet",
