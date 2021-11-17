@@ -18,16 +18,8 @@ module.exports = {
       timeout: 1800000,
       accounts: { mnemonic: "test test test test test test test test test test test junk" },
       forking: {
-        url: "https://weathered-billowing-resonance.bsc.quiknode.pro/f98a121ea42a5f4b6b3a7ef736880f1db9018146/",
+        url: process.env.FORKING_RPC_URL,
       },
-    },
-    testnet: {
-      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
-      accounts: [process.env.BSC_TESTNET_PRIVATE_KEY],
-    },
-    mainnet: {
-      url: process.env.BSC_MAINNET_RPC,
-      accounts: [process.env.BSC_MAINNET_PRIVATE_KEY],
     },
   },
   namedAccounts: {
@@ -46,7 +38,7 @@ module.exports = {
   },
   paths: {
     sources: "./contracts/8.7",
-    tests: "./tests",
+    tests: "./tests/integration",
     cache: "./cache",
     artifacts: "./artifacts",
   },

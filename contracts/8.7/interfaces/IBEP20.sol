@@ -24,7 +24,4 @@ interface IBEP20 is IERC20 {
 
   /// @dev Return token's decimals
   function decimals() external returns (uint256);
-
-  /// @dev Safe Transfer
-  function safeTransfer(address _to, uint256 _amount) external;
 }

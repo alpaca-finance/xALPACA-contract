@@ -30,9 +30,6 @@ contract MockFairLaunch is IFairLaunch {
     proxyToken = _proxyToken;
   }
 
-  function poolLength() external override view returns (uint256) {
-    return 1;
-  }
   // Deposit Staking tokens to FairLaunchToken for ALPACA allocation.
   function deposit(
     address _for,

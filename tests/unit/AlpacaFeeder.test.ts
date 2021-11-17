@@ -13,14 +13,14 @@ import {
   MockFairLaunch__factory,
   MockProxyToken,
   MockProxyToken__factory,
-} from "../typechain";
+} from "../../typechain";
 
 chai.use(solidity);
 const { expect } = chai;
 
 describe("AlpacaFeeder", () => {
   // Constants
-  const fairLuancePoolId = 123;
+  const FAIR_LAUNCH_POOL_ID = 123;
 
   // Contact Instance
   let alpaca: BEP20;
@@ -51,25 +51,25 @@ describe("AlpacaFeeder", () => {
     alpaca = await BEP20.deploy("ALPACA", "ALPACA");
 
     // Deploy PROXYTOKEN
-    const MOCKPROXYTOKEN = (await ethers.getContractFactory("MockProxyToken", deployer)) as MockProxyToken__factory;
-    const mockProxyToken = (await upgrades.deployProxy(MOCKPROXYTOKEN, ["PROXYTOKEN", "PROXYTOKEN"])) as MockProxyToken;
+    const MockProxyToken = (await ethers.getContractFactory("MockProxyToken", deployer)) as MockProxyToken__factory;
+    const mockProxyToken = (await upgrades.deployProxy(MockProxyToken, ["PROXYTOKEN", "PROXYTOKEN"])) as MockProxyToken;
     proxyToken = await mockProxyToken.deployed();
 
     // Deploy GrassHouse
-    const MOCKFAIRLAUNCH = (await ethers.getContractFactory("MockFairLaunch", deployer)) as MockFairLaunch__factory;
-    fairLaunch = await MOCKFAIRLAUNCH.deploy(alpaca.address, proxyToken.address);
+    const MockFairLaunch = (await ethers.getContractFactory("MockFairLaunch", deployer)) as MockFairLaunch__factory;
+    fairLaunch = await MockFairLaunch.deploy(alpaca.address, proxyToken.address);
 
     // Deploy GrassHouse
-    const MOCKGRASSHOUSE = (await ethers.getContractFactory("MockGrassHouse", deployer)) as MockGrassHouse__factory;
-    grassHouse = await MOCKGRASSHOUSE.deploy(alpaca.address);
+    const MockGrassHouse = (await ethers.getContractFactory("MockGrassHouse", deployer)) as MockGrassHouse__factory;
+    grassHouse = await MockGrassHouse.deploy(alpaca.address);
 
     // Deploy feeder
-    const ALCAPAFEEDER = (await ethers.getContractFactory("AlpacaFeeder", deployer)) as AlpacaFeeder__factory;
-    const alpacaFeeder = (await upgrades.deployProxy(ALCAPAFEEDER, [
+    const AlpacaFeeder = (await ethers.getContractFactory("AlpacaFeeder", deployer)) as AlpacaFeeder__factory;
+    const alpacaFeeder = (await upgrades.deployProxy(AlpacaFeeder, [
       alpaca.address,
       proxyToken.address,
       fairLaunch.address,
-      fairLuancePoolId,
+      FAIR_LAUNCH_POOL_ID,
       grassHouse.address,
     ])) as AlpacaFeeder;
     feeder = await alpacaFeeder.deployed();

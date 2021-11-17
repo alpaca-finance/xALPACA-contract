@@ -97,7 +97,6 @@ contract AlpacaFeeder is IVault, Initializable, OwnableUpgradeable {
     uint256 _feedAmount = token.myBalance();
     token.safeApprove(address(grassHouse), _feedAmount);
     grassHouse.feed(_feedAmount);
-    token.safeApprove(address(grassHouse), 0);
     emit LogFeedGrassHouse(_feedAmount);
   }
 }
