@@ -18,7 +18,7 @@ module.exports = {
       timeout: 1800000,
       accounts: { mnemonic: "test test test test test test test test test test test junk" },
       forking: {
-        url: "https://weathered-billowing-resonance.bsc.quiknode.pro/f98a121ea42a5f4b6b3a7ef736880f1db9018146/",
+        url: process.env.BSC_MAINNET_FORK_RPC,
       },
     },
   },
