@@ -22,6 +22,8 @@ import {
   CakeMaxiWorker02,
   CakeMaxiWorker02__factory,
   MdexWorker02__factory,
+  PancakeswapV2Worker02,
+  PancakeswapV2Worker02__factory,
 } from "@alpaca-finance/alpaca-contract/typechain";
 import * as timeHelpers from "../helpers/time";
 import { BigNumber, Signer } from "ethers";
@@ -38,6 +40,7 @@ const DEPLOYER = "0xC44f82b07Ab3E691F826951a6E335E1bC1bB0B51";
 const SHIELD = "0x1963f84395c8cf464e5483de7f2f434c3f1b4656";
 const CAKEMAXI_WORKER = "0xecfB6E8BEceA9A65A5a367497230dF14F64A14C9";
 const MDEX_WORKER = "0x5EffBF90F915B59cc967060740243037CE9E6a7E";
+const PCS_WORKER = "0xE90C44C16705859931099E7565DA5d3c21F67273";
 const ALPACA = "0x8F0528cE5eF7B51152A59745bEfDD91D97091d2F";
 const WBNB = "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c";
 const CAKE = "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82";
@@ -61,6 +64,7 @@ describe("AlpacaFeeder - Integration test", () => {
   let grassHouse: GrassHouse;
   let worker: CakeMaxiWorker02;
   let mdexWorker: MdexWorker02;
+  let pcsWorker: PancakeswapV2Worker02;
 
   async function fixture() {
     // const [bot, lyf] = await ethers.getSigners();
@@ -138,6 +142,7 @@ describe("AlpacaFeeder - Integration test", () => {
 
     worker = CakeMaxiWorker02__factory.connect(CAKEMAXI_WORKER, deployer);
     mdexWorker = MdexWorker02__factory.connect(MDEX_WORKER, deployer);
+    pcsWorker = PancakeswapV2Worker02__factory.connect(PCS_WORKER, deployer);
 
     // set reinvest whitelist
     // CakeMaxiWorker
@@ -148,10 +153,29 @@ describe("AlpacaFeeder - Integration test", () => {
       ethers.utils.defaultAbiCoder.encode(["address[]", "bool"], [[deployer.address], true]),
       executeTime2
     );
+    // PancakeSwapWorker
+    await timelock.queueTransaction(
+      PCS_WORKER,
+      "0",
+      "setReinvestorOk(address[],bool)",
+      ethers.utils.defaultAbiCoder.encode(["address[]", "bool"], [[deployer.address], true]),
+      executeTime2
+    );
     // set beneficial vault for worker
     // CakeMaxiWorker
     await timelock.queueTransaction(
       CAKEMAXI_WORKER,
+      "0",
+      "setBeneficialVaultConfig(uint256,address,address[])",
+      ethers.utils.defaultAbiCoder.encode(
+        ["uint256", "address", "address[]"],
+        [100, alpacaFeeder.address, [CAKE, WBNB, ALPACA]]
+      ),
+      executeTime2
+    );
+    // PancakeSwapWorker
+    await timelock.queueTransaction(
+      PCS_WORKER,
       "0",
       "setBeneficialVaultConfig(uint256,address,address[])",
       ethers.utils.defaultAbiCoder.encode(
@@ -176,6 +200,17 @@ describe("AlpacaFeeder - Integration test", () => {
       ),
       executeTime2
     );
+    // PancakeSwapWorker
+    await timelock.executeTransaction(
+      PCS_WORKER,
+      "0",
+      "setBeneficialVaultConfig(uint256,address,address[])",
+      ethers.utils.defaultAbiCoder.encode(
+        ["uint256", "address", "address[]"],
+        [100, alpacaFeeder.address, [CAKE, WBNB, ALPACA]]
+      ),
+      executeTime2
+    );
     // Mdex
     await mdexWorker.setBeneficialVaultConfig(100, alpacaFeeder.address, [MDEX, BUSD, ALPACA]);
 
@@ -183,6 +218,14 @@ describe("AlpacaFeeder - Integration test", () => {
     // CakeMaxiWorker
     await timelock.executeTransaction(
       CAKEMAXI_WORKER,
+      "0",
+      "setReinvestorOk(address[],bool)",
+      ethers.utils.defaultAbiCoder.encode(["address[]", "bool"], [[deployer.address], true]),
+      executeTime2
+    );
+    // PancakeSwapWorker
+    await timelock.executeTransaction(
+      PCS_WORKER,
       "0",
       "setReinvestorOk(address[],bool)",
       ethers.utils.defaultAbiCoder.encode(["address[]", "bool"], [[deployer.address], true]),
@@ -213,6 +256,16 @@ describe("AlpacaFeeder - Integration test", () => {
         const balance = await alpaca.balanceOf(alpacaFeeder.address);
         console.log(formatEther(balance.toString()));
         await mdexWorker.reinvest();
+        console.log(formatEther(await (await alpaca.balanceOf(alpacaFeeder.address)).toString()));
+        expect(await alpaca.balanceOf(alpacaFeeder.address)).to.be.gt(balance);
+      });
+    });
+    context("when PCS worker is triggered reinvest", () => {
+      it("should send alpaca to AlpacaFeeder(PCS)", async () => {
+        console.log("reinvest pcs");
+        const balance = await alpaca.balanceOf(alpacaFeeder.address);
+        console.log(formatEther(balance.toString()));
+        await pcsWorker.reinvest();
         console.log(formatEther(await (await alpaca.balanceOf(alpacaFeeder.address)).toString()));
         expect(await alpaca.balanceOf(alpacaFeeder.address)).to.be.gt(balance);
       });
