@@ -29,23 +29,24 @@ import * as timeHelpers from "../helpers/time";
 import { BigNumber, Signer } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { formatEther } from "ethers/lib/utils";
+import {
+  ALPACA,
+  DEPLOYER,
+  FAIR_LAUNCH,
+  SHIELD,
+  TIME_LOCK,
+  CAKEMAXI_WORKER,
+  MDEX_WORKER,
+  PCS_WORKER,
+  CAKE,
+  WBNB,
+  MDEX,
+  BUSD,
+} from "../constants/addresses";
+import * as deployHelper from "../helpers/deploy";
 
 chai.use(solidity);
 const { expect } = chai;
-
-// contract's addresses
-const TIME_LOCK = "0x2D5408f2287BF9F9B05404794459a846651D0a59";
-const FAIR_LAUNCH = "0xA625AB01B08ce023B2a342Dbb12a16f2C8489A8F";
-const DEPLOYER = "0xC44f82b07Ab3E691F826951a6E335E1bC1bB0B51";
-const SHIELD = "0x1963f84395c8cf464e5483de7f2f434c3f1b4656";
-const CAKEMAXI_WORKER = "0xecfB6E8BEceA9A65A5a367497230dF14F64A14C9";
-const MDEX_WORKER = "0x5EffBF90F915B59cc967060740243037CE9E6a7E";
-const PCS_WORKER = "0xE90C44C16705859931099E7565DA5d3c21F67273";
-const ALPACA = "0x8F0528cE5eF7B51152A59745bEfDD91D97091d2F";
-const WBNB = "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c";
-const CAKE = "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82";
-const MDEX = "0x9c65ab58d8d978db963e63f2bfb7121627e3a739";
-const BUSD = "0xe9e7cea3dedca5984780bafc599bd69add087d56";
 
 describe("AlpacaFeeder - Integration test", () => {
   let deployer: SignerWithAddress;
@@ -81,24 +82,13 @@ describe("AlpacaFeeder - Integration test", () => {
     fairlaunch = await FairLaunch__factory.connect(FAIR_LAUNCH, deployer);
 
     // Deploy xAlpaca
-    const XALPACA = (await ethers.getContractFactory("xALPACA", deployer)) as XALPACA__factory;
-    xalpaca = (await upgrades.deployProxy(XALPACA, [alpaca.address])) as XALPACA;
-    await xalpaca.deployed();
+    xalpaca = await deployHelper.deployXAlpaca(deployer);
 
     // Deploy PROXY Token
-    const PROXY_TOKEN = (await ethers.getContractFactory("ProxyToken", deployer)) as ProxyToken__factory;
-    proxyToken = (await upgrades.deployProxy(PROXY_TOKEN, [`proxyToken`, `proxyToken`, TIME_LOCK])) as ProxyToken;
-    await proxyToken.deployed();
+    proxyToken = await deployHelper.deployProxyToken(deployer);
 
     // Deploy Grasshouse
-    const GrassHouse = (await ethers.getContractFactory("GrassHouse", deployer)) as GrassHouse__factory;
-    grassHouse = (await upgrades.deployProxy(GrassHouse, [
-      xalpaca.address,
-      await timeHelpers.latestTimestamp(),
-      alpaca.address,
-      deployer.address,
-    ])) as GrassHouse;
-    await grassHouse.deployed();
+    grassHouse = await deployHelper.deployGrasshouse(deployer, xalpaca.address);
 
     poolId = await fairlaunch.poolLength();
     const executeTime = (await timeHelpers.latestTimestamp())
@@ -122,15 +112,7 @@ describe("AlpacaFeeder - Integration test", () => {
     );
 
     // Deploy AlpacaFeeder
-    const AlpacaFeeder = (await ethers.getContractFactory("AlpacaFeeder", deployer)) as AlpacaFeeder__factory;
-    alpacaFeeder = (await upgrades.deployProxy(AlpacaFeeder, [
-      alpaca.address,
-      proxyToken.address,
-      fairlaunch.address,
-      poolId,
-      grassHouse.address,
-    ])) as AlpacaFeeder;
-    await alpacaFeeder.deployed();
+    alpacaFeeder = await deployHelper.deployAlpacaFeeder(deployer, proxyToken.address, poolId, grassHouse.address);
     await proxyToken.setOkHolders([alpacaFeeder.address, fairlaunch.address], true);
     await proxyToken.transferOwnership(alpacaFeeder.address);
 
