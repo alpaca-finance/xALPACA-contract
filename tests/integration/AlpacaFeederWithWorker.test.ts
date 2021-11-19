@@ -239,7 +239,7 @@ describe("AlpacaFeeder - Integration test", () => {
   });
 
   describe("AlpacaFeeder", () => {
-    context("when CakeMaxi worker is triggered reinvest", () => {
+    context("when CakeMaxi worker trigger reinvest", () => {
       it("should send alpaca to AlpacaFeeder(CakeMaxi)", async () => {
         const balance = await alpaca.balanceOf(alpacaFeeder.address);
         expect(balance).to.be.eq(0);
@@ -247,7 +247,7 @@ describe("AlpacaFeeder - Integration test", () => {
         expect(await alpaca.balanceOf(alpacaFeeder.address)).to.be.gt(balance);
       });
     });
-    context("when Mdex worker is triggered reinvest", () => {
+    context("when Mdex worker trigger reinvest", () => {
       it("should send alpaca to AlpacaFeeder(Mdex)", async () => {
         const balance = await alpaca.balanceOf(alpacaFeeder.address);
         expect(balance).to.be.eq(0);
@@ -255,7 +255,7 @@ describe("AlpacaFeeder - Integration test", () => {
         expect(await alpaca.balanceOf(alpacaFeeder.address)).to.be.gt(balance);
       });
     });
-    context("when PCS worker is triggered reinvest", () => {
+    context("when PCS worker trigger reinvest", () => {
       it("should send alpaca to AlpacaFeeder(PCS)", async () => {
         const balance = await alpaca.balanceOf(alpacaFeeder.address);
         expect(balance).to.be.eq(0);
