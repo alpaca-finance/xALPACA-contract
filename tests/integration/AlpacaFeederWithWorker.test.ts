@@ -67,8 +67,6 @@ describe("AlpacaFeeder - Integration test", () => {
   let pcsWorker: PancakeswapV2Worker02;
 
   async function fixture() {
-    // const [bot, lyf] = await ethers.getSigners();
-
     await network.provider.request({
       method: "hardhat_impersonateAccount",
       params: [DEPLOYER],
@@ -82,17 +80,17 @@ describe("AlpacaFeeder - Integration test", () => {
     // connect fairlaunch
     fairlaunch = await FairLaunch__factory.connect(FAIR_LAUNCH, deployer);
 
-    // console.log("Deploy xAlpaca");
+    // Deploy xAlpaca
     const XALPACA = (await ethers.getContractFactory("xALPACA", deployer)) as XALPACA__factory;
     xalpaca = (await upgrades.deployProxy(XALPACA, [alpaca.address])) as XALPACA;
     await xalpaca.deployed();
 
-    // console.log("Deploy PROXY Token");
+    // Deploy PROXY Token
     const PROXY_TOKEN = (await ethers.getContractFactory("ProxyToken", deployer)) as ProxyToken__factory;
     proxyToken = (await upgrades.deployProxy(PROXY_TOKEN, [`proxyToken`, `proxyToken`, TIME_LOCK])) as ProxyToken;
     await proxyToken.deployed();
 
-    // console.log("Deploy Grasshouse");
+    // Deploy Grasshouse
     const GrassHouse = (await ethers.getContractFactory("GrassHouse", deployer)) as GrassHouse__factory;
     grassHouse = (await upgrades.deployProxy(GrassHouse, [
       xalpaca.address,
@@ -123,7 +121,7 @@ describe("AlpacaFeeder - Integration test", () => {
       executeTime
     );
 
-    // console.log("Deploy AlpacaFeeder");
+    // Deploy AlpacaFeeder
     const AlpacaFeeder = (await ethers.getContractFactory("AlpacaFeeder", deployer)) as AlpacaFeeder__factory;
     alpacaFeeder = (await upgrades.deployProxy(AlpacaFeeder, [
       alpaca.address,
@@ -140,6 +138,7 @@ describe("AlpacaFeeder - Integration test", () => {
       .add(timeHelpers.duration.days(BigNumber.from(2)))
       .toNumber();
 
+    // Connect workers by deployer
     worker = CakeMaxiWorker02__factory.connect(CAKEMAXI_WORKER, deployer);
     mdexWorker = MdexWorker02__factory.connect(MDEX_WORKER, deployer);
     pcsWorker = PancakeswapV2Worker02__factory.connect(PCS_WORKER, deployer);
@@ -242,31 +241,25 @@ describe("AlpacaFeeder - Integration test", () => {
   describe("AlpacaFeeder", () => {
     context("when CakeMaxi worker is triggered reinvest", () => {
       it("should send alpaca to AlpacaFeeder(CakeMaxi)", async () => {
-        console.log("reinvest CakeMaxi");
         const balance = await alpaca.balanceOf(alpacaFeeder.address);
-        console.log(formatEther(balance.toString()));
+        expect(balance).to.be.eq(0);
         await worker.reinvest();
-        console.log(formatEther(await (await alpaca.balanceOf(alpacaFeeder.address)).toString()));
         expect(await alpaca.balanceOf(alpacaFeeder.address)).to.be.gt(balance);
       });
     });
     context("when Mdex worker is triggered reinvest", () => {
       it("should send alpaca to AlpacaFeeder(Mdex)", async () => {
-        console.log("reinvest mdex");
         const balance = await alpaca.balanceOf(alpacaFeeder.address);
-        console.log(formatEther(balance.toString()));
+        expect(balance).to.be.eq(0);
         await mdexWorker.reinvest();
-        console.log(formatEther(await (await alpaca.balanceOf(alpacaFeeder.address)).toString()));
         expect(await alpaca.balanceOf(alpacaFeeder.address)).to.be.gt(balance);
       });
     });
     context("when PCS worker is triggered reinvest", () => {
       it("should send alpaca to AlpacaFeeder(PCS)", async () => {
-        console.log("reinvest pcs");
         const balance = await alpaca.balanceOf(alpacaFeeder.address);
-        console.log(formatEther(balance.toString()));
+        expect(balance).to.be.eq(0);
         await pcsWorker.reinvest();
-        console.log(formatEther(await (await alpaca.balanceOf(alpacaFeeder.address)).toString()));
         expect(await alpaca.balanceOf(alpacaFeeder.address)).to.be.gt(balance);
       });
     });
