@@ -11,7 +11,7 @@ The following assumes the use of `node@>=14`.
 ### Compile Contracts
 `yarn compile`
 
-### Run Tests
+### Run Unit Tests
 `yarn test`
 
 ### Run Integration Tests
