@@ -9,10 +9,10 @@ import {
   MockContractContext__factory,
   XALPACA,
   XALPACA__factory,
-} from "../typechain";
-import * as timeHelpers from "./helpers/time";
-import * as assertHelpers from "./helpers/assert";
-import * as mathHelpers from "./helpers/math";
+} from "../../typechain";
+import * as timeHelpers from "../helpers/time";
+import * as assertHelpers from "../helpers/assert";
+import * as mathHelpers from "../helpers/math";
 
 chai.use(solidity);
 const { expect } = chai;

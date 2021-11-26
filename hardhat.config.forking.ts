@@ -17,14 +17,9 @@ module.exports = {
       allowUnlimitedContractSize: true,
       timeout: 1800000,
       accounts: { mnemonic: "test test test test test test test test test test test junk" },
-    },
-    testnet: {
-      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
-      accounts: [process.env.BSC_TESTNET_PRIVATE_KEY],
-    },
-    mainnet: {
-      url: process.env.BSC_MAINNET_RPC,
-      accounts: [process.env.BSC_MAINNET_PRIVATE_KEY],
+      forking: {
+        url: process.env.BSC_MAINNET_FORK_RPC,
+      },
     },
   },
   namedAccounts: {
@@ -43,7 +38,7 @@ module.exports = {
   },
   paths: {
     sources: "./contracts/8.7",
-    tests: "./tests/unit",
+    tests: "./tests/integration",
     cache: "./cache",
     artifacts: "./artifacts",
   },
@@ -52,6 +47,6 @@ module.exports = {
     target: "ethers-v5",
   },
   mocha: {
-    timeout: 50000,
+    timeout: 100000,
   },
 };
