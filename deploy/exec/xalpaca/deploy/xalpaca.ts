@@ -7,11 +7,6 @@ import { BEP20, BEP20__factory, XALPACA__factory, XALPACA } from "../../../../ty
 
 
 const func: DeployFunction = async function(hre: HardhatRuntimeEnvironment){
-    // let ALPACA : BEP20
-
-    // const BEP20 = (await ethers.getContractFactory("BEP20", (await ethers.getSigners())[0])) as BEP20__factory;
-    // ALPACA = await BEP20.deploy("ALPACA", "ALPACA");
-
     const alpacaAddress = '0x616f8604955B661920041E618A2a59cD1fF1B911'
     
     const XALPACA = (await ethers.getContractFactory(
