@@ -11,8 +11,17 @@ The following assumes the use of `node@>=14`.
 ### Compile Contracts
 `yarn compile`
 
-### Run Tests
+### Run Unit Tests
 `yarn test`
+
+### Run Integration Tests
+`yarn integration-test`
+
+#### specific integration test
+```
+yarn integration-test:feeder-fairlaunch
+yarn integration-test:feeder-worker
+```
 
 ## Licensing
 The primary license for Alpaca Protocol is the MIT License, see [MIT LICENSE](https://github.com/alpaca-finance/xALPACA/blob/main/LICENSE).
