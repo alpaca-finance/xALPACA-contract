@@ -434,7 +434,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     _checkpoint(_for, _prevLocked, _newLocked);
 
     if (_amount != 0) {
-      token.safeTransferFrom(_for, address(this), _amount);
+      token.safeTransferFrom(msg.sender, address(this), _amount);
     }
 
     emit LogDeposit(_for, _amount, _newLocked.end, _actionType, block.timestamp);
