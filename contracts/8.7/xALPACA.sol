@@ -90,7 +90,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   /// @notice BEP20 compatible variables
   string public name;
   string public symbol;
-  uint256 public decimals;
+  uint8 public decimals;
 
   /// @notice Initialize xALPACA
   /// @param _token The address of ALPACA token
@@ -357,7 +357,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
       if (_newLocked.end > block.timestamp) {
         if (_newLocked.end > _prevLocked.end) {
           // At this line, the old slope should gone
-          _newSlopeDelta = _newSlopeDelta - _userNewPoint.slope; 
+          _newSlopeDelta = _newSlopeDelta - _userNewPoint.slope;
           slopeChanges[_newLocked.end] = _newSlopeDelta;
         }
       }
