@@ -19,7 +19,12 @@ module.exports = {
       accounts: { mnemonic: "test test test test test test test test test test test junk" },
       forking: {
         url: process.env.BSC_MAINNET_FORK_RPC,
+        blockNumber: 12600043,
       },
+    },
+    mainnetfork: {
+      url: "http://127.0.0.1:8545",
+      accounts: [process.env.BSC_MAINNET_PRIVATE_KEY],
     },
   },
   namedAccounts: {
