@@ -127,6 +127,19 @@ describe("AlpacaFeeder", () => {
         ])).to.be.revertedWith("!same stakeToken");
       });
     });
+
+    describe("if grasshouse's reward token did not match ", async () => {
+      it("should revert", async () => {
+        const AlpacaFeeder = (await ethers.getContractFactory("AlpacaFeeder", deployer)) as AlpacaFeeder__factory;
+        await expect(upgrades.deployProxy(AlpacaFeeder, [
+          proxyToken.address,
+          proxyToken.address,
+          fairLaunch.address,
+          FAIR_LAUNCH_POOL_ID,
+          grassHouse.address,
+        ])).to.be.revertedWith("!same rewardToken");
+      });
+    });
   });
 
   describe("#fairLaunchDeposit", async () => {

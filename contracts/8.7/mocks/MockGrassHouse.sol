@@ -22,7 +22,7 @@ import "../SafeToken.sol";
 // solhint-disable-next-line contract-name-camelcase
 contract MockGrassHouse is IGrassHouse {
   using SafeToken for address;
-  address public rewardToken;
+  address public override rewardToken;
 
   /// @notice Constructor to instaniate MockGrassHouse
   /// @param _rewardToken The token to be distributed
