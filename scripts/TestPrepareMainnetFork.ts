@@ -1,7 +1,5 @@
 import { BigNumber } from "ethers";
 import { ethers, network, upgrades } from "hardhat";
-import { DeployFunction } from "hardhat-deploy/dist/types";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 import {
   BEP20,
   BEP20__factory,
@@ -10,6 +8,7 @@ import {
   GrassHouse__factory,
   ProxyToken,
   AlpacaFeeder,
+  XALPACA,
 } from "../typechain";
 import * as timeHelpers from "../tests/helpers/time";
 import * as addresses from "../tests/constants/addresses";
@@ -19,16 +18,12 @@ import {
   FairLaunch,
   AlpacaToken,
   AlpacaToken__factory,
-  CakeMaxiWorker02,
-  PancakeswapV2Worker02,
-  CakeMaxiWorker02__factory,
-  PancakeswapV2Worker02__factory,
 } from "@alpaca-finance/alpaca-contract/typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { TimelockHelper } from "../tests/helpers/timelock";
 import * as deployHelper from "../tests/helpers/deploy";
 
-const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+async function main() {
   // Token
   let DTOKEN: BEP20;
   let BTOKEN: BEP20;
@@ -41,55 +36,53 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   let grassHouseDTOKEN: GrassHouse;
   let grassHouseAlpaca: GrassHouse;
   let alpacaFeeder: AlpacaFeeder;
-
-  // Signer
-  let deployer: SignerWithAddress;
+  let xALPACA: XALPACA;
 
   let poolId: BigNumber;
-
-  await network.provider.request({
-    method: "hardhat_impersonateAccount",
-    params: [addresses.DEPLOYER],
-  });
-  deployer = await ethers.getSigner(addresses.DEPLOYER);
+  const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+  await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
+  const signer = provider.getSigner(addresses.DEPLOYER);
+  const deployer = await SignerWithAddress.create(signer);
+  console.log(deployer);
 
   // Deploy DTOKEN, BTOKEN, ALPACATOKEN
   const BEP20 = (await ethers.getContractFactory("BEP20", deployer)) as BEP20__factory;
   DTOKEN = await BEP20.deploy("DTOKEN", "DTOKEN");
-  await DTOKEN.mint(deployer.address, ethers.utils.parseEther("888888888888888"));
+  await DTOKEN.mint(await deployer.getAddress(), ethers.utils.parseEther("888888888888888"));
 
   BTOKEN = await BEP20.deploy("BTOKEN", "BTOKEN");
-  await BTOKEN.mint(deployer.address, ethers.utils.parseEther("888888888888888"));
+  await BTOKEN.mint(await deployer.getAddress(), ethers.utils.parseEther("888888888888888"));
 
   alpacaToken = await AlpacaToken__factory.connect(addresses.ALPACA, deployer);
 
-  // Deploy XAlpaca
+  // Deploy xALPACA
   const XALPACA = (await ethers.getContractFactory("xALPACA", deployer)) as XALPACA__factory;
-  const xAlpaca = await XALPACA.deploy();
+  xALPACA = (await upgrades.deployProxy(XALPACA, [addresses.ALPACA])) as XALPACA;
+  await xALPACA.deployed();
 
   // Deploy GrassHouse
   const GrassHouse = (await ethers.getContractFactory("GrassHouse", deployer)) as GrassHouse__factory;
   grassHouseDTOKEN = (await upgrades.deployProxy(GrassHouse, [
-    xAlpaca.address,
+    xALPACA.address,
     await timeHelpers.latestTimestamp(),
     DTOKEN.address,
-    deployer.address,
+    await deployer.getAddress(),
   ])) as GrassHouse;
   await grassHouseDTOKEN.deployed();
 
   grassHouseAlpaca = (await upgrades.deployProxy(GrassHouse, [
-    xAlpaca.address,
+    xALPACA.address,
     await timeHelpers.latestTimestamp(),
     addresses.ALPACA,
-    deployer.address,
+    await deployer.getAddress(),
   ])) as GrassHouse;
   await grassHouseDTOKEN.deployed();
 
   // feed token to feeder
-  await DTOKEN.approve(grassHouseDTOKEN.address, ethers.constants.MaxUint256);
-  await alpacaToken.approve(grassHouseDTOKEN.address, ethers.constants.MaxUint256);
-  await grassHouseDTOKEN.feed(ethers.utils.parseEther("100"));
-  await grassHouseAlpaca.feed(ethers.utils.parseEther("100"));
+  // await DTOKEN.approve(grassHouseDTOKEN.address, ethers.constants.MaxUint256);
+  // await alpacaToken.approve(grassHouseDTOKEN.address, ethers.constants.MaxUint256);
+  // await grassHouseDTOKEN.feed(ethers.utils.parseEther("100"));
+  // await grassHouseAlpaca.feed(ethers.utils.parseEther("100"));
 
   const timelock = await Timelock__factory.connect(addresses.TIME_LOCK, deployer);
   fairlaunch = await FairLaunch__factory.connect(addresses.FAIR_LAUNCH, deployer);
@@ -105,14 +98,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("alpacaFeeder address: ", alpacaFeeder.address);
 
   const poolIdAfterAdded = await timelockHelper.addFairLaunchPool(100, proxyToken.address, false);
-  console.log("poolId proxyToken: ", ethers.utils.formatEther(poolIdAfterAdded));
+  console.log("poolId: ", ethers.utils.formatEther(poolIdAfterAdded));
 
   await proxyToken.setOkHolders([alpacaFeeder.address, fairlaunch.address], true);
   await proxyToken.transferOwnership(alpacaFeeder.address);
 
+  // Deposit proxyToken to fairlaunch
+  await alpacaFeeder.fairLaunchDeposit();
+
   // Prepare Workers
   // Set execute time
-  const executeTime = (await timeHelpers.latestTimestamp()).toNumber();
+  const executeTime = (await timeHelpers.latestTimestamp())
+    .add(timeHelpers.duration.days(BigNumber.from(2)))
+    .toNumber();
 
   // Set reinvest whitelist
   // CakeMaxiWorker
@@ -201,13 +199,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     executeTime
   );
 
-  xAlpaca.initialize(addresses.ALPACA);
+  xALPACA.initialize(addresses.ALPACA);
   console.log("DTOKEN address: ", DTOKEN.address);
-  console.log("xAlpaca address: ", xAlpaca.address);
+  console.log("BTOKEN address: ", BTOKEN.address);
+  console.log("ALPACA address: ", alpacaToken.address);
+  console.log("xAlpaca address: ", xALPACA.address);
   console.log("GrassHouse address: ", grassHouseDTOKEN.address);
   console.log("AlpacaFeeder address: ", alpacaFeeder.address);
   console.log("✅ Done");
-};
+}
 
-export default func;
-func.tags = ["TestPrepareMainnetFork"];
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

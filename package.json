@@ -18,11 +18,12 @@
     "testnet": "hardhat console --no-compile --network testnet",
     "integration-test:feeder-fairlaunch": "hardhat test --no-compile ./tests/integration/AlpacaFeederWithFairLaunch.test.ts --config hardhat.config.forking.ts",
     "integration-test:feeder-worker": "hardhat test --no-compile ./tests/integration/AlpacaFeederWithWorker.test.ts --config hardhat.config.forking.ts",
-    "mainnet-fork": "hardhat node --show-stack-traces --config hardhat.config.forking.ts",
     "coverage": "hardhat coverage",
     "solhint": "./node_modules/.bin/solhint -f table contracts/**/*.sol",
     "prettier:solidity": "./node_modules/.bin/prettier --write contracts/**/*.sol",
-    "deploy:mainnetfork:000:xalpaca": "hardhat deploy --network mainnetfork --reset --tags TestPrepareMainnetFork --config hardhat.config.forking.ts"
+    "mainnet-fork": "hardhat node --show-stack-traces --config hardhat.config.forking.ts",
+    "script:mainnetfork:000:prepare-test": "hardhat run --network mainnetfork ./scripts/TestPrepareMainnetFork.ts --config hardhat.config.forking.ts --show-stack-traces",
+    "script:mainnetfork:001:advance-time": "hardhat run --network mainnetfork ./scripts/AdvanceTime.ts --config hardhat.config.forking.ts"
   },
   "devDependencies": {
     "@alpaca-finance/alpaca-contract": "1.2.23",

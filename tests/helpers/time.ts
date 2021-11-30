@@ -37,6 +37,19 @@ export async function increaseTimestamp(duration: BigNumber) {
   await advanceBlock();
 }
 
+export async function advanceTimestampAndBlock(duration: BigNumber) {
+  if (duration.isNegative()) throw Error(`Cannot increase time by a negative amount (${duration})`);
+
+  await ethers.provider.send("evm_increaseTime", [duration.toNumber()]);
+
+  const blockToAdvance = duration.div(3).toNumber();
+
+  for (let i = 0; i < blockToAdvance; i++) {
+    await advanceBlock();
+    i++;
+  }
+}
+
 export const duration = {
   seconds: function (val: BigNumber): BigNumber {
     return val;
