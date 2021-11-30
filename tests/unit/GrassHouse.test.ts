@@ -311,7 +311,7 @@ describe("GrassHouse", () => {
         const lastTokenTimestamp = await grassHouse.lastTokenTimestamp();
 
         await ALPACA.approve(grassHouse.address, ethers.constants.MaxUint256);
-        await grassHouse.feed(ethers.utils.parseEther("100"));
+        expect(await grassHouse.feed(ethers.utils.parseEther("100"))).to.be.emit(grassHouse, "LogFeed");
 
         expect(await ALPACA.balanceOf(grassHouse.address)).to.be.eq(ethers.utils.parseEther("100"));
         expect(await grassHouse.lastTokenTimestamp()).to.be.eq(lastTokenTimestamp);
@@ -326,7 +326,7 @@ describe("GrassHouse", () => {
           await grassHouse.setCanCheckpointToken(true);
           await timeHelpers.increaseTimestamp(TOKEN_CHECKPOINT_DEADLINE);
           await ALPACA.approve(grassHouse.address, ethers.constants.MaxUint256);
-          await grassHouse.feed(ethers.utils.parseEther("100"));
+          expect(await grassHouse.feed(ethers.utils.parseEther("100"))).to.be.emit(grassHouse, "LogFeed");
 
           expect(await ALPACA.balanceOf(grassHouse.address)).to.be.eq(ethers.utils.parseEther("100"));
           expect(await grassHouse.lastTokenTimestamp()).to.be.gt(lastTokenTimestamp);
@@ -343,7 +343,7 @@ describe("GrassHouse", () => {
 
           await grassHouse.setCanCheckpointToken(true);
           await ALPACA.approve(grassHouse.address, ethers.constants.MaxUint256);
-          await grassHouse.feed(feedAmount);
+          expect(await grassHouse.feed(feedAmount)).to.be.emit(grassHouse, "LogFeed");
 
           let weekCursor = startWeekCursor;
           for (let i = 0; i < 20; i++) {

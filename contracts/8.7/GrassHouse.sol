@@ -32,6 +32,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
 
   /// @dev Events
   event LogSetCanCheckpointToken(bool _toggleFlag);
+  event LogFeed(uint256 _amount);
   event LogCheckpointToken(uint256 _timestamp, uint256 _tokens);
   event LogClaimed(address indexed _recipient, uint256 _amount, uint256 _claimEpoch, uint256 _maxEpoch);
   event LogKilled();
@@ -374,6 +375,9 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
     if (canCheckpointToken && (block.timestamp > lastTokenTimestamp + TOKEN_CHECKPOINT_DEADLINE)) {
       _checkpointToken();
     }
+
+    emit LogFeed(_amount);
+    
     return true;
   }
 
