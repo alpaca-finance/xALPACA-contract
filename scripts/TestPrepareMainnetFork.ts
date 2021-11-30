@@ -43,7 +43,6 @@ async function main() {
   await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
   const signer = provider.getSigner(addresses.DEPLOYER);
   const deployer = await SignerWithAddress.create(signer);
-  console.log(deployer);
 
   // Deploy DTOKEN, BTOKEN, ALPACATOKEN
   const BEP20 = (await ethers.getContractFactory("BEP20", deployer)) as BEP20__factory;

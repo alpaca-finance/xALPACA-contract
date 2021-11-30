@@ -6,6 +6,8 @@ export const DAY = ethers.BigNumber.from(86400);
 export const WEEK = DAY.mul(7);
 export const YEAR = DAY.mul(365);
 
+const SEC_PER_BLOCK = 3;
+
 export function timestampFloorWeek(t: BigNumberish): BigNumber {
   const bt = BigNumber.from(t);
   return bt.div(WEEK).mul(WEEK);
@@ -42,7 +44,7 @@ export async function advanceTimestampAndBlock(duration: BigNumber) {
 
   await ethers.provider.send("evm_increaseTime", [duration.toNumber()]);
 
-  const blockToAdvance = duration.div(3).toNumber();
+  const blockToAdvance = duration.div(SEC_PER_BLOCK).toNumber();
 
   for (let i = 0; i < blockToAdvance; i++) {
     await advanceBlock();
