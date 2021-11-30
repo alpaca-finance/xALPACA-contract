@@ -19,6 +19,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
 import "./interfaces/IBEP20.sol";
 
@@ -111,7 +112,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   }
 
   modifier onlyEOA() {
-    require(tx.origin == msg.sender, "only EOA");
+    require(!AddressUpgradeable.isContract(msg.sender) && tx.origin == msg.sender, "only EOA");
     _;
   }
 
