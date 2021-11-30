@@ -60,6 +60,11 @@ contract AlpacaFeeder is IVault, Initializable, OwnableUpgradeable {
     fairLaunchPoolId = _fairLaunchPoolId;
     fairLaunch = IFairLaunch(_fairLaunchAddress);
     grassHouse = IGrassHouse(_grasshouseAddress);
+    
+    (address _stakeToken, , , ,) = fairLaunch.poolInfo(fairLaunchPoolId);
+    
+    require(_stakeToken == _proxyToken, "!same stakeToken");
+    require(grassHouse.rewardToken() == _token, "!same rewardToken");
 
     proxyToken.safeApprove(_fairLaunchAddress, type(uint256).max);
   }

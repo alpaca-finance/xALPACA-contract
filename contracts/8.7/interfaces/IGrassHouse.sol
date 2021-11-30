@@ -14,5 +14,6 @@ Alpaca Fin Corporation
 pragma solidity 0.8.7;
 
 interface IGrassHouse {
+  function rewardToken() external returns (address);
   function feed(uint256 _amount) external returns (bool);
 }

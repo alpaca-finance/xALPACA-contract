@@ -19,6 +19,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
 import "./interfaces/IBEP20.sol";
 
@@ -103,7 +104,6 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     pointHistory.push(Point({ bias: 0, slope: 0, timestamp: block.timestamp, blockNumber: block.number }));
 
     uint8 _decimals = IBEP20(_token).decimals();
-    require(_decimals <= 255, "bad decimals");
     decimals = _decimals;
 
     name = "xALPACA";
@@ -111,7 +111,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   }
 
   modifier onlyEOA() {
-    require(tx.origin == msg.sender, "only EOA");
+    require(!AddressUpgradeable.isContract(msg.sender) && tx.origin == msg.sender, "only EOA");
     _;
   }
 
@@ -243,8 +243,8 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
 
     // Handle global states here
     Point memory _lastPoint = Point({ bias: 0, slope: 0, timestamp: block.timestamp, blockNumber: block.number });
-    if (epoch > 0) {
-      // If epoch > 0, then there is some history written
+    if (_epoch > 0) {
+      // If _epoch > 0, then there is some history written
       // Hence, _lastPoint should be pointHistory[_epoch]
       // else _lastPoint should an empty point
       _lastPoint = pointHistory[_epoch];
@@ -606,7 +606,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     _lock.amount = 0;
     locks[msg.sender] = _lock;
     uint256 _supplyBefore = supply;
-    supply = supply.sub(amount);
+    supply = _supplyBefore.sub(amount);
 
     // _prevLock can have either block.timstamp >= _lock.end or zero end
     // _lock has only 0 end
