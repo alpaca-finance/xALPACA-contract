@@ -244,8 +244,8 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
 
     // Handle global states here
     Point memory _lastPoint = Point({ bias: 0, slope: 0, timestamp: block.timestamp, blockNumber: block.number });
-    if (epoch > 0) {
-      // If epoch > 0, then there is some history written
+    if (_epoch > 0) {
+      // If _epoch > 0, then there is some history written
       // Hence, _lastPoint should be pointHistory[_epoch]
       // else _lastPoint should an empty point
       _lastPoint = pointHistory[_epoch];
