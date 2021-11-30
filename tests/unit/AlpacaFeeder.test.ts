@@ -42,7 +42,7 @@ describe("AlpacaFeeder", () => {
 
   let feederAsAlice: AlpacaFeeder;
 
-  async function correctFixture() {
+  async function fixture() {
     [deployer, alice] = await ethers.getSigners();
     [deployerAddress, aliceAddress] = await Promise.all([deployer.getAddress(), alice.getAddress()]);
 
@@ -89,7 +89,7 @@ describe("AlpacaFeeder", () => {
   }
 
   beforeEach(async () => {
-    await waffle.loadFixture(correctFixture);
+    await waffle.loadFixture(fixture);
   });
 
   context("#initialize", () => {
