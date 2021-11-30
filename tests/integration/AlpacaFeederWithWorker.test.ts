@@ -9,9 +9,6 @@ import {
   XALPACA,
   BEP20,
   BEP20__factory,
-  XALPACA__factory,
-  GrassHouse__factory,
-  AlpacaFeeder__factory,
 } from "../../typechain";
 import {
   Timelock,
@@ -26,9 +23,8 @@ import {
   PancakeswapV2Worker02__factory,
 } from "@alpaca-finance/alpaca-contract/typechain";
 import * as timeHelpers from "../helpers/time";
-import { BigNumber, Signer } from "ethers";
+import { BigNumber } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { formatEther } from "ethers/lib/utils";
 import {
   ALPACA,
   DEPLOYER,
@@ -142,6 +138,14 @@ describe("AlpacaFeeder - Integration test", () => {
       ethers.utils.defaultAbiCoder.encode(["address[]", "bool"], [[deployer.address], true]),
       executeTime2
     );
+    // MdexWorker
+    await timelock.queueTransaction(
+      MDEX_WORKER,
+      "0",
+      "setReinvestorOk(address[],bool)",
+      ethers.utils.defaultAbiCoder.encode(["address[]", "bool"], [[deployer.address], true]),
+      executeTime2
+    );
     // set beneficial vault for worker
     // CakeMaxiWorker
     await timelock.queueTransaction(
@@ -162,6 +166,17 @@ describe("AlpacaFeeder - Integration test", () => {
       ethers.utils.defaultAbiCoder.encode(
         ["uint256", "address", "address[]"],
         [100, alpacaFeeder.address, [CAKE, WBNB, ALPACA]]
+      ),
+      executeTime2
+    );
+    // MdexWorker
+    await timelock.queueTransaction(
+      MDEX_WORKER,
+      "0",
+      "setBeneficialVaultConfig(uint256,address,address[])",
+      ethers.utils.defaultAbiCoder.encode(
+        ["uint256", "address", "address[]"],
+        [100, alpacaFeeder.address, [MDEX, BUSD, ALPACA]]
       ),
       executeTime2
     );
@@ -192,8 +207,17 @@ describe("AlpacaFeeder - Integration test", () => {
       ),
       executeTime2
     );
-    // Mdex
-    await mdexWorker.setBeneficialVaultConfig(100, alpacaFeeder.address, [MDEX, BUSD, ALPACA]);
+    // MdexWorker
+    await timelock.executeTransaction(
+      MDEX_WORKER,
+      "0",
+      "setBeneficialVaultConfig(uint256,address,address[])",
+      ethers.utils.defaultAbiCoder.encode(
+        ["uint256", "address", "address[]"],
+        [100, alpacaFeeder.address, [MDEX, BUSD, ALPACA]]
+      ),
+      executeTime2
+    );
 
     // execute set reinvest whitelist
     // CakeMaxiWorker
@@ -213,7 +237,13 @@ describe("AlpacaFeeder - Integration test", () => {
       executeTime2
     );
     // Mdex
-    await mdexWorker.setReinvestorOk([deployer.address], true);
+    await timelock.executeTransaction(
+      MDEX_WORKER,
+      "0",
+      "setReinvestorOk(address[],bool)",
+      ethers.utils.defaultAbiCoder.encode(["address[]", "bool"], [[deployer.address], true]),
+      executeTime2
+    );
   }
 
   beforeEach(async () => {
