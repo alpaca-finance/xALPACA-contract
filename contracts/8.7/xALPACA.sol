@@ -607,7 +607,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     _lock.amount = 0;
     locks[msg.sender] = _lock;
     uint256 _supplyBefore = supply;
-    supply = supply.sub(amount);
+    supply = _supplyBefore.sub(amount);
 
     // _prevLock can have either block.timstamp >= _lock.end or zero end
     // _lock has only 0 end
