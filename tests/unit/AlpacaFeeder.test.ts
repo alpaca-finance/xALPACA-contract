@@ -83,7 +83,6 @@ describe("AlpacaFeeder", () => {
 
     // Assign contract signer
     alpacaAsAlice = BEP20__factory.connect(alpaca.address, alice);
-
     feederAsAlice = AlpacaFeeder__factory.connect(feeder.address, alice);
   }
 

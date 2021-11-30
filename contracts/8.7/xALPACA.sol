@@ -90,7 +90,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   /// @notice BEP20 compatible variables
   string public name;
   string public symbol;
-  uint256 public decimals;
+  uint8 public decimals;
 
   /// @notice Initialize xALPACA
   /// @param _token The address of ALPACA token
@@ -102,7 +102,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
 
     pointHistory.push(Point({ bias: 0, slope: 0, timestamp: block.timestamp, blockNumber: block.number }));
 
-    uint256 _decimals = IBEP20(_token).decimals();
+    uint8 _decimals = IBEP20(_token).decimals();
     require(_decimals <= 255, "bad decimals");
     decimals = _decimals;
 
@@ -357,7 +357,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
       if (_newLocked.end > block.timestamp) {
         if (_newLocked.end > _prevLocked.end) {
           // At this line, the old slope should gone
-          _newSlopeDelta = _newSlopeDelta - _userNewPoint.slope; 
+          _newSlopeDelta = _newSlopeDelta - _userNewPoint.slope;
           slopeChanges[_newLocked.end] = _newSlopeDelta;
         }
       }
@@ -434,7 +434,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     _checkpoint(_for, _prevLocked, _newLocked);
 
     if (_amount != 0) {
-      token.safeTransferFrom(_for, address(this), _amount);
+      token.safeTransferFrom(msg.sender, address(this), _amount);
     }
 
     emit LogDeposit(_for, _amount, _newLocked.end, _actionType, block.timestamp);
