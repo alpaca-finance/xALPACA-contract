@@ -326,8 +326,8 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     uint256 _amount = _claim(_user, _lastTokenTimestamp);
     if (_amount != 0) {
-      rewardToken.safeTransfer(_user, _amount);
       lastTokenBalance = lastTokenBalance - _amount;
+      rewardToken.safeTransfer(_user, _amount);
     }
 
     return _amount;
