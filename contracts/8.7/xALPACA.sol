@@ -104,7 +104,6 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     pointHistory.push(Point({ bias: 0, slope: 0, timestamp: block.timestamp, blockNumber: block.number }));
 
     uint8 _decimals = IBEP20(_token).decimals();
-    require(_decimals <= 255, "bad decimals");
     decimals = _decimals;
 
     name = "xALPACA";
