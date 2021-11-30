@@ -23,5 +23,5 @@ interface IBEP20 is IERC20 {
   function symbol() external returns (string memory);
 
   /// @dev Return token's decimals
-  function decimals() external returns (uint256);
+  function decimals() external returns (uint8);
 }

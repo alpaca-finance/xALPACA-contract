@@ -8,7 +8,7 @@
     "compile": "hardhat typechain --config hardhat.config.ts",
     "mainnet": "hardhat console --no-compile --network mainnet",
     "badges": "istanbul-badges-readme --coverageDir=./",
-    "test:case": "mocha tests --require hardhat/register --extension ts -g",
+    "test:case": "mocha tests --require hardhat/register --file tests/**/* --extension ts -g",
     "test:parallel": "mocha --require hardhat/register --recursive --parallel --extension ts --exit",
     "test": "hardhat test",
     "integration-test": "hardhat test --config hardhat.config.forking.ts",

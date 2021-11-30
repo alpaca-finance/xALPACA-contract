@@ -391,7 +391,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
       if (_min >= _max) {
         break;
       }
-      uint256 _mid = (_min + _max + 2) / 2;
+      uint256 _mid = (_min + _max + 1) / 2;
       Point memory _point = IxALPACA(xALPACA).pointHistory(_mid);
       if (_point.timestamp <= _timestamp) {
         _min = _mid;
@@ -417,7 +417,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
       if (_min >= _max) {
         break;
       }
-      uint256 _mid = (_min + _max + 2) / 2;
+      uint256 _mid = (_min + _max + 1) / 2;
       Point memory _point = IxALPACA(xALPACA).userPointHistory(_user, _mid);
       if (_point.timestamp <= _timestamp) {
         _min = _mid;
