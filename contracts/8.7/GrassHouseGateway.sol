@@ -17,17 +17,9 @@ import "./interfaces/IGrassHouse.sol";
 
 /// @title GrassHouseGateway
 contract GrassHouseGateway {
-  /// @notice Libraries
-
-  /// @notice Events
-
-  /// @notice State
-
-  /// @notice Attributes for Gateway
-
   function claimMultiple(address[] calldata _grassHouses, address _for) external {
     for (uint256 i = 0; i < _grassHouses.length; i++) {
-      IGrassHouse(_grassHouses[i]).claim();
+      IGrassHouse(_grassHouses[i]).claim(_for);
     }
   }
 }
