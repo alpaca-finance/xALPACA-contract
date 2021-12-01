@@ -13,6 +13,7 @@
     "test": "hardhat test",
     "integration-test": "hardhat test --config hardhat.config.forking.ts",
     "test:feeder": "hardhat test ./tests/unit/AlpacaFeeder.test.ts",
+    "test:gateway": "hardhat test ./tests/unit/GrassHouseGateway.test.ts",
     "test:xAlpaca": "hardhat test ./tests/unit/xALPACA.test.ts",
     "test:grassHouse": "hardhat test ./tests/unit/GrassHouse.test.ts",
     "testnet": "hardhat console --no-compile --network testnet",

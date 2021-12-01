@@ -23,16 +23,26 @@ import "../SafeToken.sol";
 contract MockGrassHouse is IGrassHouse {
   using SafeToken for address;
   address public override rewardToken;
+  uint256 public rewardPerClaim;
 
   /// @notice Constructor to instaniate MockGrassHouse
   /// @param _rewardToken The token to be distributed
   constructor(address _rewardToken) {
     rewardToken = _rewardToken;
+    rewardPerClaim = 0;
   }
 
   /// @notice Receive rewardTokens into the contract and trigger token checkpoint
   function feed(uint256 _amount) external override returns (bool) {
     rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
     return true;
+  }
+
+  function setRewardPerClaim(uint256 _amount) external {
+    rewardPerClaim = _amount;
+  }
+
+  function claim(address _for) external override returns (uint256) {
+    rewardToken.safeTransfer(_for, rewardPerClaim);
   }
 }
