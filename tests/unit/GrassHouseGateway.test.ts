@@ -16,19 +16,14 @@ import {
 chai.use(solidity);
 const { expect } = chai;
 
-describe("AlpacaFeeder", () => {
-  // Constants
-  const FAIR_LAUNCH_POOL_ID = 123;
-
+describe("GrasshouseGateway", () => {
   // Contact Instance
   let alpaca: BEP20;
   let rewardToken: BEP20;
-  let proxyToken: MockProxyToken;
 
   let grassHouse: MockGrassHouse;
   let secondGrasshouse: MockGrassHouse;
   let gateway: GrassHouseGateway;
-
 
   // Accounts
   let deployer: Signer;
@@ -39,7 +34,6 @@ describe("AlpacaFeeder", () => {
 
   // Contract Signer
   let alpacaAsDeployer: BEP20;
-
   let rewardTokenAsDeployer: BEP20;
 
   let gatewayAsAlice: GrassHouseGateway;
