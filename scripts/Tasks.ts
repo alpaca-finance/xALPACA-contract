@@ -60,6 +60,19 @@ task("advance-time", "Advance timestamp and blocks")
     console.log("current timestamp(After advance): ", ethers.BigNumber.from(blockAfter.timestamp));
   });
 
+task("set-timestamp-startweek", "set timestamp to start week cursor").setAction(async ({ ethers }) => {
+  const DAY = ethers.BigNumber.from(86400);
+  const WEEK = DAY.mul(7);
+
+  const blockBefore = await ethers.provider.getBlock("latest");
+  const latestTimestamp = ethers.BigNumber.from(blockBefore.timestamp);
+  await ethers.provider.send("evm_mine", [latestTimestamp.div(WEEK).add(1).mul(WEEK).toNumber()]);
+  console.log("current timestamp(Before advance): ", ethers.BigNumber.from(blockBefore.timestamp));
+
+  const blockAfter = await ethers.provider.getBlock("latest");
+  console.log("current timestamp(After advance): ", ethers.BigNumber.from(blockAfter.timestamp));
+});
+
 task("checkpoint", "set can check point token")
   .addParam("grasshouseaddress", "address of grassHouse to be called checkpoint", "", types.string)
   .setAction(async ({ grasshouseaddress }, { ethers }) => {
