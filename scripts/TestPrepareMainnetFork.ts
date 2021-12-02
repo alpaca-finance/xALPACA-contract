@@ -26,7 +26,6 @@ import * as deployHelper from "../tests/helpers/deploy";
 async function main() {
   // Token
   let DTOKEN: BEP20;
-  let BTOKEN: BEP20;
   let alpacaToken: AlpacaToken;
   let proxyToken: ProxyToken;
 
@@ -44,13 +43,10 @@ async function main() {
   const signer = provider.getSigner(addresses.DEPLOYER);
   const deployer = await SignerWithAddress.create(signer);
 
-  // Deploy DTOKEN, BTOKEN, ALPACATOKEN
+  // Deploy DTOKEN, ALPACATOKEN
   const BEP20 = (await ethers.getContractFactory("BEP20", deployer)) as BEP20__factory;
   DTOKEN = await BEP20.deploy("DTOKEN", "DTOKEN");
   await DTOKEN.mint(await deployer.getAddress(), ethers.utils.parseEther("888888888888888"));
-
-  BTOKEN = await BEP20.deploy("BTOKEN", "BTOKEN");
-  await BTOKEN.mint(await deployer.getAddress(), ethers.utils.parseEther("888888888888888"));
 
   alpacaToken = await AlpacaToken__factory.connect(addresses.ALPACA, deployer);
 
@@ -77,12 +73,6 @@ async function main() {
   ])) as GrassHouse;
   await grassHouseDTOKEN.deployed();
 
-  // feed token to feeder
-  // await DTOKEN.approve(grassHouseDTOKEN.address, ethers.constants.MaxUint256);
-  // await alpacaToken.approve(grassHouseDTOKEN.address, ethers.constants.MaxUint256);
-  // await grassHouseDTOKEN.feed(ethers.utils.parseEther("100"));
-  // await grassHouseAlpaca.feed(ethers.utils.parseEther("100"));
-
   const timelock = await Timelock__factory.connect(addresses.TIME_LOCK, deployer);
   fairlaunch = await FairLaunch__factory.connect(addresses.FAIR_LAUNCH, deployer);
   timelockHelper = new TimelockHelper(timelock, fairlaunch);
@@ -90,14 +80,16 @@ async function main() {
 
   // Deploy proxy token
   proxyToken = await deployHelper.deployProxyToken(deployer);
-  console.log("proxyToken address: ", proxyToken.address);
-
-  // Deploy alpacaFeeder
-  alpacaFeeder = await deployHelper.deployAlpacaFeeder(deployer, proxyToken.address, poolId, proxyToken.address);
-  console.log("alpacaFeeder address: ", alpacaFeeder.address);
 
   const poolIdAfterAdded = await timelockHelper.addFairLaunchPool(100, proxyToken.address, false);
-  console.log("poolId: ", ethers.utils.formatEther(poolIdAfterAdded));
+
+  // Deploy alpacaFeeder
+  alpacaFeeder = await deployHelper.deployAlpacaFeeder(
+    deployer,
+    proxyToken.address,
+    poolIdAfterAdded,
+    grassHouseAlpaca.address
+  );
 
   await proxyToken.setOkHolders([alpacaFeeder.address, fairlaunch.address], true);
   await proxyToken.transferOwnership(alpacaFeeder.address);
@@ -199,13 +191,13 @@ async function main() {
   );
 
   xALPACA.initialize(addresses.ALPACA);
+  console.log("ProxyToken address: ", proxyToken.address);
   console.log("DTOKEN address: ", DTOKEN.address);
-  console.log("BTOKEN address: ", BTOKEN.address);
   console.log("ALPACA address: ", alpacaToken.address);
   console.log("xAlpaca address: ", xALPACA.address);
   console.log("GrassHouse address: ", grassHouseDTOKEN.address);
-  console.log("alpacaGrassHouse address: ", grassHouseAlpaca.address);
-  console.log("AlpacaFeeder address: ", alpacaFeeder.address);
+  console.log("Alpaca GrassHouse address: ", grassHouseAlpaca.address);
+  console.log("Alpaca Feeder address: ", alpacaFeeder.address);
   console.log("✅ Done");
 }
 
