@@ -32,6 +32,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
 
   /// @dev Events
   event LogSetCanCheckpointToken(bool _toggleFlag);
+  event LogFeed(uint256 _amount);
   event LogCheckpointToken(uint256 _timestamp, uint256 _tokens);
   event LogClaimed(address indexed _recipient, uint256 _amount, uint256 _claimEpoch, uint256 _maxEpoch);
   event LogKilled();
@@ -326,8 +327,8 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     uint256 _amount = _claim(_user, _lastTokenTimestamp);
     if (_amount != 0) {
-      rewardToken.safeTransfer(_user, _amount);
       lastTokenBalance = lastTokenBalance - _amount;
+      rewardToken.safeTransfer(_user, _amount);
     }
 
     return _amount;
@@ -374,6 +375,9 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
     if (canCheckpointToken && (block.timestamp > lastTokenTimestamp + TOKEN_CHECKPOINT_DEADLINE)) {
       _checkpointToken();
     }
+
+    emit LogFeed(_amount);
+    
     return true;
   }
 
@@ -387,7 +391,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
       if (_min >= _max) {
         break;
       }
-      uint256 _mid = (_min + _max + 2) / 2;
+      uint256 _mid = (_min + _max + 1) / 2;
       Point memory _point = IxALPACA(xALPACA).pointHistory(_mid);
       if (_point.timestamp <= _timestamp) {
         _min = _mid;
@@ -413,7 +417,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
       if (_min >= _max) {
         break;
       }
-      uint256 _mid = (_min + _max + 2) / 2;
+      uint256 _mid = (_min + _max + 1) / 2;
       Point memory _point = IxALPACA(xALPACA).userPointHistory(_user, _mid);
       if (_point.timestamp <= _timestamp) {
         _min = _mid;

@@ -20,7 +20,7 @@ const { expect } = chai;
 
 describe("AlpacaFeeder", () => {
   // Constants
-  const FAIR_LAUNCH_POOL_ID = 123;
+  const FAIR_LAUNCH_POOL_ID = 0;
 
   // Contact Instance
   let alpaca: BEP20;
@@ -59,6 +59,8 @@ describe("AlpacaFeeder", () => {
     const MockFairLaunch = (await ethers.getContractFactory("MockFairLaunch", deployer)) as MockFairLaunch__factory;
     fairLaunch = await MockFairLaunch.deploy(alpaca.address, proxyToken.address);
 
+    await fairLaunch.addPool(proxyToken.address);
+
     // Deploy GrassHouse
     const MockGrassHouse = (await ethers.getContractFactory("MockGrassHouse", deployer)) as MockGrassHouse__factory;
     grassHouse = await MockGrassHouse.deploy(alpaca.address);
@@ -83,7 +85,6 @@ describe("AlpacaFeeder", () => {
 
     // Assign contract signer
     alpacaAsAlice = BEP20__factory.connect(alpaca.address, alice);
-
     feederAsAlice = AlpacaFeeder__factory.connect(feeder.address, alice);
   }
 
@@ -91,12 +92,53 @@ describe("AlpacaFeeder", () => {
     await waffle.loadFixture(fixture);
   });
 
-  describe("#initialize", () => {
-    it("should initialized correctly", async () => {
-      expect(await feeder.owner()).to.be.eq(deployerAddress);
-      expect(await feeder.fairLaunch()).to.be.eq(fairLaunch.address);
-      expect(await feeder.grassHouse()).to.be.eq(grassHouse.address);
-      expect(await feeder.proxyToken()).to.be.eq(proxyToken.address);
+  context("#initialize", () => {
+    describe("if initialized correctly", async () => {
+      it("should work", async () => {
+        expect(await feeder.owner()).to.be.eq(deployerAddress);
+        expect(await feeder.fairLaunch()).to.be.eq(fairLaunch.address);
+        expect(await feeder.grassHouse()).to.be.eq(grassHouse.address);
+        expect(await feeder.proxyToken()).to.be.eq(proxyToken.address);
+      });
+    });
+    describe("if fairlaunch's pool id has not been set", async () => {
+      it("should revert", async () => {
+        const AlpacaFeeder = (await ethers.getContractFactory("AlpacaFeeder", deployer)) as AlpacaFeeder__factory;
+        await expect(upgrades.deployProxy(AlpacaFeeder, [
+          alpaca.address,
+          proxyToken.address,
+          fairLaunch.address,
+          1,
+          grassHouse.address,
+        ])).to.be.revertedWith("Address: low-level delegate call failed");
+      });
+    });
+
+    describe("if fairlaunch's pool stakeToken did not match ", async () => {
+      it("should revert", async () => {
+        await fairLaunch.addPool(grassHouse.address);
+        const AlpacaFeeder = (await ethers.getContractFactory("AlpacaFeeder", deployer)) as AlpacaFeeder__factory;
+        await expect(upgrades.deployProxy(AlpacaFeeder, [
+          alpaca.address,
+          proxyToken.address,
+          fairLaunch.address,
+          1,
+          grassHouse.address,
+        ])).to.be.revertedWith("!same stakeToken");
+      });
+    });
+
+    describe("if grasshouse's reward token did not match ", async () => {
+      it("should revert", async () => {
+        const AlpacaFeeder = (await ethers.getContractFactory("AlpacaFeeder", deployer)) as AlpacaFeeder__factory;
+        await expect(upgrades.deployProxy(AlpacaFeeder, [
+          proxyToken.address,
+          proxyToken.address,
+          fairLaunch.address,
+          FAIR_LAUNCH_POOL_ID,
+          grassHouse.address,
+        ])).to.be.revertedWith("!same rewardToken");
+      });
     });
   });
 

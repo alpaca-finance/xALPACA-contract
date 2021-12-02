@@ -19,6 +19,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
 import "./interfaces/IBEP20.sol";
 
@@ -90,7 +91,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   /// @notice BEP20 compatible variables
   string public name;
   string public symbol;
-  uint256 public decimals;
+  uint8 public decimals;
 
   /// @notice Initialize xALPACA
   /// @param _token The address of ALPACA token
@@ -102,8 +103,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
 
     pointHistory.push(Point({ bias: 0, slope: 0, timestamp: block.timestamp, blockNumber: block.number }));
 
-    uint256 _decimals = IBEP20(_token).decimals();
-    require(_decimals <= 255, "bad decimals");
+    uint8 _decimals = IBEP20(_token).decimals();
     decimals = _decimals;
 
     name = "xALPACA";
@@ -111,7 +111,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   }
 
   modifier onlyEOA() {
-    require(tx.origin == msg.sender, "only EOA");
+    require(!AddressUpgradeable.isContract(msg.sender) && tx.origin == msg.sender, "only EOA");
     _;
   }
 
@@ -243,8 +243,8 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
 
     // Handle global states here
     Point memory _lastPoint = Point({ bias: 0, slope: 0, timestamp: block.timestamp, blockNumber: block.number });
-    if (epoch > 0) {
-      // If epoch > 0, then there is some history written
+    if (_epoch > 0) {
+      // If _epoch > 0, then there is some history written
       // Hence, _lastPoint should be pointHistory[_epoch]
       // else _lastPoint should an empty point
       _lastPoint = pointHistory[_epoch];
@@ -357,7 +357,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
       if (_newLocked.end > block.timestamp) {
         if (_newLocked.end > _prevLocked.end) {
           // At this line, the old slope should gone
-          _newSlopeDelta = _newSlopeDelta - _userNewPoint.slope; 
+          _newSlopeDelta = _newSlopeDelta - _userNewPoint.slope;
           slopeChanges[_newLocked.end] = _newSlopeDelta;
         }
       }
@@ -434,7 +434,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     _checkpoint(_for, _prevLocked, _newLocked);
 
     if (_amount != 0) {
-      token.safeTransferFrom(_for, address(this), _amount);
+      token.safeTransferFrom(msg.sender, address(this), _amount);
     }
 
     emit LogDeposit(_for, _amount, _newLocked.end, _actionType, block.timestamp);
@@ -606,7 +606,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     _lock.amount = 0;
     locks[msg.sender] = _lock;
     uint256 _supplyBefore = supply;
-    supply = supply.sub(amount);
+    supply = _supplyBefore.sub(amount);
 
     // _prevLock can have either block.timstamp >= _lock.end or zero end
     // _lock has only 0 end

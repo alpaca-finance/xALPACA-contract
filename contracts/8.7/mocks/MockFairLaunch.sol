@@ -20,14 +20,37 @@ import "../SafeToken.sol";
 contract MockFairLaunch is IFairLaunch {
   using SafeToken for address;
 
+  // Info of each pool.
+  struct PoolInfo {
+    address stakeToken; // Address of Staking token contract.
+    uint256 allocPoint; // How many allocation points assigned to this pool. ALPACAs to distribute per block.
+    uint256 lastRewardBlock; // Last block number that ALPACAs distribution occurs.
+    uint256 accAlpacaPerShare; // Accumulated ALPACAs per share, times 1e12. See below.
+    uint256 accAlpacaPerShareTilBonusEnd; // Accumated ALPACAs per share until Bonus End.
+  }
+
   // The Alpaca TOKEN!
   address public alpaca;
   address public proxyToken;
   uint256 public constant DEFAULT_HARVEST_AMOUNT = 10 * 1e18;
 
+  PoolInfo[] public override poolInfo;
+
   constructor(address _alpaca, address _proxyToken) {
     alpaca = _alpaca;
     proxyToken = _proxyToken;
+  }
+
+  function addPool(address _stakeToken) external {
+    poolInfo.push(
+      PoolInfo({
+        stakeToken: _stakeToken,
+        allocPoint: 0,
+        lastRewardBlock: 0,
+        accAlpacaPerShare: 0,
+        accAlpacaPerShareTilBonusEnd: 0
+      })
+    );
   }
 
   // Deposit Staking tokens to FairLaunchToken for ALPACA allocation.

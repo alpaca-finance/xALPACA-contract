@@ -23,4 +23,6 @@ interface IFairLaunch {
   function withdrawAll(address _for, uint256 _pid) external;
 
   function harvest(uint256 _pid) external;
+
+  function poolInfo(uint256 _pid) external returns (address, uint256, uint256, uint256 ,uint256);
 }
