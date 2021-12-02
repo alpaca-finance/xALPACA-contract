@@ -17,7 +17,6 @@ pragma solidity 0.8.7;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
@@ -30,7 +29,6 @@ import "./SafeToken.sol";
 // solhint-disable-next-line contract-name-camelcase
 contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeable {
   using SafeToken for address;
-  using SafeMathUpgradeable for uint256;
 
   /// @dev Events
   event LogDeposit(
@@ -278,7 +276,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     for (uint256 i = 0; i < 255; i++) {
       // This logic will works for 5 years, if more than that vote power will be broken 😟
       // Bump _weekCursor a week
-      _weekCursor = _weekCursor.add(WEEK);
+      _weekCursor = _weekCursor + WEEK;
       int128 _slopeDelta = 0;
       if (_weekCursor > block.timestamp) {
         // If the given _weekCursor go beyond block.timestamp,
@@ -291,7 +289,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
         _slopeDelta = slopeChanges[_weekCursor];
       }
       // Calculate _biasDelta = _lastPoint.slope * (_weekCursor - _lastCheckpoint)
-      int128 _biasDelta = _lastPoint.slope * SafeCastUpgradeable.toInt128(int256((_weekCursor.sub(_lastCheckpoint))));
+      int128 _biasDelta = _lastPoint.slope * SafeCastUpgradeable.toInt128(int256((_weekCursor - _lastCheckpoint)));
       _lastPoint.bias = _lastPoint.bias - _biasDelta;
       _lastPoint.slope = _lastPoint.slope + _slopeDelta;
       if (_lastPoint.bias < 0) {
@@ -417,7 +415,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   ) internal {
     // Initiate _supplyBefore & update supply
     uint256 _supplyBefore = supply;
-    supply = _supplyBefore.add(_amount);
+    supply = _supplyBefore + _amount;
 
     // Store _prevLocked
     LockedBalance memory _newLocked = LockedBalance({ amount: _prevLocked.amount, end: _prevLocked.end });
@@ -511,7 +509,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   /// @notice Round off random timestamp to week
   /// @param _timestamp The timestamp to be rounded off
   function _timestampToFloorWeek(uint256 _timestamp) internal pure returns (uint256) {
-    return (_timestamp / WEEK).mul(WEEK);
+    return (_timestamp / WEEK) * WEEK;
   }
 
   /// @notice Calculate total supply of xALPACA (voting power)
@@ -599,23 +597,23 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
 
     if (breaker == 0) require(block.timestamp >= _lock.end, "!lock expired");
 
-    uint256 amount = SafeCastUpgradeable.toUint256(_lock.amount);
+    uint256 _amount = SafeCastUpgradeable.toUint256(_lock.amount);
 
     LockedBalance memory _prevLock = LockedBalance({ end: _lock.end, amount: _lock.amount });
     _lock.end = 0;
     _lock.amount = 0;
     locks[msg.sender] = _lock;
     uint256 _supplyBefore = supply;
-    supply = _supplyBefore.sub(amount);
+    supply = _supplyBefore - _amount;
 
     // _prevLock can have either block.timstamp >= _lock.end or zero end
     // _lock has only 0 end
     // Both can have >= 0 amount
     _checkpoint(msg.sender, _prevLock, _lock);
 
-    token.safeTransfer(msg.sender, amount);
+    token.safeTransfer(msg.sender, _amount);
 
-    emit LogWithdraw(msg.sender, amount, block.timestamp);
+    emit LogWithdraw(msg.sender, _amount, block.timestamp);
     emit LogSupply(_supplyBefore, supply);
   }
 }
