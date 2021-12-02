@@ -204,6 +204,7 @@ async function main() {
   console.log("ALPACA address: ", alpacaToken.address);
   console.log("xAlpaca address: ", xALPACA.address);
   console.log("GrassHouse address: ", grassHouseDTOKEN.address);
+  console.log("alpacaGrassHouse address: ", grassHouseAlpaca.address);
   console.log("AlpacaFeeder address: ", alpacaFeeder.address);
   console.log("✅ Done");
 }

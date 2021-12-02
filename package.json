@@ -23,7 +23,11 @@
     "prettier:solidity": "./node_modules/.bin/prettier --write contracts/**/*.sol",
     "mainnet-fork": "hardhat node --show-stack-traces --config hardhat.config.forking.ts",
     "script:mainnetfork:000:prepare-test": "hardhat run --network mainnetfork ./scripts/TestPrepareMainnetFork.ts --config hardhat.config.forking.ts --show-stack-traces",
-    "script:mainnetfork:001:advance-time": "hardhat run --network mainnetfork ./scripts/AdvanceTime.ts --config hardhat.config.forking.ts"
+    "task:advancetime": "hardhat advance-time --config hardhat.config.forking.ts --network mainnetfork",
+    "task:checkpoint": "hardhat checkpoint --config hardhat.config.forking.ts --network mainnetfork",
+    "task:feed-grasshouse": "hardhat feed-grasshouse --config hardhat.config.forking.ts --network mainnetfork",
+    "task:deploy-grasshouse": "hardhat deploy-grasshouse --config hardhat.config.forking.ts --network mainnetfork",
+    "task:feed-alpaca-grasshouse": "hardhat feed-alpaca-grasshouse --config hardhat.config.forking.ts --network mainnetfork"
   },
   "devDependencies": {
     "@alpaca-finance/alpaca-contract": "1.2.23",

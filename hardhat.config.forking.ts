@@ -6,7 +6,7 @@ import "@nomiclabs/hardhat-waffle";
 import "hardhat-typechain";
 import "hardhat-deploy";
 import "solidity-coverage";
-require("./scripts/AdvanceTime");
+require("./scripts/Tasks");
 
 module.exports = {
   defaultNetwork: "hardhat",
