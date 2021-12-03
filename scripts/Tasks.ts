@@ -48,16 +48,16 @@ task("advance-time", "Advance timestamp and blocks")
 
     const blockBefore = await ethers.provider.getBlock("latest");
     const blockToAdvance = durationInSec.div(SEC_PER_BLOCK).toNumber();
-    console.log("current block(Before advance): ", ethers.BigNumber.from(blockBefore));
-    console.log("current timestamp(Before advance): ", ethers.BigNumber.from(blockBefore.timestamp));
+    console.log("current block(Before advance): ", blockBefore.number);
+    console.log("current timestamp(Before advance): ", blockBefore.timestamp);
     for (let i = 0; i < blockToAdvance; i++) {
       await ethers.provider.send("evm_mine", []);
       i++;
     }
 
     const blockAfter = await ethers.provider.getBlock("latest");
-    console.log("current block(After advance): ", ethers.BigNumber.from(blockAfter));
-    console.log("current timestamp(After advance): ", ethers.BigNumber.from(blockAfter.timestamp));
+    console.log("current block(After advance): ", blockAfter.number);
+    console.log("current timestamp(After advance): ", blockAfter.timestamp);
   });
 
 task("set-timestamp-startweek", "set timestamp to start week cursor").setAction(async ({ ethers }) => {
