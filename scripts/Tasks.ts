@@ -67,10 +67,10 @@ task("set-timestamp-startweek", "set timestamp to start week cursor").setAction(
   const blockBefore = await ethers.provider.getBlock("latest");
   const latestTimestamp = ethers.BigNumber.from(blockBefore.timestamp);
   await ethers.provider.send("evm_mine", [latestTimestamp.div(WEEK).add(1).mul(WEEK).toNumber()]);
-  console.log("current timestamp(Before advance): ", ethers.BigNumber.from(blockBefore.timestamp));
+  console.log("current timestamp(Before advance): ", blockBefore.timestamp);
 
   const blockAfter = await ethers.provider.getBlock("latest");
-  console.log("current timestamp(After advance): ", ethers.BigNumber.from(blockAfter.timestamp));
+  console.log("current timestamp(After advance): ", blockAfter.timestamp);
 });
 
 task("checkpoint", "set can check point token")
