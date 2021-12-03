@@ -167,6 +167,37 @@ task("deploy-grasshouse", "deploy grassHouseXToken")
     console.log(`✅ Done deploy ${tokenname}GrassHouse: `, grassHouseXToken.address);
   });
 
+task("deploy-grasshouse-dynamic-token", "deploy grassHouse with already exist token on mainnet")
+  .addParam("ownertokenaddress", "address of the owner of the token", "", types.string)
+  .addParam("tokenaddress", "address of token", "", types.string)
+  .setAction(async ({ ownertokenaddress, tokenaddress }, { ethers, upgrades }) => {
+    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+    await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER, ownertokenaddress]);
+    const signer = provider.getSigner(addresses.DEPLOYER);
+    const signer1 = provider.getSigner(ownertokenaddress);
+    const deployer = await SignerWithAddress.create(signer);
+    const tokenOwner = await SignerWithAddress.create(signer1);
+
+    const block = await ethers.provider.getBlock("latest");
+    const latestTimestamp = ethers.BigNumber.from(block.timestamp);
+
+    const XToken = await BEP20__factory.connect(tokenaddress, tokenOwner);
+    await XToken.mint(await deployer.getAddress(), ethers.utils.parseEther("888888888888888"));
+
+    // Deploy GrassHouse
+    const grassHouseAsDeployer = (await ethers.getContractFactory("GrassHouse", deployer)) as GrassHouse__factory;
+    const grassHouseXToken = (await upgrades.deployProxy(grassHouseAsDeployer, [
+      XALPACA_ADDRESS,
+      latestTimestamp,
+      XToken.address,
+      await deployer.getAddress(),
+    ])) as GrassHouse;
+    await grassHouseXToken.deployed();
+
+    console.log(`XToken.address`);
+    console.log(`✅ Done deploy GrassHouse with already exist token: `, grassHouseXToken.address);
+  });
+
 task("feed-alpaca-grasshouse", "feed alpaca to grassHouse").setAction(async ({ ethers }) => {
   const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
   await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);

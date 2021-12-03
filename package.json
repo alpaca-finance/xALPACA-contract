@@ -31,6 +31,7 @@
     "task:checkpoint-total-supply": "hardhat checkpoint-total-supply --config hardhat.config.forking.ts --network mainnetfork",
     "task:feed-grasshouse": "hardhat feed-grasshouse --config hardhat.config.forking.ts --network mainnetfork",
     "task:deploy-grasshouse": "hardhat deploy-grasshouse --config hardhat.config.forking.ts --network mainnetfork",
+    "task:deploy-grasshouse-dynamic-token": "hardhat deploy-grasshouse-dynamic-token --config hardhat.config.forking.ts --network mainnetfork",
     "task:feed-alpaca-grasshouse": "hardhat feed-alpaca-grasshouse --config hardhat.config.forking.ts --network mainnetfork"
   },
   "devDependencies": {
