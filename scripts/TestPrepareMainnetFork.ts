@@ -91,6 +91,10 @@ async function main() {
     grassHouseAlpaca.address
   );
 
+  // Deploy alpacaFeeder
+  alpacaFeeder = await deployHelper.deployAlpacaFeeder(deployer, proxyToken.address, poolId, grassHouseAlpaca.address);
+  console.log("alpacaFeeder address: ", alpacaFeeder.address);
+
   await proxyToken.setOkHolders([alpacaFeeder.address, fairlaunch.address], true);
   await proxyToken.transferOwnership(alpacaFeeder.address);
 

@@ -82,10 +82,37 @@ task("checkpoint", "set can check point token")
     const deployer = await SignerWithAddress.create(signer);
 
     const grassHouseAsDeployer = GrassHouse__factory.connect(grasshouseaddress, deployer);
-    await grassHouseAsDeployer.checkpointTotalSupply();
-    await grassHouseAsDeployer.setCanCheckpointToken(true);
+    await grassHouseAsDeployer.checkpointToken();
 
     console.log("✅ Done checkpoint");
+  });
+
+task("checkpoint-total-supply", "call checkpointTotalSupply")
+  .addParam("grasshouseaddress", "address of grassHouse to be called checkpoint", "", types.string)
+  .setAction(async ({ grasshouseaddress }, { ethers }) => {
+    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+    await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
+    const signer = provider.getSigner(addresses.DEPLOYER);
+    const deployer = await SignerWithAddress.create(signer);
+
+    const grassHouseAsDeployer = GrassHouse__factory.connect(grasshouseaddress, deployer);
+    await grassHouseAsDeployer.checkpointTotalSupply();
+
+    console.log("✅ Done checkpointTotalSupply");
+  });
+
+task("enable-checkpoint", "Enable checkpointToken to be call by anyone")
+  .addParam("grasshouseaddress", "address of grassHouse to be called checkpoint", "", types.string)
+  .setAction(async ({ grasshouseaddress }, { ethers }) => {
+    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+    await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
+    const signer = provider.getSigner(addresses.DEPLOYER);
+    const deployer = await SignerWithAddress.create(signer);
+
+    const grassHouseAsDeployer = GrassHouse__factory.connect(grasshouseaddress, deployer);
+    await grassHouseAsDeployer.setCanCheckpointToken(true);
+
+    console.log("✅ Done enable checkpoint");
   });
 
 task("feed-grasshouse", "feed XToken to grassHouse")

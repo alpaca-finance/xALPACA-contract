@@ -23,9 +23,12 @@
     "solhint": "./node_modules/.bin/solhint -f table contracts/**/*.sol",
     "prettier:solidity": "./node_modules/.bin/prettier --write contracts/**/*.sol",
     "mainnet-fork": "hardhat node --show-stack-traces --config hardhat.config.forking.ts",
-    "script:mainnetfork:000:prepare-test": "hardhat run --network mainnetfork ./scripts/TestPrepareMainnetFork.ts --config hardhat.config.forking.ts --show-stack-traces",
+    "script:mainnetfork:prepare-test": "hardhat run --network mainnetfork ./scripts/TestPrepareMainnetFork.ts --config hardhat.config.forking.ts --show-stack-traces",
+    "task:set-timestamp-startweek": "hardhat set-timestamp-startweek --config hardhat.config.forking.ts --network mainnetfork",
     "task:advancetime": "hardhat advance-time --config hardhat.config.forking.ts --network mainnetfork",
     "task:checkpoint": "hardhat checkpoint --config hardhat.config.forking.ts --network mainnetfork",
+    "task:enable-checkpoint": "hardhat enable-checkpoint --config hardhat.config.forking.ts --network mainnetfork",
+    "task:checkpoint-total-supply": "hardhat checkpoint-total-supply --config hardhat.config.forking.ts --network mainnetfork",
     "task:feed-grasshouse": "hardhat feed-grasshouse --config hardhat.config.forking.ts --network mainnetfork",
     "task:deploy-grasshouse": "hardhat deploy-grasshouse --config hardhat.config.forking.ts --network mainnetfork",
     "task:feed-alpaca-grasshouse": "hardhat feed-alpaca-grasshouse --config hardhat.config.forking.ts --network mainnetfork"
