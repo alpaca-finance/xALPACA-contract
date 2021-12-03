@@ -23,7 +23,7 @@
     "solhint": "./node_modules/.bin/solhint -f table contracts/**/*.sol",
     "prettier:solidity": "./node_modules/.bin/prettier --write contracts/**/*.sol",
     "mainnet-fork": "hardhat node --show-stack-traces --config hardhat.config.forking.ts",
-    "script:mainnetfork:prepare-test": "hardhat run --network mainnetfork ./scripts/TestPrepareMainnetFork.ts --config hardhat.config.forking.ts --show-stack-traces",
+    "script:mainnetfork:prepare-xalpaca": "hardhat run --network mainnetfork ./scripts/TestPrepareMainnetFork.ts --config hardhat.config.forking.ts --show-stack-traces",
     "task:set-timestamp-startweek": "hardhat set-timestamp-startweek --config hardhat.config.forking.ts --network mainnetfork",
     "task:advancetime": "hardhat advance-time --config hardhat.config.forking.ts --network mainnetfork",
     "task:checkpoint": "hardhat checkpoint --config hardhat.config.forking.ts --network mainnetfork",

@@ -34,7 +34,7 @@ yarn integration-test:feeder-worker
    
     command
     ```console
-    $ yarn script:mainnetfork:prepare-test
+    $ yarn script:mainnetfork:prepare-xalpaca
     ```
     results example
     ```console
