@@ -23,7 +23,7 @@
     "solhint": "./node_modules/.bin/solhint -f table contracts/**/*.sol",
     "prettier:solidity": "./node_modules/.bin/prettier --write contracts/**/*.sol",
     "mainnet-fork": "hardhat node --show-stack-traces --config hardhat.config.forking.ts",
-    "script:mainnetfork:prepare-xalpaca": "hardhat run --network mainnetfork ./scripts/TestPrepareMainnetFork.ts --config hardhat.config.forking.ts --show-stack-traces",
+    "script:mainnetfork:prepare-xalpaca": "hardhat run --network mainnetfork ./scripts/PrepareXAlpacaEnvironment.ts --config hardhat.config.forking.ts --show-stack-traces",
     "task:set-timestamp-startweek": "hardhat set-timestamp-startweek --config hardhat.config.forking.ts --network mainnetfork",
     "task:advancetime": "hardhat advance-time --config hardhat.config.forking.ts --network mainnetfork",
     "task:checkpoint": "hardhat checkpoint --config hardhat.config.forking.ts --network mainnetfork",
@@ -32,7 +32,15 @@
     "task:feed-grasshouse": "hardhat feed-grasshouse --config hardhat.config.forking.ts --network mainnetfork",
     "task:deploy-grasshouse": "hardhat deploy-grasshouse --config hardhat.config.forking.ts --network mainnetfork",
     "task:deploy-grasshouse-dynamic-token": "hardhat deploy-grasshouse-dynamic-token --config hardhat.config.forking.ts --network mainnetfork",
-    "task:feed-alpaca-grasshouse": "hardhat feed-alpaca-grasshouse --config hardhat.config.forking.ts --network mainnetfork"
+    "task:feed-alpaca-grasshouse": "hardhat feed-alpaca-grasshouse --config hardhat.config.forking.ts --network mainnetfork",
+    "deploy:testnet:proxy-token:add-pool": "hardhat --network testnet deploy --no-compile --reset --tags ProxyToken",
+    "deploy:testnet:xalpaca": "hardhat --network testnet deploy --no-compile --reset --tags XAlpaca",
+    "deploy:testnet:grasshouse": "hardhat --network testnet deploy --no-compile --reset --tags GrassHouse",
+    "deploy:testnet:alpaca-feeder": "hardhat --network testnet deploy --no-compile --reset --tags AlpacaFeeder",
+    "deploy:mainnet:proxy-token:add-pool": "hardhat --network mainnet deploy --no-compile --reset --tags ProxyToken",
+    "deploy:mainnet:xalpaca": "hardhat --network mainnet deploy --no-compile --reset --tags XAlpaca",
+    "deploy:mainnet:grasshouse": "hardhat --network mainnet deploy --no-compile --reset --tags GrassHouse",
+    "deploy:mainnet:alpaca-feeder": "hardhat --network mainnet deploy --no-compile --reset --tags AlpacaFeeder"
   },
   "devDependencies": {
     "@alpaca-finance/alpaca-contract": "1.2.23",
