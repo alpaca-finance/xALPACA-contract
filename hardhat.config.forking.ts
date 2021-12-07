@@ -24,7 +24,7 @@ module.exports = {
       },
     },
     mainnetfork: {
-      url: "http://10.11.1.176:8545",
+      url: process.env.MAINNET_FORK_URL,
       accounts: [process.env.BSC_MAINNET_PRIVATE_KEY],
     },
   },
