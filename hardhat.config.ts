@@ -20,7 +20,7 @@ module.exports = {
     },
     testnet: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
-      accounts: [process.env.BSC_TESTNET_PRIVATE_KEY],
+      accounts: [process.env.BSC_TESTNET_PRIVATE_KEY, process.env.LOCAL_PRIVATE_KEY_1],
     },
     mainnet: {
       url: process.env.BSC_MAINNET_RPC,
