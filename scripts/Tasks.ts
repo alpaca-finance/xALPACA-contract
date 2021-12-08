@@ -76,7 +76,7 @@ task("set-timestamp-startweek", "set timestamp to start week cursor").setAction(
 task("checkpoint", "set can check point token")
   .addParam("grasshouseaddress", "address of grassHouse to be called checkpoint", "", types.string)
   .setAction(async ({ grasshouseaddress }, { ethers }) => {
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+    const provider = new ethers.providers.JsonRpcProvider(process.env.MAINNET_FORK_URL);
     await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
     const signer = provider.getSigner(addresses.DEPLOYER);
     const deployer = await SignerWithAddress.create(signer);
@@ -90,7 +90,7 @@ task("checkpoint", "set can check point token")
 task("checkpoint-total-supply", "call checkpointTotalSupply")
   .addParam("grasshouseaddress", "address of grassHouse to be called checkpoint", "", types.string)
   .setAction(async ({ grasshouseaddress }, { ethers }) => {
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+    const provider = new ethers.providers.JsonRpcProvider(process.env.MAINNET_FORK_URL);
     await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
     const signer = provider.getSigner(addresses.DEPLOYER);
     const deployer = await SignerWithAddress.create(signer);
@@ -104,7 +104,7 @@ task("checkpoint-total-supply", "call checkpointTotalSupply")
 task("enable-checkpoint", "Enable checkpointToken to be call by anyone")
   .addParam("grasshouseaddress", "address of grassHouse to be called checkpoint", "", types.string)
   .setAction(async ({ grasshouseaddress }, { ethers }) => {
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+    const provider = new ethers.providers.JsonRpcProvider(process.env.MAINNET_FORK_URL);
     await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
     const signer = provider.getSigner(addresses.DEPLOYER);
     const deployer = await SignerWithAddress.create(signer);
@@ -120,7 +120,7 @@ task("feed-grasshouse", "feed XToken to grassHouse")
   .addParam("grasshousetokenaddress", "address token of grassHouse", "", types.string)
   .addParam("amount", "amount of XToken to be feed", "", types.string)
   .setAction(async ({ grasshouseaddress, grasshousetokenaddress, amount }, { ethers }) => {
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+    const provider = new ethers.providers.JsonRpcProvider(process.env.MAINNET_FORK_URL);
     await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
     const signer = provider.getSigner(addresses.DEPLOYER);
     const deployer = await SignerWithAddress.create(signer);
@@ -141,7 +141,7 @@ task("feed-grasshouse", "feed XToken to grassHouse")
 task("deploy-grasshouse", "deploy grassHouseXToken")
   .addParam("tokenname", "token name", "XToken", types.string)
   .setAction(async ({ tokenname }, { ethers, upgrades }) => {
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+    const provider = new ethers.providers.JsonRpcProvider(process.env.MAINNET_FORK_URL);
     await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
     const signer = provider.getSigner(addresses.DEPLOYER);
     const deployer = await SignerWithAddress.create(signer);
@@ -171,7 +171,7 @@ task("deploy-grasshouse-dynamic-token", "deploy grassHouse with already exist to
   .addParam("ownertokenaddress", "address of the owner of the token", "", types.string)
   .addParam("tokenaddress", "address of token", "", types.string)
   .setAction(async ({ ownertokenaddress, tokenaddress }, { ethers, upgrades }) => {
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+    const provider = new ethers.providers.JsonRpcProvider(process.env.MAINNET_FORK_URL);
     await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER, ownertokenaddress]);
     const signer = provider.getSigner(addresses.DEPLOYER);
     const signer1 = provider.getSigner(ownertokenaddress);
@@ -199,7 +199,7 @@ task("deploy-grasshouse-dynamic-token", "deploy grassHouse with already exist to
   });
 
 task("feed-alpaca-grasshouse", "feed alpaca to grassHouse").setAction(async ({}, { ethers }) => {
-  const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+  const provider = new ethers.providers.JsonRpcProvider(process.env.MAINNET_FORK_URL);
   await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
   const signer = provider.getSigner(addresses.DEPLOYER);
   const deployer = await SignerWithAddress.create(signer);
