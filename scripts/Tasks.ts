@@ -60,7 +60,7 @@ task("advance-time", "Advance timestamp and blocks")
     console.log("current timestamp(After advance): ", blockAfter.timestamp);
   });
 
-task("set-timestamp-startweek", "set timestamp to start week cursor").setAction(async ({ ethers }) => {
+task("set-timestamp-startweek", "set timestamp to start week cursor").setAction(async ({}, { ethers }) => {
   const DAY = ethers.BigNumber.from(86400);
   const WEEK = DAY.mul(7);
 
@@ -198,7 +198,7 @@ task("deploy-grasshouse-dynamic-token", "deploy grassHouse with already exist to
     console.log(`✅ Done deploy GrassHouse with already exist token: `, grassHouseXToken.address);
   });
 
-task("feed-alpaca-grasshouse", "feed alpaca to grassHouse").setAction(async ({ ethers }) => {
+task("feed-alpaca-grasshouse", "feed alpaca to grassHouse").setAction(async ({}, { ethers }) => {
   const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
   await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
   const signer = provider.getSigner(addresses.DEPLOYER);

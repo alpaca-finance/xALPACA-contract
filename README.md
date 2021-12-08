@@ -21,7 +21,12 @@ The following assumes the use of `node@>=14`.
 yarn integration-test:feeder-fairlaunch
 yarn integration-test:feeder-worker
 ```
-
+### Sequence of contract deployment
+    Step:
+    1. Deploy xAlpaca
+    2. Deploy proxy token
+    3. Deploy Grasshouse
+    4. Deploy Feeder
 ### Step to setting up mainnet fork environment
 1. Run mainnetfork in background process.
     ```console
