@@ -12,6 +12,7 @@ import {
   AlpacaFeeder,
   XALPACA,
   AlpacaFeeder__factory,
+  GrassHouseGateway__factory,
 } from "../typechain";
 import { AlpacaToken__factory } from "@alpaca-finance/alpaca-contract/typechain";
 
@@ -24,8 +25,8 @@ import { AlpacaToken__factory } from "@alpaca-finance/alpaca-contract/typechain"
   ░░░╚═╝░░░╚═╝░░╚═╝░░╚═╝╚═╝░░╚═╝╚═╝░░╚══╝╚═╝╚═╝░░╚══╝░╚═════╝░
   Check all variables below before execute the task
   */
-const XALPACA_ADDRESS = "0x9E7084d7894C01D2b1cA3793385E986622506e4D";
-const FEEDER_ADDRESS = "0x8F0528cE5eF7B51152A59745bEfDD91D97091d2F";
+const XALPACA_ADDRESS = "";
+const FEEDER_ADDRESS = "";
 const ALPACA_GRASSHOUSE_ADDRESS = "";
 
 task("advance-time", "Advance timestamp and blocks")
@@ -221,4 +222,22 @@ task("feed-alpaca-grasshouse", "feed alpaca to grassHouse").setAction(async ({},
   console.log(
     `✅ Done feed Alpaca ${await alpacaTokenAsDeployer.balanceOf(ALPACA_GRASSHOUSE_ADDRESS)} to AlpacaGrassHouse`
   );
+});
+
+task("deploy-grasshouse-gateway", "deploy grassHouseXToken").setAction(async ({}, { ethers }) => {
+  const provider = new ethers.providers.JsonRpcProvider(process.env.MAINNET_FORK_URL);
+  await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
+  const signer = provider.getSigner(addresses.DEPLOYER);
+  const deployer = await SignerWithAddress.create(signer);
+
+  const block = await ethers.provider.getBlock("latest");
+
+  // Deploy GrassHouse
+  const grassHouseGateWayAsDeployer = (await ethers.getContractFactory(
+    "GrassHouseGateway",
+    deployer
+  )) as GrassHouseGateway__factory;
+  const grassHouseGateWay = await grassHouseGateWayAsDeployer.deploy();
+
+  console.log(`✅ Done deploy GrassHouseGateWay at : ${grassHouseGateWay.address}`);
 });

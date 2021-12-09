@@ -15,7 +15,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     Check all variables below before execute the deployment script
     */
   const SYMBOL = "ProxyToken";
-  const TIMELOCK = "0x2D5408f2287BF9F9B05404794459a846651D0a59";
+  const TIMELOCK = ""; // Address of TIMELOCK
 
   const deployer = (await ethers.getSigners())[0];
 
