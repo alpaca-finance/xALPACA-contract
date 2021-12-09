@@ -1,9 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers, upgrades } from "hardhat";
-import { GrassHouse, GrassHouse__factory } from "../../../typechain";
+import { GrassHouse, GrassHouse__factory } from "../../../../typechain";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+  interface IGrassHouse {
+    SYMBOL: string;
+    TOKEN_ADDRESS: string;
+    START_TIME: string;
+  }
   /*
       ░██╗░░░░░░░██╗░█████╗░██████╗░███╗░░██╗██╗███╗░░██╗░██████╗░
       ░██║░░██╗░░██║██╔══██╗██╔══██╗████╗░██║██║████╗░██║██╔════╝░
@@ -13,24 +18,28 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       ░░░╚═╝░░░╚═╝░░╚═╝░░╚═╝╚═╝░░╚═╝╚═╝░░╚══╝╚═╝╚═╝░░╚══╝░╚═════╝░
       Check all variables below before execute the deployment script
 */
-  const SYMBOL = "";
-  const TOKEN = "";
+
+  const GRASSHOUSES: Array<IGrassHouse> = [
+    { SYMBOL: "", TOKEN_ADDRESS: "", START_TIME: "" },
+    { SYMBOL: "", TOKEN_ADDRESS: "", START_TIME: "" },
+  ];
   const XALPACA = "";
-  const START_TIME = "";
 
   const deployer = (await ethers.getSigners())[0];
 
-  console.log(`>> Deploying GrassHouse ${SYMBOL}`);
-  const GrassHouse = (await ethers.getContractFactory("GrassHouse", deployer)) as GrassHouse__factory;
-  const grassHouse = (await upgrades.deployProxy(GrassHouse, [
-    XALPACA,
-    START_TIME,
-    TOKEN,
-    await deployer.getAddress(),
-  ])) as GrassHouse;
-  await grassHouse.deployed();
-  console.log(`>> Deployed at ${grassHouse.address}`);
-  console.log("✅ Done");
+  for (const grassHouseConfig of GRASSHOUSES) {
+    console.log(`>> Deploying GrassHouse ${grassHouseConfig.SYMBOL}`);
+    const GrassHouse = (await ethers.getContractFactory("GrassHouse", deployer)) as GrassHouse__factory;
+    const grassHouse = (await upgrades.deployProxy(GrassHouse, [
+      XALPACA,
+      grassHouseConfig.START_TIME,
+      grassHouseConfig.TOKEN_ADDRESS,
+      await deployer.getAddress(),
+    ])) as GrassHouse;
+    await grassHouse.deployed();
+    console.log(`>> Deployed at ${grassHouse.address}`);
+    console.log("✅ Done");
+  }
 };
 
 export default func;

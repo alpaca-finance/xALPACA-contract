@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers, upgrades } from "hardhat";
-import { AlpacaFeeder, AlpacaFeeder__factory, ProxyToken, ProxyToken__factory } from "../../../typechain";
+import { AlpacaFeeder, AlpacaFeeder__factory, ProxyToken, ProxyToken__factory } from "../../../../typechain";
 import { FairLaunch__factory, Timelock__factory } from "@alpaca-finance/alpaca-contract/typechain";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
