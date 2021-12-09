@@ -44,12 +44,12 @@ task("advance-time", "Advance timestamp and blocks")
     const daysInSec = DAY.mul(days);
     const hoursInSec = HOUR.mul(hours);
     const durationInSec = yearsInSec.add(weeksInSec).add(daysInSec).add(hoursInSec);
-    await ethers.provider.send("evm_increaseTime", [durationInSec.toNumber()]);
-
     const blockBefore = await ethers.provider.getBlock("latest");
-    const blockToAdvance = durationInSec.div(SEC_PER_BLOCK).toNumber();
     console.log("current block(Before advance): ", blockBefore.number);
     console.log("current timestamp(Before advance): ", blockBefore.timestamp);
+
+    await ethers.provider.send("evm_increaseTime", [durationInSec.toNumber()]);
+    const blockToAdvance = durationInSec.div(SEC_PER_BLOCK).toNumber();
     for (let i = 0; i < blockToAdvance; i++) {
       await ethers.provider.send("evm_mine", []);
       i++;
