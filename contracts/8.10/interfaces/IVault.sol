@@ -11,10 +11,8 @@
 Alpaca Fin Corporation
 */
 
-pragma solidity 0.8.7;
+pragma solidity 0.8.10;
 
-interface IGrassHouse {
-  function rewardToken() external returns (address);
-  function feed(uint256 _amount) external returns (bool);
-  function claim(address _for) external returns (uint256);
+interface IVault {
+  function token() external view returns (address);
 }
