@@ -98,6 +98,11 @@
         "id": 20,
         "stakingToken": "ibTUSD",
         "address": "0x3282d2a151ca00BfE7ed17Aa16E42880248CD3Cd"
+      },
+      {
+        "id": 21,
+        "stakingToken": "fdALPACA",
+        "address": ""
       }
     ]
   },

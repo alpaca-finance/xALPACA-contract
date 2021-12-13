@@ -21,6 +21,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
   const alpacaGrassHouseAddress = config.GrassHouses.find((gh) => gh.name === "ALPACA");
+  if (alpacaGrassHouseAddress === undefined) throw new Error(`could not find ALPACA GrassHouse`);
 
   console.log(`>> Deploying AlpacaFeeder`);
   const AlpacaFeeder = (await ethers.getContractFactory("AlpacaFeeder", deployer)) as AlpacaFeeder__factory;
