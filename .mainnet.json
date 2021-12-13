@@ -1,0 +1,112 @@
+{
+  "Timelock": "0x2D5408f2287BF9F9B05404794459a846651D0a59",
+  "FairLaunch": {
+    "address": "0xA625AB01B08ce023B2a342Dbb12a16f2C8489A8F",
+    "deployedBlock": 5212992,
+    "pools": [
+      {
+        "id": 0,
+        "stakingToken": "debtibBNB (Legacy)",
+        "address": "0x5138133f0671071D8b8F1C4c180881bfCfe22CeC"
+      },
+      {
+        "id": 1,
+        "stakingToken": "ibWBNB",
+        "address": "0xd7D069493685A581d27824Fc46EdA46B7EfC0063"
+      },
+      {
+        "id": 2,
+        "stakingToken": "debtibBUSD (Legacy)",
+        "address": "0xD19D6253D979cCF663869fee30b8e0Ac86029ebd"
+      },
+      {
+        "id": 3,
+        "stakingToken": "ibBUSD",
+        "address": "0x7C9e73d4C71dae564d41F78d56439bB4ba87592f"
+      },
+      {
+        "id": 4,
+        "stakingToken": "ALPACA-WBNB LP (Legacy)",
+        "address": "0xf3ce6aac24980e6b657926dfc79502ae414d3083"
+      },
+      {
+        "id": 5,
+        "stakingToken": "sALPACA",
+        "address": "0x6F695Bd5FFD25149176629f8491A5099426Ce7a7"
+      },
+      {
+        "id": 6,
+        "stakingToken": "debtIbBNB V2",
+        "address": "0x6A3487CE84FD83c66B83e598b18412bD1D2A55F9"
+      },
+      {
+        "id": 7,
+        "stakingToken": "debtIbBUSD V2",
+        "address": "0x02dA7035beD00ae645516bDb0c282A7fD4AA7442"
+      },
+      {
+        "id": 8,
+        "stakingToken": "debtIbETH V2",
+        "address": "0x92110af24d280E412b3a89691f6B0B9E09258fe6"
+      },
+      {
+        "id": 9,
+        "stakingToken": "ibETH",
+        "address": "0xbfF4a34A4644a113E8200D7F1D79b3555f723AfE"
+      },
+      {
+        "id": 10,
+        "stakingToken": "debtIbALPACA V2",
+        "address": "0x11362eA137A799298306123EEa014b7809A9DB40"
+      },
+      {
+        "id": 11,
+        "stakingToken": "ibALPACA",
+        "address": "0xf1bE8ecC990cBcb90e166b71E368299f0116d421"
+      },
+      {
+        "id": 12,
+        "stakingToken": "ALPACA-WBNB LP",
+        "address": "0x1099C2E6Ed6ebA95099c205b599B409305783E43"
+      },
+      {
+        "id": 15,
+        "stakingToken": "debtIbUSDT V2",
+        "address": "0x3B4fBB2b8536AB144048aBaFdd27eaF52f0fa4DC"
+      },
+      {
+        "id": 16,
+        "stakingToken": "ibUSDT",
+        "address": "0x158Da805682BdC8ee32d52833aD41E74bb951E59"
+      },
+      {
+        "id": 17,
+        "stakingToken": "debtIbBTCB V2",
+        "address": "0x262de19B5fde97eD5bdBa10d630E34Fb9a1b59B2"
+      },
+      {
+        "id": 18,
+        "stakingToken": "ibBTCB",
+        "address": "0x08FC9Ba2cAc74742177e0afC3dC8Aed6961c24e7"
+      },
+      {
+        "id": 19,
+        "stakingToken": "debtIbTUSD V2",
+        "address": "0xb76ED435B93477511e4604c441550A23d5aeAF84"
+      },
+      {
+        "id": 20,
+        "stakingToken": "ibTUSD",
+        "address": "0x3282d2a151ca00BfE7ed17Aa16E42880248CD3Cd"
+      }
+    ]
+  },
+  "Tokens": {
+    "ALPACA": "0x8F0528cE5eF7B51152A59745bEfDD91D97091d2F"
+  },
+  "xALPACA": "",
+  "ALPACAFeeder": "",
+  "PROXYTOKEN": "",
+  "GrassHouses": [],
+  "GrassHouseGateway": ""
+}
