@@ -61,7 +61,8 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   uint256 public constant ACTION_INCREASE_UNLOCK_TIME = 3;
 
   uint256 public constant WEEK = 7 days;
-  uint256 public constant MAX_LOCK = 365 days;
+  /// @dev MAX_LOCK 53 weeks - 1 seconds
+  uint256 public constant MAX_LOCK = (53 * WEEK) - 1;
   uint256 public constant MULTIPLIER = 10**18;
 
   /// @dev Token to be locked (ALPACA)
