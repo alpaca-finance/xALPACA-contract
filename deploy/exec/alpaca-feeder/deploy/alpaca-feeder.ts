@@ -19,7 +19,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const PROXY_TOKEN = "";
   const POOL_ID = "";
   const ALPACA_GRASSHOUSE = "";
-  const FAIRLAUNCH = ""; // Address of FairLaunch
 
   const deployer = (await ethers.getSigners())[0];
 
@@ -38,7 +37,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log(">> Transferring ownership and set okHolders of proxyToken to be alpacaFeeder");
   const proxyToken = ProxyToken__factory.connect(PROXY_TOKEN, deployer);
-  await proxyToken.setOkHolders([alpacaFeeder.address, FAIRLAUNCH], true);
+  await proxyToken.setOkHolders([alpacaFeeder.address, FAIR_LAUNCH], true);
   await proxyToken.transferOwnership(alpacaFeeder.address);
   console.log("✅ Done");
 
