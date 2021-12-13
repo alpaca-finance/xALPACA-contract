@@ -107,11 +107,17 @@
     ]
   },
   "Tokens": {
-    "ALPACA": "0x354b3a11D5Ea2DA89405173977E271F58bE2897D"
+    "ALPACA": "0x354b3a11D5Ea2DA89405173977E271F58bE2897D",
+    "fdALPACA": ""
   },
   "xALPACA": "",
   "ALPACAFeeder": "",
-  "PROXYTOKEN": "",
-  "GrassHouses": [],
+  "GrassHouses": [
+    {
+      "name": "ALPACA",
+      "address": "",
+      "rewardToken": "0x354b3a11D5Ea2DA89405173977E271F58bE2897D"
+    }
+  ],
   "GrassHouseGateway": ""
 }

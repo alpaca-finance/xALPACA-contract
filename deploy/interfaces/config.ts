@@ -4,7 +4,6 @@ export interface Config {
   Tokens: Tokens;
   xALPACA: string;
   ALPACAFeeder: string;
-  PROXYTOKEN: string;
   GrassHouses: GrassHouse[];
   GrassHouseGateway: string;
 }
@@ -23,10 +22,11 @@ export interface PoolsEntity1 {
 
 export interface Tokens {
   ALPACA: string;
+  fdALPACA: string;
 }
 
 export interface GrassHouse {
-  name: "";
-  address: "";
-  rewardToken: "";
+  name: string;
+  address: string;
+  rewardToken: string;
 }
