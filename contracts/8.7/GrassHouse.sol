@@ -23,6 +23,7 @@ import "./interfaces/IxALPACA.sol";
 import "./interfaces/IBEP20.sol";
 
 import "./SafeToken.sol";
+import "./utils/Math128.sol";
 
 /// @title GrassHouse - Where Alpaca eats
 // solhint-disable not-rely-on-time
@@ -286,9 +287,8 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
         }
       } else {
         int128 _timeDelta = SafeCastUpgradeable.toInt128(int256(_userWeekCursor - _prevUserPoint.timestamp));
-        uint256 _balanceOf = MathUpgradeable.max(
-          SafeCastUpgradeable.toUint256(_prevUserPoint.bias - _timeDelta * _prevUserPoint.slope),
-          0
+        uint256 _balanceOf = SafeCastUpgradeable.toUint256(
+          Math128.max(_prevUserPoint.bias - _timeDelta * _prevUserPoint.slope, 0)
         );
         if (_balanceOf == 0 && _userEpoch > _maxUserEpoch) {
           break;
@@ -377,7 +377,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
     }
 
     emit LogFeed(_amount);
-    
+
     return true;
   }
 
