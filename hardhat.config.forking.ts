@@ -4,7 +4,6 @@ dotEnvConfig();
 import "@openzeppelin/hardhat-upgrades";
 import "@nomiclabs/hardhat-waffle";
 import "hardhat-typechain";
-import "hardhat-deploy";
 import "solidity-coverage";
 require("./scripts/Tasks");
 
