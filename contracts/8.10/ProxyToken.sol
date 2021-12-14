@@ -23,6 +23,9 @@ import "./interfaces/IProxyToken.sol";
 contract ProxyToken is IProxyToken, ERC20Upgradeable, OwnableUpgradeable {
   using SafeMathUpgradeable for uint256;
 
+  /// @dev Events
+  event LogSetOkHolder(address _holder, bool _isOk);
+
   /// @notice just reserve for future use
   address timelock;
 
@@ -46,6 +49,7 @@ contract ProxyToken is IProxyToken, ERC20Upgradeable, OwnableUpgradeable {
   function setOkHolders(address[] memory _okHolders, bool _isOk) external override onlyOwner {
     for (uint256 idx = 0; idx < _okHolders.length; idx++) {
       okHolders[_okHolders[idx]] = _isOk;
+      emit LogSetOkHolder(_okHolders[idx], _isOk);
     }
   }
 

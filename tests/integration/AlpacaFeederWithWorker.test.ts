@@ -109,7 +109,8 @@ describe("AlpacaFeeder - Integration test", () => {
 
     // Deploy AlpacaFeeder
     alpacaFeeder = await deployHelper.deployAlpacaFeeder(deployer, proxyToken.address, poolId, grassHouse.address);
-    await proxyToken.setOkHolders([alpacaFeeder.address, fairlaunch.address], true);
+    await expect(proxyToken.setOkHolders([alpacaFeeder.address, fairlaunch.address], true)).to.be.emit(proxyToken, "LogSetOkHolder");
+
     await proxyToken.transferOwnership(alpacaFeeder.address);
 
     const executeTime2 = (await timeHelpers.latestTimestamp())
