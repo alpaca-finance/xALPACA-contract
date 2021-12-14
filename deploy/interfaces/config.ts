@@ -30,3 +30,23 @@ export interface GrassHouse {
   address: string;
   rewardToken: string;
 }
+
+export interface WorkersEntity {
+  name: string;
+  address: string;
+  deployedBlock: number;
+  config: string;
+  pId: number;
+  stakingToken: string;
+  stakingTokenAt: string;
+  strategies: Strategies;
+}
+
+export interface Strategies {
+  StrategyAddAllBaseToken: string;
+  StrategyLiquidate: string;
+  StrategyAddTwoSidesOptimal: string;
+  StrategyWithdrawMinimizeTrading: string;
+  StrategyPartialCloseLiquidate: string;
+  StrategyPartialCloseMinimizeTrading: string;
+}

@@ -4,6 +4,6 @@ import TestnetConfig from "../../.testnet.json";
 import { Config } from "../interfaces/config";
 
 export function getConfig(): Config {
-  const config = network.name === "mainnet" || network.name === "testnet" ? MainnetConfig : TestnetConfig;
+  const config = network.name === "mainnet" ? MainnetConfig : TestnetConfig;
   return config;
 }
