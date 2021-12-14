@@ -38,7 +38,7 @@ async function main() {
   let xALPACA: XALPACA;
 
   let poolId: BigNumber;
-  const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+  const provider = new ethers.providers.JsonRpcProvider(process.env.MAINNET_FORK_URL);
   await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
   const signer = provider.getSigner(addresses.DEPLOYER);
   const deployer = await SignerWithAddress.create(signer);
@@ -93,7 +93,6 @@ async function main() {
 
   // Deploy alpacaFeeder
   alpacaFeeder = await deployHelper.deployAlpacaFeeder(deployer, proxyToken.address, poolId, grassHouseAlpaca.address);
-  console.log("alpacaFeeder address: ", alpacaFeeder.address);
 
   await proxyToken.setOkHolders([alpacaFeeder.address, fairlaunch.address], true);
   await proxyToken.transferOwnership(alpacaFeeder.address);
