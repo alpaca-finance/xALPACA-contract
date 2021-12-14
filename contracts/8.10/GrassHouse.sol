@@ -128,7 +128,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
     lastTokenTimestamp = block.timestamp;
 
     // Iterate through weeks to filled out missing tokensPerWeek (if any)
-    for (uint256 _i = 0; _i < 20; _i++) {
+    for (uint256 _i = 0; _i < 52; _i++) {
       _nextWeekCursor = _thisWeekCursor + WEEK;
 
       // if block.timestamp < _nextWeekCursor, means _nextWeekCursor goes
