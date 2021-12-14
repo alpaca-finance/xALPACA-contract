@@ -12,7 +12,7 @@ Alpaca Fin Corporation
 Ported to Solidity from: https://github.com/curvefi/curve-dao-contracts/blob/master/contracts/VotingEscrow.vy
 **/
 
-pragma solidity 0.8.7;
+pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -94,7 +94,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
 
   /// @notice Initialize xALPACA
   /// @param _token The address of ALPACA token
-  function initialize(address _token) public initializer {
+  function initialize(address _token) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 

@@ -11,7 +11,7 @@
 Alpaca Fin Corporation
 **/
 
-pragma solidity 0.8.7;
+pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -73,7 +73,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
     uint256 _startTime,
     address _rewardToken,
     address _emergencyReturn
-  ) public initializer {
+  ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
@@ -128,7 +128,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
     lastTokenTimestamp = block.timestamp;
 
     // Iterate through weeks to filled out missing tokensPerWeek (if any)
-    for (uint256 _i = 0; _i < 20; _i++) {
+    for (uint256 _i = 0; _i < 52; _i++) {
       _nextWeekCursor = _thisWeekCursor + WEEK;
 
       // if block.timestamp < _nextWeekCursor, means _nextWeekCursor goes
@@ -179,7 +179,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     IxALPACA(xALPACA).checkpoint();
 
-    for (uint256 i = 0; i < 20; i++) {
+    for (uint256 _i = 0; _i < 52; _i++) {
       if (_weekCursor > _roundedTimestamp) {
         break;
       } else {
@@ -262,7 +262,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
     Point memory _prevUserPoint = Point({ bias: 0, slope: 0, timestamp: 0, blockNumber: 0 });
 
     // Go through weeks
-    for (uint256 i = 0; i < 50; i++) {
+    for (uint256 _i = 0; _i < 52; _i++) {
       // If _userWeekCursor is iterated to be at/beyond _maxClaimTimestamp
       // This means we went through all weeks that user subject to claim rewards already
       if (_userWeekCursor >= _maxClaimTimestamp) {
