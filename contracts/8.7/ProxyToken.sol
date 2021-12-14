@@ -24,7 +24,7 @@ contract ProxyToken is IProxyToken, ERC20Upgradeable, OwnableUpgradeable {
   using SafeMathUpgradeable for uint256;
 
   /// @notice just reserve for future use
-  address timelock;
+  address public timelock;
 
   mapping(address => bool) public okHolders;
 
@@ -60,7 +60,6 @@ contract ProxyToken is IProxyToken, ERC20Upgradeable, OwnableUpgradeable {
   }
 
   function transfer(address to, uint256 amount) public override returns (bool) {
-    // allow to transfer to Vault
     require(okHolders[msg.sender], "proxyToken::transfer:: unapproved holder on msg.sender");
     require(okHolders[to], "proxyToken::transfer:: unapproved holder on to");
     _transfer(msg.sender, to, amount);
