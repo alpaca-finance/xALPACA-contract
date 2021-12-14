@@ -52,7 +52,7 @@ contract AlpacaFeeder is IVault, Initializable, OwnableUpgradeable {
     address _fairLaunchAddress,
     uint256 _fairLaunchPoolId,
     address _grasshouseAddress
-  ) public initializer {
+  ) external initializer {
     OwnableUpgradeable.__Ownable_init();
 
     token = _token;

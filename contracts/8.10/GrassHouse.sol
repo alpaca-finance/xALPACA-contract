@@ -73,7 +73,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
     uint256 _startTime,
     address _rewardToken,
     address _emergencyReturn
-  ) public initializer {
+  ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 

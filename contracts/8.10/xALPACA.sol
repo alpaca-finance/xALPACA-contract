@@ -94,7 +94,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
 
   /// @notice Initialize xALPACA
   /// @param _token The address of ALPACA token
-  function initialize(address _token) public initializer {
+  function initialize(address _token) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
