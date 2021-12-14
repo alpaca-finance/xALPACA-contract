@@ -179,7 +179,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     IxALPACA(xALPACA).checkpoint();
 
-    for (uint256 _i = 0; _i < 20; _i++) {
+    for (uint256 _i = 0; _i < 52; _i++) {
       if (_weekCursor > _roundedTimestamp) {
         break;
       } else {
@@ -262,7 +262,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
     Point memory _prevUserPoint = Point({ bias: 0, slope: 0, timestamp: 0, blockNumber: 0 });
 
     // Go through weeks
-    for (uint256 _i = 0; _i < 50; _i++) {
+    for (uint256 _i = 0; _i < 52; _i++) {
       // If _userWeekCursor is iterated to be at/beyond _maxClaimTimestamp
       // This means we went through all weeks that user subject to claim rewards already
       if (_userWeekCursor >= _maxClaimTimestamp) {
