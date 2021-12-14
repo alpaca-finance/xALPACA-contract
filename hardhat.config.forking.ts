@@ -4,7 +4,6 @@ dotEnvConfig();
 import "@openzeppelin/hardhat-upgrades";
 import "@nomiclabs/hardhat-waffle";
 import "hardhat-typechain";
-import "hardhat-deploy";
 import "solidity-coverage";
 require("./scripts/Tasks");
 
@@ -20,11 +19,11 @@ module.exports = {
       accounts: { mnemonic: "test test test test test test test test test test test junk" },
       forking: {
         url: process.env.BSC_MAINNET_FORK_RPC,
-        blockNumber: 11600043,
+        blockNumber: 10000043,
       },
     },
     mainnetfork: {
-      url: "http://127.0.0.1:8545",
+      url: process.env.MAINNET_FORK_URL,
       accounts: [process.env.BSC_MAINNET_PRIVATE_KEY],
     },
   },

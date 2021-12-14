@@ -12,6 +12,7 @@ import {
   AlpacaFeeder,
   XALPACA,
   AlpacaFeeder__factory,
+  GrassHouseGateway__factory,
 } from "../typechain";
 import { AlpacaToken__factory } from "@alpaca-finance/alpaca-contract/typechain";
 
@@ -24,8 +25,8 @@ import { AlpacaToken__factory } from "@alpaca-finance/alpaca-contract/typechain"
   ░░░╚═╝░░░╚═╝░░╚═╝░░╚═╝╚═╝░░╚═╝╚═╝░░╚══╝╚═╝╚═╝░░╚══╝░╚═════╝░
   Check all variables below before execute the task
   */
-const XALPACA_ADDRESS = "0x9E7084d7894C01D2b1cA3793385E986622506e4D";
-const FEEDER_ADDRESS = "0x8F0528cE5eF7B51152A59745bEfDD91D97091d2F";
+const XALPACA_ADDRESS = "";
+const FEEDER_ADDRESS = "";
 const ALPACA_GRASSHOUSE_ADDRESS = "";
 
 task("advance-time", "Advance timestamp and blocks")
@@ -44,12 +45,12 @@ task("advance-time", "Advance timestamp and blocks")
     const daysInSec = DAY.mul(days);
     const hoursInSec = HOUR.mul(hours);
     const durationInSec = yearsInSec.add(weeksInSec).add(daysInSec).add(hoursInSec);
-    await ethers.provider.send("evm_increaseTime", [durationInSec.toNumber()]);
-
     const blockBefore = await ethers.provider.getBlock("latest");
-    const blockToAdvance = durationInSec.div(SEC_PER_BLOCK).toNumber();
     console.log("current block(Before advance): ", blockBefore.number);
     console.log("current timestamp(Before advance): ", blockBefore.timestamp);
+
+    await ethers.provider.send("evm_increaseTime", [durationInSec.toNumber()]);
+    const blockToAdvance = durationInSec.div(SEC_PER_BLOCK).toNumber();
     for (let i = 0; i < blockToAdvance; i++) {
       await ethers.provider.send("evm_mine", []);
       i++;
@@ -60,7 +61,7 @@ task("advance-time", "Advance timestamp and blocks")
     console.log("current timestamp(After advance): ", blockAfter.timestamp);
   });
 
-task("set-timestamp-startweek", "set timestamp to start week cursor").setAction(async ({ ethers }) => {
+task("set-timestamp-startweek", "set timestamp to start week cursor").setAction(async ({}, { ethers }) => {
   const DAY = ethers.BigNumber.from(86400);
   const WEEK = DAY.mul(7);
 
@@ -76,7 +77,7 @@ task("set-timestamp-startweek", "set timestamp to start week cursor").setAction(
 task("checkpoint", "set can check point token")
   .addParam("grasshouseaddress", "address of grassHouse to be called checkpoint", "", types.string)
   .setAction(async ({ grasshouseaddress }, { ethers }) => {
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+    const provider = new ethers.providers.JsonRpcProvider(process.env.MAINNET_FORK_URL);
     await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
     const signer = provider.getSigner(addresses.DEPLOYER);
     const deployer = await SignerWithAddress.create(signer);
@@ -90,7 +91,7 @@ task("checkpoint", "set can check point token")
 task("checkpoint-total-supply", "call checkpointTotalSupply")
   .addParam("grasshouseaddress", "address of grassHouse to be called checkpoint", "", types.string)
   .setAction(async ({ grasshouseaddress }, { ethers }) => {
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+    const provider = new ethers.providers.JsonRpcProvider(process.env.MAINNET_FORK_URL);
     await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
     const signer = provider.getSigner(addresses.DEPLOYER);
     const deployer = await SignerWithAddress.create(signer);
@@ -104,7 +105,7 @@ task("checkpoint-total-supply", "call checkpointTotalSupply")
 task("enable-checkpoint", "Enable checkpointToken to be call by anyone")
   .addParam("grasshouseaddress", "address of grassHouse to be called checkpoint", "", types.string)
   .setAction(async ({ grasshouseaddress }, { ethers }) => {
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+    const provider = new ethers.providers.JsonRpcProvider(process.env.MAINNET_FORK_URL);
     await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
     const signer = provider.getSigner(addresses.DEPLOYER);
     const deployer = await SignerWithAddress.create(signer);
@@ -120,7 +121,7 @@ task("feed-grasshouse", "feed XToken to grassHouse")
   .addParam("grasshousetokenaddress", "address token of grassHouse", "", types.string)
   .addParam("amount", "amount of XToken to be feed", "", types.string)
   .setAction(async ({ grasshouseaddress, grasshousetokenaddress, amount }, { ethers }) => {
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+    const provider = new ethers.providers.JsonRpcProvider(process.env.MAINNET_FORK_URL);
     await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
     const signer = provider.getSigner(addresses.DEPLOYER);
     const deployer = await SignerWithAddress.create(signer);
@@ -141,7 +142,7 @@ task("feed-grasshouse", "feed XToken to grassHouse")
 task("deploy-grasshouse", "deploy grassHouseXToken")
   .addParam("tokenname", "token name", "XToken", types.string)
   .setAction(async ({ tokenname }, { ethers, upgrades }) => {
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+    const provider = new ethers.providers.JsonRpcProvider(process.env.MAINNET_FORK_URL);
     await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
     const signer = provider.getSigner(addresses.DEPLOYER);
     const deployer = await SignerWithAddress.create(signer);
@@ -171,7 +172,7 @@ task("deploy-grasshouse-dynamic-token", "deploy grassHouse with already exist to
   .addParam("ownertokenaddress", "address of the owner of the token", "", types.string)
   .addParam("tokenaddress", "address of token", "", types.string)
   .setAction(async ({ ownertokenaddress, tokenaddress }, { ethers, upgrades }) => {
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+    const provider = new ethers.providers.JsonRpcProvider(process.env.MAINNET_FORK_URL);
     await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER, ownertokenaddress]);
     const signer = provider.getSigner(addresses.DEPLOYER);
     const signer1 = provider.getSigner(ownertokenaddress);
@@ -198,8 +199,8 @@ task("deploy-grasshouse-dynamic-token", "deploy grassHouse with already exist to
     console.log(`✅ Done deploy GrassHouse with already exist token: `, grassHouseXToken.address);
   });
 
-task("feed-alpaca-grasshouse", "feed alpaca to grassHouse").setAction(async ({ ethers }) => {
-  const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+task("feed-alpaca-grasshouse", "feed alpaca to grassHouse").setAction(async ({}, { ethers }) => {
+  const provider = new ethers.providers.JsonRpcProvider(process.env.MAINNET_FORK_URL);
   await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
   const signer = provider.getSigner(addresses.DEPLOYER);
   const deployer = await SignerWithAddress.create(signer);
@@ -221,4 +222,22 @@ task("feed-alpaca-grasshouse", "feed alpaca to grassHouse").setAction(async ({ e
   console.log(
     `✅ Done feed Alpaca ${await alpacaTokenAsDeployer.balanceOf(ALPACA_GRASSHOUSE_ADDRESS)} to AlpacaGrassHouse`
   );
+});
+
+task("deploy-grasshouse-gateway", "deploy grassHouseXToken").setAction(async ({}, { ethers }) => {
+  const provider = new ethers.providers.JsonRpcProvider(process.env.MAINNET_FORK_URL);
+  await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
+  const signer = provider.getSigner(addresses.DEPLOYER);
+  const deployer = await SignerWithAddress.create(signer);
+
+  const block = await ethers.provider.getBlock("latest");
+
+  // Deploy GrassHouse
+  const grassHouseGateWayAsDeployer = (await ethers.getContractFactory(
+    "GrassHouseGateway",
+    deployer
+  )) as GrassHouseGateway__factory;
+  const grassHouseGateWay = await grassHouseGateWayAsDeployer.deploy();
+
+  console.log(`✅ Done deploy GrassHouseGateWay at : ${grassHouseGateWay.address}`);
 });

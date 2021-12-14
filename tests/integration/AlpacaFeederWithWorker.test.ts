@@ -1,15 +1,7 @@
-import { ethers, waffle, network, upgrades } from "hardhat";
+import { ethers, waffle, network } from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
-import {
-  ProxyToken,
-  ProxyToken__factory,
-  GrassHouse,
-  AlpacaFeeder,
-  XALPACA,
-  BEP20,
-  BEP20__factory,
-} from "../../typechain";
+import { ProxyToken, GrassHouse, AlpacaFeeder, XALPACA, BEP20, BEP20__factory } from "../../typechain";
 import {
   Timelock,
   Timelock__factory,
