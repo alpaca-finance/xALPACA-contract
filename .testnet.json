@@ -107,22 +107,22 @@
       {
         "id": 21,
         "stakingToken": "fdALPACA",
-        "address": ""
+        "address": "0xE0E9F41a9572105D1F391AcC03245aF7E30254eF"
       }
     ]
   },
   "Tokens": {
     "ALPACA": "0x354b3a11D5Ea2DA89405173977E271F58bE2897D",
-    "fdALPACA": ""
+    "fdALPACA": "0xE0E9F41a9572105D1F391AcC03245aF7E30254eF"
   },
-  "xALPACA": "",
-  "ALPACAFeeder": "",
+  "xALPACA": "0x2B0501e17515EE7418A91336346F5C6B8D6c3322",
+  "ALPACAFeeder": "0x5589FE5BEAe1C642A48eEFF5e80A761343D831a9",
   "GrassHouses": [
     {
       "name": "ALPACA",
-      "address": "",
+      "address": "0xD83B643721780a89e46c2A3323cE22D2C9317c82",
       "rewardToken": "0x354b3a11D5Ea2DA89405173977E271F58bE2897D"
     }
   ],
-  "GrassHouseGateway": ""
+  "GrassHouseGateway": "0xf68cb688F4219D866BB946776b6cE2125eC5eCC8"
 }
