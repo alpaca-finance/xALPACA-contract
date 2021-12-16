@@ -107,13 +107,13 @@
       {
         "id": 22,
         "stakingToken": "fdALPACA",
-        "address": ""
+        "address": "0x50E5748a2E9C5e05Ba8b95549Bf7B11dA91ddAB7"
       }
     ]
   },
   "Tokens": {
     "ALPACA": "0x8F0528cE5eF7B51152A59745bEfDD91D97091d2F",
-    "fdALPACA": ""
+    "fdALPACA": "0x50E5748a2E9C5e05Ba8b95549Bf7B11dA91ddAB7"
   },
   "xALPACA": "",
   "ALPACAFeeder": "",
