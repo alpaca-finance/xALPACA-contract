@@ -15,7 +15,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     ░░░╚═╝░░░╚═╝░░╚═╝░░╚═╝╚═╝░░╚═╝╚═╝░░╚══╝╚═╝╚═╝░░╚══╝░╚═════╝░
     Check all variables below before execute the deployment script
     */
-  const POOL_ID = "";
+  const POOL_ID = "21";
 
   const config = ConfigEntity.getConfig();
   const deployer = (await ethers.getSigners())[0];
@@ -30,7 +30,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     config.Tokens.fdALPACA,
     config.FairLaunch.address,
     POOL_ID,
-    alpacaGrassHouseAddress,
+    alpacaGrassHouseAddress.address,
   ])) as AlpacaFeeder;
   await alpacaFeeder.deployed();
   console.log(`>> Deployed at ${alpacaFeeder.address}`);
@@ -40,6 +40,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const proxyToken = ProxyToken__factory.connect(config.Tokens.fdALPACA, deployer);
   await proxyToken.setOkHolders([alpacaFeeder.address, config.FairLaunch.address], true);
   await proxyToken.transferOwnership(alpacaFeeder.address);
+  console.log("✅ Done");
+
+  console.log(">> Sleep for 10000msec waiting for alpacaFeeder to completely deployed");
+  await new Promise((resolve) => setTimeout(resolve, 10000));
   console.log("✅ Done");
 
   console.log(">> Depositing proxyToken to Fairlaunch pool");
