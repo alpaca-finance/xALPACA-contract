@@ -77,7 +77,7 @@ async function validateWorkersConfig(workerInfo: WorkersEntity) {
       expect(await worker.treasuryBountyBps()).to.be.eq("900");
       expect(await worker.maxReinvestBountyBps()).to.be.eq("900");
       expect(await worker.reinvestBountyBps()).to.be.eq("900");
-      expect(await worker.reinvestThreshold()).to.be.eq("1000000000000000000");
+      expect(await worker.reinvestThreshold()).to.be.eq("330000000000000000000");
       if (workerInfo.name.includes("-BTCB")) {
         expect(reinvestPathSymbols).to.be.eql(["MDX", "WBNB", "BTCB"]);
       } else if (workerInfo.name.includes("-USDT")) {
