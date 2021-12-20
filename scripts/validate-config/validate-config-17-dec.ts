@@ -39,19 +39,18 @@ async function validateXAlpaca() {
 
 async function validateALPACAGrassHouse() {
   console.log(`=== validate ALPACA GrassHouse ===`);
-  const grassHouses = config.GrassHouses;
   const startWeekCursor = 1640217600; // 23 Dec 2021 00:00 UTC
-  for (const grassHouse of grassHouses) {
-    const grassHouseConnect = GrassHouse__factory.connect(grassHouse.address, ethers.provider);
-    expect(await grassHouseConnect.rewardToken()).to.be.eq(grassHouse.rewardToken);
-    expect(await grassHouseConnect.startWeekCursor()).to.be.eq(startWeekCursor);
-    expect(await grassHouseConnect.lastTokenTimestamp()).to.be.eq(startWeekCursor);
-    expect(await grassHouseConnect.weekCursor()).to.be.eq(startWeekCursor);
-    expect(await grassHouseConnect.rewardToken()).to.be.eq(config.Tokens.ALPACA);
-    expect(await grassHouseConnect.xALPACA()).to.be.eq(config.xALPACA);
-    expect(await grassHouseConnect.emergencyReturn()).to.be.eq(addresses.DEPLOYER);
-    expect(await grassHouseConnect.canCheckpointToken()).to.be.eq(false);
-  }
+  const alpacaGrassHouse = config.GrassHouses.find((gh) => gh.rewardToken === config.Tokens.ALPACA);
+  if (!alpacaGrassHouse) throw new Error("> ❌ Cannot find ALPACA Grasshouse");
+  const grassHouseConnect = GrassHouse__factory.connect(alpacaGrassHouse.address, ethers.provider);
+  expect(await grassHouseConnect.rewardToken()).to.be.eq(alpacaGrassHouse.rewardToken);
+  expect(await grassHouseConnect.startWeekCursor()).to.be.eq(startWeekCursor);
+  expect(await grassHouseConnect.lastTokenTimestamp()).to.be.eq(startWeekCursor);
+  expect(await grassHouseConnect.weekCursor()).to.be.eq(startWeekCursor);
+  expect(await grassHouseConnect.rewardToken()).to.be.eq(config.Tokens.ALPACA);
+  expect(await grassHouseConnect.xALPACA()).to.be.eq(config.xALPACA);
+  expect(await grassHouseConnect.emergencyReturn()).to.be.eq(addresses.DEPLOYER);
+  expect(await grassHouseConnect.canCheckpointToken()).to.be.eq(false);
 }
 
 async function validateAlpacaFeeder() {
