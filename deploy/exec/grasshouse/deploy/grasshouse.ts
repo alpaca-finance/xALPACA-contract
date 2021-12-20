@@ -21,7 +21,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   */
 
   const GRASSHOUSES: Array<IGrassHouse> = [
-    { SYMBOL: "ALPACA", TOKEN_ADDRESS: "0x354b3a11D5Ea2DA89405173977E271F58bE2897D", START_TIME: "1639612800" },
+    { SYMBOL: "ALPACA", TOKEN_ADDRESS: "0x8F0528cE5eF7B51152A59745bEfDD91D97091d2F", START_TIME: "1640217600" },
   ];
 
   const config = ConfigEntity.getConfig();
