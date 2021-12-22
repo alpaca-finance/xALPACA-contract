@@ -15,10 +15,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     ░░░╚═╝░░░╚═╝░░╚═╝░░╚═╝╚═╝░░╚═╝╚═╝░░╚══╝╚═╝╚═╝░░╚══╝░╚═════╝░
     Check all variables below before execute the deployment script
     */
-  const POOL_ID = "21";
+  const POOL_ID = "22";
 
   const config = ConfigEntity.getConfig();
   const deployer = (await ethers.getSigners())[0];
+  let nonce = await deployer.getTransactionCount();
 
   const alpacaGrassHouseAddress = config.GrassHouses.find((gh) => gh.name === "ALPACA");
   if (alpacaGrassHouseAddress === undefined) throw new Error(`could not find ALPACA GrassHouse`);
@@ -33,13 +34,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     alpacaGrassHouseAddress.address,
   ])) as AlpacaFeeder;
   await alpacaFeeder.deployed();
+  nonce++;
   console.log(`>> Deployed at ${alpacaFeeder.address}`);
   console.log("✅ Done");
 
   console.log(">> Transferring ownership and set okHolders of proxyToken to be alpacaFeeder");
   const proxyToken = ProxyToken__factory.connect(config.Tokens.fdALPACA, deployer);
-  await proxyToken.setOkHolders([alpacaFeeder.address, config.FairLaunch.address], true);
-  await proxyToken.transferOwnership(alpacaFeeder.address);
+  await proxyToken.setOkHolders([alpacaFeeder.address, config.FairLaunch.address], true, { nonce: nonce++ });
+  await proxyToken.transferOwnership(alpacaFeeder.address, { nonce: nonce++ });
   console.log("✅ Done");
 
   console.log(">> Sleep for 10000msec waiting for alpacaFeeder to completely deployed");
@@ -47,7 +49,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("✅ Done");
 
   console.log(">> Depositing proxyToken to Fairlaunch pool");
-  await alpacaFeeder.fairLaunchDeposit();
+  await alpacaFeeder.fairLaunchDeposit({ nonce });
   console.log("✅ Done");
 };
 

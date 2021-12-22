@@ -115,14 +115,19 @@
     "ALPACA": "0x8F0528cE5eF7B51152A59745bEfDD91D97091d2F",
     "fdALPACA": "0x50E5748a2E9C5e05Ba8b95549Bf7B11dA91ddAB7"
   },
-  "xALPACA": "",
-  "ALPACAFeeder": "",
+  "xALPACA": "0xB7d85Ab25b9D478961face285fa3D8AAecAd24a9",
+  "ALPACAFeeder": "0x44B3868cbba5fbd2c5D8d1445BDB14458806B3B4",
   "GrassHouses": [
     {
       "name": "ALPACA",
-      "address": "",
+      "address": "0xDD97A18E36222F5D493d990eC7FfA52338aafB2C",
       "rewardToken": "0x8F0528cE5eF7B51152A59745bEfDD91D97091d2F"
+    },
+    {
+      "name": "THG",
+      "address": "0x66877f35062F3C4ad44c4889C2Efddbeb93C5EC7",
+      "rewardToken": "0x9fd87aefe02441b123c3c32466cd9db4c578618f"
     }
   ],
-  "GrassHouseGateway": ""
+  "GrassHouseGateway": "0x50309398E3AbCBD3357b0DD54A624C1251026ee5"
 }
