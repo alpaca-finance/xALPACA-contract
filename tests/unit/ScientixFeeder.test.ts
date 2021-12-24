@@ -23,7 +23,7 @@ describe("ScientixFeeder", () => {
   const FAIR_LAUNCH_POOL_ID = 0;
 
   // Contact Instance
-  let alpaca: BEP20;
+  let scientix: BEP20;
   let proxyToken: MockProxyToken;
 
   let feeder: ScientixFeeder;
@@ -38,7 +38,7 @@ describe("ScientixFeeder", () => {
   let aliceAddress: string;
 
   // Contract Signer
-  let alpacaAsAlice: BEP20;
+  let scientixAsAlice: BEP20;
 
   let feederAsAlice: ScientixFeeder;
 
@@ -46,9 +46,9 @@ describe("ScientixFeeder", () => {
     [deployer, alice] = await ethers.getSigners();
     [deployerAddress, aliceAddress] = await Promise.all([deployer.getAddress(), alice.getAddress()]);
 
-    // Deploy ALPACA
+    // Deploy SCIX
     const BEP20 = (await ethers.getContractFactory("BEP20", deployer)) as BEP20__factory;
-    alpaca = await BEP20.deploy("ALPACA", "ALPACA");
+    scientix = await BEP20.deploy("SCIX", "SCIX");
 
     // Deploy PROXYTOKEN
     const MockProxyToken = (await ethers.getContractFactory("MockProxyToken", deployer)) as MockProxyToken__factory;
@@ -57,18 +57,18 @@ describe("ScientixFeeder", () => {
 
     // Deploy GrassHouse
     const MockStakingPool = (await ethers.getContractFactory("MockStakingPool", deployer)) as MockStakingPool__factory;
-    stakingPool = await MockStakingPool.deploy(alpaca.address, proxyToken.address);
+    stakingPool = await MockStakingPool.deploy(scientix.address, proxyToken.address);
 
     stakingPool.createPool(proxyToken.address);
 
     // Deploy GrassHouse
     const MockGrassHouse = (await ethers.getContractFactory("MockGrassHouse", deployer)) as MockGrassHouse__factory;
-    grassHouse = await MockGrassHouse.deploy(alpaca.address);
+    grassHouse = await MockGrassHouse.deploy(scientix.address);
 
     // Deploy feeder
     const ScientixFeeder = (await ethers.getContractFactory("ScientixFeeder", deployer)) as ScientixFeeder__factory;
     const scientixFeeder = (await upgrades.deployProxy(ScientixFeeder, [
-      alpaca.address,
+      scientix.address,
       proxyToken.address,
       stakingPool.address,
       FAIR_LAUNCH_POOL_ID,
@@ -80,11 +80,11 @@ describe("ScientixFeeder", () => {
     await proxyToken.transferOwnership(scientixFeeder.address);
 
     // MINT
-    await alpaca.mint(deployerAddress, ethers.utils.parseEther("8888888"));
-    await alpaca.mint(aliceAddress, ethers.utils.parseEther("8888888"));
+    await scientix.mint(deployerAddress, ethers.utils.parseEther("8888888"));
+    await scientix.mint(aliceAddress, ethers.utils.parseEther("8888888"));
 
     // Assign contract signer
-    alpacaAsAlice = BEP20__factory.connect(alpaca.address, alice);
+    scientixAsAlice = BEP20__factory.connect(scientix.address, alice);
     feederAsAlice = ScientixFeeder__factory.connect(feeder.address, alice);
   }
 
@@ -105,7 +105,7 @@ describe("ScientixFeeder", () => {
       it("should revert", async () => {
         const ScientixFeeder = (await ethers.getContractFactory("ScientixFeeder", deployer)) as ScientixFeeder__factory;
         await expect(upgrades.deployProxy(ScientixFeeder, [
-          alpaca.address,
+          scientix.address,
           proxyToken.address,
           stakingPool.address,
           1,
@@ -118,7 +118,7 @@ describe("ScientixFeeder", () => {
       it("should revert", async () => {
         const ScientixFeeder = (await ethers.getContractFactory("ScientixFeeder", deployer)) as ScientixFeeder__factory;
         await expect(upgrades.deployProxy(ScientixFeeder, [
-          alpaca.address,
+          scientix.address,
           proxyToken.address,
           stakingPool.address,
           1,
@@ -179,29 +179,29 @@ describe("ScientixFeeder", () => {
 
   describe("#stakingPoolClaim", async () => {
     it("should work correctly", async () => {
-      await alpacaAsAlice.transfer(stakingPool.address, ethers.utils.parseEther("10"));
+      await scientixAsAlice.transfer(stakingPool.address, ethers.utils.parseEther("10"));
       await feeder.stakingPoolClaim();
-      expect(await alpaca.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("10"));
+      expect(await scientix.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("10"));
     });
   });
 
   describe("#feedGrassHouse", async () => {
     it("should work correctly", async () => {
-      await alpacaAsAlice.transfer(stakingPool.address, ethers.utils.parseEther("10"));
-      await alpacaAsAlice.transfer(feeder.address, ethers.utils.parseEther("20"));
-      expect(await alpaca.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("20"));
+      await scientixAsAlice.transfer(stakingPool.address, ethers.utils.parseEther("10"));
+      await scientixAsAlice.transfer(feeder.address, ethers.utils.parseEther("20"));
+      expect(await scientix.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("20"));
       await expect(feeder.feedGrassHouse()).to.be.emit(feeder, "LogFeedGrassHouse");
-      expect(await alpaca.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("0"));
-      expect(await alpaca.balanceOf(grassHouse.address)).to.be.eq(ethers.utils.parseEther("30"));
+      expect(await scientix.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("0"));
+      expect(await scientix.balanceOf(grassHouse.address)).to.be.eq(ethers.utils.parseEther("30"));
     });
 
     context("revert on harvest", () => {
       it("should continue feed", async () => {
-        await alpacaAsAlice.transfer(feeder.address, ethers.utils.parseEther("20"));
-        expect(await alpaca.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("20"));
+        await scientixAsAlice.transfer(feeder.address, ethers.utils.parseEther("20"));
+        expect(await scientix.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("20"));
         await expect(feeder.feedGrassHouse()).to.be.emit(feeder, "LogFeedGrassHouse");
-        expect(await alpaca.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("0"));
-        expect(await alpaca.balanceOf(grassHouse.address)).to.be.eq(ethers.utils.parseEther("20"));
+        expect(await scientix.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("0"));
+        expect(await scientix.balanceOf(grassHouse.address)).to.be.eq(ethers.utils.parseEther("20"));
       });
     });
   });
