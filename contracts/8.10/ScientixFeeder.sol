@@ -19,13 +19,12 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./interfaces/IBEP20.sol";
 import "./interfaces/IStakingPool.sol";
 import "./interfaces/IGrassHouse.sol";
-import "./interfaces/IVault.sol";
 import "./interfaces/IProxyToken.sol";
 
 import "./SafeToken.sol";
 
 /// @title ScientixFeeder
-contract ScientixFeeder is IVault, Initializable, OwnableUpgradeable {
+contract ScientixFeeder is Initializable, OwnableUpgradeable {
   /// @notice Libraries
   using SafeToken for address;
 
@@ -43,7 +42,7 @@ contract ScientixFeeder is IVault, Initializable, OwnableUpgradeable {
   /// @notice Attributes for ScientixFeeder
   /// token - address of the token to be deposited in this contract
   /// proxyToken - just a simple ERC20 token for staking with StakingPool
-  address public override token;
+  address public token;
   address public proxyToken;
 
   function initialize(
