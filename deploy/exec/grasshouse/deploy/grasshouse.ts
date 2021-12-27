@@ -19,7 +19,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       ░░░╚═╝░░░╚═╝░░╚═╝░░╚═╝╚═╝░░╚═╝╚═╝░░╚══╝╚═╝╚═╝░░╚══╝░╚═════╝░
       Check all variables below before execute the deployment script
   */
-
   const GRASSHOUSES: Array<IGrassHouse> = [
     { SYMBOL: "PAYB", TOKEN_ADDRESS: "0x916792fd41855914ba4b71285c8a05b866f0618b", START_TIME: "1640822400" },
   ];

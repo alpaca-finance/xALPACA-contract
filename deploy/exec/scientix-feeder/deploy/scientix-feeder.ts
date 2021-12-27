@@ -28,7 +28,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const scientixFeeder = (await upgrades.deployProxy(ScientixFeeder, [
     config.Tokens.SCIX,
     config.Tokens.fdSCIX,
-    config.ScientixStakingPool.address,
+    config.Scientix.StakingPools.address,
     POOL_ID,
     scientixGrassHouseAddress.address,
   ])) as ScientixFeeder;
@@ -39,7 +39,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log(">> Transferring ownership and set okHolders of proxyToken to be scientixFeeder");
   const proxyToken = ProxyToken__factory.connect(config.Tokens.fdSCIX, deployer);
-  await proxyToken.setOkHolders([scientixFeeder.address, config.ScientixStakingPool.address], true, { nonce: nonce++ });
+  await proxyToken.setOkHolders([scientixFeeder.address, config.Scientix.StakingPools.address], true, {
+    nonce: nonce++,
+  });
   await proxyToken.transferOwnership(scientixFeeder.address, { nonce: nonce++ });
   console.log("✅ Done");
 
