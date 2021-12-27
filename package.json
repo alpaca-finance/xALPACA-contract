@@ -23,7 +23,13 @@
     "solhint": "./node_modules/.bin/solhint -f table contracts/**/*.sol",
     "prettier:solidity": "./node_modules/.bin/prettier --write contracts/**/*.sol",
     "mainnet-fork": "hardhat node --show-stack-traces --config hardhat.config.forking.ts",
-    "script:mainnetfork:prepare-xalpaca": "hardhat run --network mainnetfork ./scripts/PrepareXAlpacaEnvironment.ts --config hardhat.config.forking.ts --show-stack-traces",
+    "script:mainnetfork:prepare-xalpaca": "hardhat run --network mainnetfork ./scripts/prepare-xalpaca-environment.ts --config hardhat.config.forking.ts --show-stack-traces",
+    "script:mainnet:validate-config-16-dec": "hardhat --network mainnet run --no-compile ./scripts/validate-config/validate-config-16-dec.ts",
+    "script:mainnet:validate-config-17-dec": "hardhat --network mainnet run --no-compile ./scripts/validate-config/validate-config-17-dec.ts",
+    "script:mainnet:validate-config-23-dec": "hardhat --network mainnet run --no-compile ./scripts/validate-config/validate-config-23-dec.ts",
+    "script:testnet:validate-config-16-dec": "hardhat --network testnet run --no-compile ./scripts/validate-config/validate-config-16-dec.ts",
+    "script:testnet:validate-config-17-dec": "hardhat --network testnet run --no-compile ./scripts/validate-config/validate-config-17-dec.ts",
+    "script:testnet:validate-config-23-dec": "hardhat --network testnet run --no-compile ./scripts/validate-config/validate-config-23-dec.ts",
     "task:set-timestamp-startweek": "hardhat set-timestamp-startweek --config hardhat.config.forking.ts --network mainnetfork",
     "task:advancetime": "hardhat advance-time --config hardhat.config.forking.ts --network mainnetfork",
     "task:checkpoint": "hardhat checkpoint --config hardhat.config.forking.ts --network mainnetfork",
@@ -93,5 +99,8 @@
   ],
   "engines": {
     "node": ">=14"
+  },
+  "dependencies": {
+    "@openzeppelin/test-helpers": "^0.5.15"
   }
 }
