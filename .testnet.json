@@ -111,9 +111,25 @@
       }
     ]
   },
+  "Scientix": {
+    "StakingPools": {
+      "address": "0xEcF393A15eed9935B6bE7BE1EB9bAB9DC34366e3",
+      "deployedBlock": 11951180,
+      "pools": [
+        {
+          "id": 3,
+          "name": "ibALPACA-SCIX",
+          "stakingToken": "0x6ad3A0d891C59677fbbB22E071613253467C382A",
+          "rewardToken": "0x5486bE4Cf629C1eD843550be65e9AC10D63A3a75"
+        }
+      ]
+    }
+  },
   "Tokens": {
     "ALPACA": "0x354b3a11D5Ea2DA89405173977E271F58bE2897D",
-    "fdALPACA": "0xE0E9F41a9572105D1F391AcC03245aF7E30254eF"
+    "fdALPACA": "0xE0E9F41a9572105D1F391AcC03245aF7E30254eF",
+    "SCIX": "0x8dEeB8A0b8B8e5e9e9e9c9b8e9e9e9e9e9e9e9e9",
+    "fdSCIX": "0x8dEeB8A0b8B8e5e9e9e9c9b8e9e9e9e9e9e9e9e9"
   },
   "xALPACA": "0x2B0501e17515EE7418A91336346F5C6B8D6c3322",
   "ALPACAFeeder": "0x5589FE5BEAe1C642A48eEFF5e80A761343D831a9",
