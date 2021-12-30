@@ -26,6 +26,11 @@ module.exports = {
       url: process.env.BSC_MAINNET_RPC,
       accounts: [process.env.BSC_MAINNET_PRIVATE_KEY],
     },
+    mainnetfork: {
+      url: "http://127.0.0.1:8545",
+      accounts: [process.env.BSC_MAINNET_PRIVATE_KEY],
+      timeout: 500000,
+    },
   },
   namedAccounts: {
     deployer: {
