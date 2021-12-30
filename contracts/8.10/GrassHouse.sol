@@ -25,6 +25,8 @@ import "./interfaces/IBEP20.sol";
 import "./SafeToken.sol";
 import "./utils/Math128.sol";
 
+import "hardhat/console.sol";
+
 /// @title GrassHouse - Where Alpaca eats
 // solhint-disable not-rely-on-time
 // solhint-disable-next-line contract-name-camelcase
@@ -294,6 +296,9 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
           break;
         }
         if (_balanceOf > 0) {
+          console.log("tokensPerWeek", tokensPerWeek[_userWeekCursor]);
+          console.log("_balanceOf", _balanceOf);
+          console.log("totalSupplyAt", totalSupplyAt[_userWeekCursor]);
           _toDistribute =
             _toDistribute +
             (_balanceOf * tokensPerWeek[_userWeekCursor]) /
@@ -446,5 +451,14 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
   /// @param _timestamp The timestamp to be rounded off
   function _timestampToFloorWeek(uint256 _timestamp) internal pure returns (uint256) {
     return (_timestamp / WEEK) * WEEK;
+  }
+
+  /// @notice Inject rewardToken into the contract
+  /// @param _timestamp The timestamp of the rewardToken to be distributed
+  /// @param _amount The amount of rewardToken to be distributed
+  function injectReward(uint256 _timestamp, uint256 _amount) external onlyOwner {
+    rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
+    lastTokenBalance = lastTokenBalance + _amount;
+    tokensPerWeek[_timestampToFloorWeek(_timestamp)] = _amount;
   }
 }
