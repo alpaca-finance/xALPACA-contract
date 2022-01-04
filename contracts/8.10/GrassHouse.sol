@@ -39,6 +39,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
   event LogCheckpointToken(uint256 _timestamp, uint256 _tokens);
   event LogClaimed(address indexed _recipient, uint256 _amount, uint256 _claimEpoch, uint256 _maxEpoch);
   event LogKilled();
+  event LogSetWhitelistedCheckpointCallers(address indexed _caller, address indexed _address, bool _ok);
 
   /// @dev Time-related constants
   uint256 public constant WEEK = 1 weeks;
@@ -64,6 +65,9 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
   /// @dev address to get token when contract is emergency stop
   bool public isKilled;
   address public emergencyReturn;
+
+  /// @dev list of whitelist checkpoint callers
+  mapping(address => bool) public whitelistedCheckpointCallers;
 
   /// @notice Initialize GrassHouse
   /// @param _xALPACA The address of xALPACA
@@ -168,6 +172,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
   function checkpointToken() external nonReentrant {
     require(
       msg.sender == owner() ||
+        whitelistedCheckpointCallers[msg.sender] ||
         (canCheckpointToken && (block.timestamp > lastTokenTimestamp + TOKEN_CHECKPOINT_DEADLINE)),
       "!allow"
     );
@@ -460,5 +465,13 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
     rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
     lastTokenBalance = lastTokenBalance + _amount;
     tokensPerWeek[_timestampToFloorWeek(_timestamp)] = _amount;
+  }
+
+  /// @dev Set whitelisted checkpoint callers. Must only be called by the owner.
+  function setWhitelistedCheckpointCallers(address[] calldata _callers, bool _ok) external onlyOwner {
+    for (uint256 _idx = 0; _idx < _callers.length; _idx++) {
+      whitelistedCheckpointCallers[_callers[_idx]] = _ok;
+      emit LogSetWhitelistedCheckpointCallers(msg.sender, _callers[_idx], _ok);
+    }
   }
 }
