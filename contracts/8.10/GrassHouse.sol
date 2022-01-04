@@ -25,8 +25,6 @@ import "./interfaces/IBEP20.sol";
 import "./SafeToken.sol";
 import "./utils/Math128.sol";
 
-import "hardhat/console.sol";
-
 /// @title GrassHouse - Where Alpaca eats
 // solhint-disable not-rely-on-time
 // solhint-disable-next-line contract-name-camelcase
@@ -296,9 +294,6 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
           break;
         }
         if (_balanceOf > 0) {
-          console.log("tokensPerWeek", tokensPerWeek[_userWeekCursor]);
-          console.log("_balanceOf", _balanceOf);
-          console.log("totalSupplyAt", totalSupplyAt[_userWeekCursor]);
           _toDistribute =
             _toDistribute +
             (_balanceOf * tokensPerWeek[_userWeekCursor]) /
