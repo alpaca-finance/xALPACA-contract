@@ -21,6 +21,7 @@
     "testnet": "hardhat console --no-compile --network testnet",
     "integration-test:feeder-fairlaunch": "hardhat test --no-compile ./tests/integration/AlpacaFeederWithFairLaunch.test.ts --config hardhat.config.forking.ts",
     "integration-test:feeder-worker": "hardhat test --no-compile ./tests/integration/AlpacaFeederWithWorker.test.ts --config hardhat.config.forking.ts",
+    "integration-test:upgrade-grasshouse": "hardhat test --no-compile ./tests/integration/UpgradeGrassHouseWhitelistedCallers.test.ts --config hardhat.config.forking.ts",
     "coverage": "hardhat coverage",
     "solhint": "./node_modules/.bin/solhint -f table contracts/**/*.sol",
     "prettier:solidity": "./node_modules/.bin/prettier --write contracts/**/*.sol",
@@ -50,6 +51,7 @@
     "deploy:testnet:grasshouse-enable-checkpoint": "hardhat --network testnet deploy --no-compile --reset --tags GrassHouseEnableCheckpoint",
     "deploy:testnet:alpaca-feeder": "hardhat --network testnet deploy --no-compile --reset --tags AlpacaFeeder",
     "deploy:testnet:scix-feeder": "hardhat --network testnet deploy --no-compile --reset --tags ScientixFeeder",
+    "deploy:testnet:grasshouse:upgrade": "hardhat --network testnet deploy --no-compile --reset --tags UpgradeGrassHouse",
     "deploy:mainnet:proxy-token": "hardhat --network mainnet deploy --no-compile --reset --tags ProxyToken",
     "deploy:mainnet:xalpaca": "hardhat --network mainnet deploy --no-compile --reset --tags XAlpaca",
     "deploy:mainnet:grasshouse": "hardhat --network mainnet deploy --no-compile --reset --tags GrassHouse",
@@ -58,7 +60,8 @@
     "deploy:mainnet:grasshouse-enable-checkpoint": "hardhat --network mainnet deploy --no-compile --reset --tags GrassHouseEnableCheckpoint",
     "deploy:mainnet:alpaca-feeder": "hardhat --network mainnet deploy --no-compile --reset --tags AlpacaFeeder",
     "deploy:mainnet:alpaca-feeder:upgrade": "hardhat --network mainnet deploy --no-compile --reset --tags UpgradeAlpacaFeeder",
-    "deploy:mainnet:scix-feeder": "hardhat --network mainnet deploy --no-compile --reset --tags ScientixFeeder"
+    "deploy:mainnet:scix-feeder": "hardhat --network mainnet deploy --no-compile --reset --tags ScientixFeeder",
+    "deploy:mainnet:grasshouse:upgrade": "hardhat --network mainnet deploy --no-compile --reset --tags UpgradeGrassHouse"
   },
   "devDependencies": {
     "@alpaca-finance/alpaca-contract": "1.2.23",
