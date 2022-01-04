@@ -15,7 +15,7 @@ import { Config } from "../../deploy/interfaces/config";
 chai.use(solidity);
 const { expect } = chai;
 
-describe("AlpacaFeeder - Integration test", () => {
+describe("UpgradeGrassHouse - fork test", () => {
   let deployer: SignerWithAddress;
 
   // contracts

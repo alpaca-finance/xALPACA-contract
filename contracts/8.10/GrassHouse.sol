@@ -462,7 +462,10 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
     tokensPerWeek[_timestampToFloorWeek(_timestamp)] = _amount;
   }
 
-  /// @dev Set whitelisted checkpoint callers. Must only be called by the owner.
+  /// @notice Set whitelisted checkpoint callers.
+  /// @dev Must only be called by owner.
+  /// @param _callers addresses to be whitelisted.
+  /// @param _ok The new ok flag for callers.
   function setWhitelistedCheckpointCallers(address[] calldata _callers, bool _ok) external onlyOwner {
     for (uint256 _idx = 0; _idx < _callers.length; _idx++) {
       whitelistedCheckpointCallers[_callers[_idx]] = _ok;
