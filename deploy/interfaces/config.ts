@@ -1,6 +1,8 @@
 export interface Config {
+  ProxyAdmin: string;
   Timelock: string;
   FairLaunch: FairLaunch;
+  Scientix: Scientix;
   Tokens: Tokens;
   xALPACA: string;
   ALPACAFeeder: string;
@@ -11,42 +13,41 @@ export interface Config {
 export interface FairLaunch {
   address: string;
   deployedBlock: number;
-  pools: PoolsEntity1[];
+  pools: Pool[];
 }
 
-export interface PoolsEntity1 {
+export interface Pool {
   id: number;
   stakingToken: string;
   address: string;
 }
 
+export interface Scientix {
+  StakingPools: StakingPools;
+}
+
+export interface StakingPools {
+  address: string;
+  deployedBlock: number;
+  pools: Pool2[];
+}
+
+export interface Pool2 {
+  id: number;
+  name: string;
+  stakingToken: string;
+  rewardToken: string;
+}
+
 export interface Tokens {
   ALPACA: string;
   fdALPACA: string;
+  SCIX: string;
+  fdSCIX: string;
 }
 
 export interface GrassHouse {
   name: string;
   address: string;
   rewardToken: string;
-}
-
-export interface WorkersEntity {
-  name: string;
-  address: string;
-  deployedBlock: number;
-  config: string;
-  pId: number;
-  stakingToken: string;
-  stakingTokenAt: string;
-  strategies: Strategies;
-}
-
-export interface Strategies {
-  StrategyAddAllBaseToken: string;
-  StrategyLiquidate: string;
-  StrategyAddTwoSidesOptimal: string;
-  StrategyWithdrawMinimizeTrading: string;
-  StrategyPartialCloseLiquidate: string;
-  StrategyPartialCloseMinimizeTrading: string;
 }

@@ -1,4 +1,5 @@
 {
+  "ProxyAdmin": "0x5379F32C8D5F663EACb61eeF63F722950294f452",
   "Timelock": "0x2D5408f2287BF9F9B05404794459a846651D0a59",
   "FairLaunch": {
     "address": "0xA625AB01B08ce023B2a342Dbb12a16f2C8489A8F",
@@ -111,22 +112,43 @@
       }
     ]
   },
+  "Scientix": {
+    "StakingPools": {
+      "address": "0x68145F3319F819b8E01Dfa3c094fa8205E9EfB9a",
+      "deployedBlock": 10880500,
+      "pools": [
+        {
+          "id": 3,
+          "name": "ibALPACA-SCIX",
+          "stakingToken": "0xf1bE8ecC990cBcb90e166b71E368299f0116d421",
+          "rewardToken": "0x2cfc48cdfea0678137854f010b5390c5144c0aa5"
+        }
+      ]
+    }
+  },
   "Tokens": {
     "ALPACA": "0x8F0528cE5eF7B51152A59745bEfDD91D97091d2F",
-    "fdALPACA": "0x50E5748a2E9C5e05Ba8b95549Bf7B11dA91ddAB7"
+    "fdALPACA": "0x50E5748a2E9C5e05Ba8b95549Bf7B11dA91ddAB7",
+    "SCIX": "0x2CFC48CdFea0678137854F010b5390c5144C0Aa5",
+    "fdSCIX": "0xc04096B8D0c4Fd0fd7a8667e813E630935aaff05"
   },
   "xALPACA": "0xB7d85Ab25b9D478961face285fa3D8AAecAd24a9",
   "ALPACAFeeder": "0x44B3868cbba5fbd2c5D8d1445BDB14458806B3B4",
   "GrassHouses": [
     {
       "name": "ALPACA",
-      "address": "0x6C8964f349C2a1a278b8fAd6B87610EE402C33f9",
+      "address": "0x6Fee87f744FC612948001b09B2808c87B91dDC3c",
       "rewardToken": "0x8F0528cE5eF7B51152A59745bEfDD91D97091d2F"
     },
     {
       "name": "THG",
-      "address": "0x2728EAfC63c81557A929fEE36DDAD0d18D6B5252",
+      "address": "0x3Fd1029D4Db12DfdAa6B92BfeEd6E41e21Fdc4b4",
       "rewardToken": "0x9fd87aefe02441b123c3c32466cd9db4c578618f"
+    },
+    {
+      "name": "PAYB",
+      "address": "0x35Cba40D30A0B814a53A09b667405A1a0A3e2AE5",
+      "rewardToken": "0x916792fd41855914ba4b71285c8a05b866f0618b"
     }
   ],
   "GrassHouseGateway": "0x50309398E3AbCBD3357b0DD54A624C1251026ee5"

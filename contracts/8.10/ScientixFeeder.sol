@@ -59,9 +59,9 @@ contract ScientixFeeder is Initializable, OwnableUpgradeable {
     stakingPoolId = _stakingPoolId;
     stakingPool = IStakingPool(_stakingPoolAddress);
     grassHouse = IGrassHouse(_grasshouseAddress);
-    
+
     address _stakeToken = address(stakingPool.getPoolToken(stakingPoolId));
-    
+
     require(_stakeToken == _proxyToken, "!same stakeToken");
     require(grassHouse.rewardToken() == _token, "!same rewardToken");
 
@@ -91,7 +91,7 @@ contract ScientixFeeder is Initializable, OwnableUpgradeable {
   /// @notice Receive reward from StakingPool
   function _stakingPoolClaim() internal {
     uint256 _before = token.myBalance();
-    // ABI Signature of claim(uint256) = 379607f58d976a91dd60b78d74592fb4bb001d7e08e70945c78343ec21864f46
+    // ABI Signature of claim(uint256) = 379607f5
     (bool _success, ) = address(stakingPool).call(abi.encodeWithSelector(0x379607f5, stakingPoolId));
     if (_success) emit LogStakingPoolClaim(address(this), token.myBalance() - _before);
   }
