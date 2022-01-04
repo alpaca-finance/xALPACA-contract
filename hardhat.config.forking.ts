@@ -5,7 +5,7 @@ import "@openzeppelin/hardhat-upgrades";
 import "@nomiclabs/hardhat-waffle";
 import "hardhat-typechain";
 import "solidity-coverage";
-require("./scripts/Tasks");
+require("./scripts/tasks-mainnetfork");
 
 module.exports = {
   defaultNetwork: "hardhat",
@@ -19,7 +19,7 @@ module.exports = {
       accounts: { mnemonic: "test test test test test test test test test test test junk" },
       forking: {
         url: process.env.BSC_MAINNET_FORK_RPC,
-        blockNumber: 10000043,
+        blockNumber: 14061119,
       },
     },
     mainnetfork: {

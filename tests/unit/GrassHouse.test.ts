@@ -171,6 +171,23 @@ describe("GrassHouse", () => {
       });
     });
 
+    context("when whitelistedCheckpointCallers call checkpointToken", async () => {
+      it("should work", async () => {
+        // set eve to be whitelistedCheckpointCallers
+        const setWhitelistedCallersTx = await grassHouse.setWhitelistedCheckpointCallers([eveAddress], true);
+
+        const latestTimestamp = await timeHelpers.latestTimestamp();
+        await ALPACA.transfer(grassHouse.address, ethers.utils.parseEther("888"));
+        await expect(grassHouseAsEve.checkpointToken()).to.be.emit(grassHouse, "LogCheckpointToken");
+
+        expect(await grassHouse.lastTokenBalance()).to.be.eq(ethers.utils.parseEther("888"));
+        expect(await grassHouse.lastTokenTimestamp()).to.be.gt(latestTimestamp);
+        expect(await grassHouse.tokensPerWeek((await timeHelpers.latestTimestamp()).div(WEEK).mul(WEEK))).to.be.eq(
+          ethers.utils.parseEther("888")
+        );
+      });
+    });
+
     context("when user call checkpointToken", async () => {
       context("when canCheckpointToken is false", async () => {
         it("should revert", async () => {
@@ -312,7 +329,9 @@ describe("GrassHouse", () => {
         const feedAmount = ethers.utils.parseEther("100");
 
         await ALPACA.approve(grassHouse.address, ethers.constants.MaxUint256);
-        expect(await grassHouse.feed(feedAmount)).to.be.emit(grassHouse, "LogFeed").withArgs(feedAmount);
+        expect(await grassHouse.feed(feedAmount))
+          .to.be.emit(grassHouse, "LogFeed")
+          .withArgs(feedAmount);
 
         expect(await ALPACA.balanceOf(grassHouse.address)).to.be.eq(feedAmount);
         expect(await grassHouse.lastTokenTimestamp()).to.be.eq(lastTokenTimestamp);
@@ -328,7 +347,9 @@ describe("GrassHouse", () => {
           await grassHouse.setCanCheckpointToken(true);
           await timeHelpers.increaseTimestamp(TOKEN_CHECKPOINT_DEADLINE);
           await ALPACA.approve(grassHouse.address, ethers.constants.MaxUint256);
-          expect(await grassHouse.feed(feedAmount)).to.be.emit(grassHouse, "LogFeed").withArgs(feedAmount);
+          expect(await grassHouse.feed(feedAmount))
+            .to.be.emit(grassHouse, "LogFeed")
+            .withArgs(feedAmount);
 
           expect(await ALPACA.balanceOf(grassHouse.address)).to.be.eq(feedAmount);
           expect(await grassHouse.lastTokenTimestamp()).to.be.gt(lastTokenTimestamp);
@@ -345,7 +366,9 @@ describe("GrassHouse", () => {
 
           await grassHouse.setCanCheckpointToken(true);
           await ALPACA.approve(grassHouse.address, ethers.constants.MaxUint256);
-          expect(await grassHouse.feed(feedAmount)).to.be.emit(grassHouse, "LogFeed").withArgs(feedAmount);
+          expect(await grassHouse.feed(feedAmount))
+            .to.be.emit(grassHouse, "LogFeed")
+            .withArgs(feedAmount);
 
           let weekCursor = startWeekCursor;
           for (let i = 0; i < 20; i++) {
@@ -2196,6 +2219,20 @@ describe("GrassHouse", () => {
         );
         expect(aliceRewards).to.be.eq(feedAmount);
         expect(await dTokenGrassHouse.callStatic.claim(aliceAddress)).to.be.eq(aliceRewards);
+      });
+    });
+  });
+
+  describe("#setWhitelistedCheckpointCallers", async () => {
+    context("when owner set whitelistedCheckpointCallers", async () => {
+      it("should be abel to set whitelistedCheckpointCallers", async () => {
+        // set eve to be whitelisted callers
+        const setWhitelistedCallersTx = await grassHouse.setWhitelistedCheckpointCallers([eveAddress], true);
+        expect(setWhitelistedCallersTx)
+          .to.be.emit(grassHouse, "LogSetWhitelistedCheckpointCallers")
+          .withArgs(deployerAddress, eveAddress, true);
+
+        expect(await grassHouse.whitelistedCheckpointCallers(eveAddress)).to.eq(true);
       });
     });
   });
