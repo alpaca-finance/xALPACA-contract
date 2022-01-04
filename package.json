@@ -57,6 +57,7 @@
     "deploy:mainnet:grasshouse-checkpoint": "hardhat --network mainnet deploy --no-compile --reset --tags GrassHouseCheckpoint",
     "deploy:mainnet:grasshouse-enable-checkpoint": "hardhat --network mainnet deploy --no-compile --reset --tags GrassHouseEnableCheckpoint",
     "deploy:mainnet:alpaca-feeder": "hardhat --network mainnet deploy --no-compile --reset --tags AlpacaFeeder",
+    "deploy:mainnet:alpaca-feeder:upgrade": "hardhat --network mainnet deploy --no-compile --reset --tags UpgradeAlpacaFeeder",
     "deploy:mainnet:scix-feeder": "hardhat --network mainnet deploy --no-compile --reset --tags ScientixFeeder"
   },
   "devDependencies": {

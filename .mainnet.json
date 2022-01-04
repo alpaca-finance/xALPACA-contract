@@ -1,4 +1,5 @@
 {
+  "ProxyAdmin": "0x5379F32C8D5F663EACb61eeF63F722950294f452",
   "Timelock": "0x2D5408f2287BF9F9B05404794459a846651D0a59",
   "FairLaunch": {
     "address": "0xA625AB01B08ce023B2a342Dbb12a16f2C8489A8F",
@@ -136,17 +137,17 @@
   "GrassHouses": [
     {
       "name": "ALPACA",
-      "address": "0x6C8964f349C2a1a278b8fAd6B87610EE402C33f9",
+      "address": "0x6Fee87f744FC612948001b09B2808c87B91dDC3c",
       "rewardToken": "0x8F0528cE5eF7B51152A59745bEfDD91D97091d2F"
     },
     {
       "name": "THG",
-      "address": "0x2728EAfC63c81557A929fEE36DDAD0d18D6B5252",
+      "address": "0x3Fd1029D4Db12DfdAa6B92BfeEd6E41e21Fdc4b4",
       "rewardToken": "0x9fd87aefe02441b123c3c32466cd9db4c578618f"
     },
     {
       "name": "PAYB",
-      "address": "0xA745BB195CBB18a43F999F52BB0b80C3614764D8",
+      "address": "0x35Cba40D30A0B814a53A09b667405A1a0A3e2AE5",
       "rewardToken": "0x916792fd41855914ba4b71285c8a05b866f0618b"
     }
   ],

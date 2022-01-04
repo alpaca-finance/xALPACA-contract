@@ -34,6 +34,7 @@ contract AlpacaFeeder is IVault, Initializable, OwnableUpgradeable {
   event LogFairLaunchDeposit();
   event LogFairLaunchWithdraw();
   event LogFairLaunchHarvest(address _caller, uint256 _harvestAmount);
+  event LogSetNewGrassHouse(address indexed _caller, address _prevGrassHouse, address _newGrassHouse);
 
   /// @notice State
   IFairLaunch public fairLaunch;
@@ -60,9 +61,9 @@ contract AlpacaFeeder is IVault, Initializable, OwnableUpgradeable {
     fairLaunchPoolId = _fairLaunchPoolId;
     fairLaunch = IFairLaunch(_fairLaunchAddress);
     grassHouse = IGrassHouse(_grasshouseAddress);
-    
-    (address _stakeToken, , , ,) = fairLaunch.poolInfo(fairLaunchPoolId);
-    
+
+    (address _stakeToken, , , , ) = fairLaunch.poolInfo(fairLaunchPoolId);
+
     require(_stakeToken == _proxyToken, "!same stakeToken");
     require(grassHouse.rewardToken() == _token, "!same rewardToken");
 
@@ -103,5 +104,13 @@ contract AlpacaFeeder is IVault, Initializable, OwnableUpgradeable {
     token.safeApprove(address(grassHouse), _feedAmount);
     grassHouse.feed(_feedAmount);
     emit LogFeedGrassHouse(_feedAmount);
+  }
+
+  /// @notice Set a new GrassHouse
+  /// @param _newGrassHouse - new GrassHouse address
+  function setGrassHouse(IGrassHouse _newGrassHouse) external onlyOwner {
+    address _prevGrassHouse = address(grassHouse);
+    grassHouse = _newGrassHouse;
+    emit LogSetNewGrassHouse(msg.sender, _prevGrassHouse, address(_newGrassHouse));
   }
 }

@@ -1,4 +1,5 @@
 export interface Config {
+  ProxyAdmin: string;
   Timelock: string;
   FairLaunch: FairLaunch;
   Scientix: Scientix;
