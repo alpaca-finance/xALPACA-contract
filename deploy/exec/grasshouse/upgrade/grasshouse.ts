@@ -15,7 +15,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       ░░░╚═╝░░░╚═╝░░╚═╝░░╚═╝╚═╝░░╚═╝╚═╝░░╚══╝╚═╝╚═╝░░╚══╝░╚═════╝░
       Check all variables below before execute the deployment script
   */
-  const EXACT_ETA = "";
+  const EXACT_ETA = "1641384000";
 
   const [deployer] = await ethers.getSigners();
   const config = getConfig();
