@@ -20,9 +20,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       Check all variables below before execute the deployment script
   */
   const GRASSHOUSES: Array<IGrassHouse> = [
-    { SYMBOL: "ALPACA", TOKEN_ADDRESS: "0x8F0528cE5eF7B51152A59745bEfDD91D97091d2F", START_TIME: "1639612800" },
-    { SYMBOL: "THG", TOKEN_ADDRESS: "0x9fd87aefe02441b123c3c32466cd9db4c578618f", START_TIME: "1639612800" },
-    { SYMBOL: "PAYB", TOKEN_ADDRESS: "0x916792fd41855914ba4b71285c8a05b866f0618b", START_TIME: "1640217600" },
+    { SYMBOL: "LAND", TOKEN_ADDRESS: "0x9d986a3f147212327dd658f712d5264a73a1fdb0", START_TIME: "1641427200" },
   ];
 
   const config = ConfigEntity.getConfig();

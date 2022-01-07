@@ -149,6 +149,11 @@
       "name": "PAYB",
       "address": "0x35Cba40D30A0B814a53A09b667405A1a0A3e2AE5",
       "rewardToken": "0x916792fd41855914ba4b71285c8a05b866f0618b"
+    },
+    {
+      "name": "LAND",
+      "address": "0x4C8F9534731eC017A7a4e71F1045f4a8Dd9f4c8A",
+      "rewardToken": "0x9d986a3f147212327dd658f712d5264a73a1fdb0"
     }
   ],
   "GrassHouseGateway": "0x50309398E3AbCBD3357b0DD54A624C1251026ee5"
