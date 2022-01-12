@@ -19,8 +19,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       ░░░╚═╝░░░╚═╝░░╚═╝░░╚═╝╚═╝░░╚═╝╚═╝░░╚══╝╚═╝╚═╝░░╚══╝░╚═════╝░
       Check all variables below before execute the deployment script
   */
+  const CHECKPOINT_WHITELIST: string[] = ["0xe45216ac4816a5ec5378b1d13de8aa9f262ce9de"];
   const GRASSHOUSES: Array<IGrassHouse> = [
-    { SYMBOL: "LAND", TOKEN_ADDRESS: "0x9d986a3f147212327dd658f712d5264a73a1fdb0", START_TIME: "1641427200" },
+    { SYMBOL: "HIGH", TOKEN_ADDRESS: "0x5f4bde007dc06b867f86ebfe4802e34a1ffeed63", START_TIME: "1642032000" },
+    { SYMBOL: "DLTA", TOKEN_ADDRESS: "0x3a06212763CAF64bf101DaA4b0cEbb0cD393fA1a", START_TIME: "1642032000" },
   ];
 
   const config = ConfigEntity.getConfig();
@@ -36,7 +38,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       await deployer.getAddress(),
     ])) as GrassHouse;
     await grassHouse.deployed();
+    const deployTx = await grassHouse.deployTransaction.wait(3);
     console.log(`>> Deployed at ${grassHouse.address}`);
+    console.log(`>> Deployed at: `, deployTx.blockNumber);
+    console.log("✅ Done");
+
+    console.log(">> Whitelist checkpoint token");
+    const whitelistTx = await grassHouse.setWhitelistedCheckpointCallers(CHECKPOINT_WHITELIST, true);
+    await whitelistTx.wait(3);
     console.log("✅ Done");
   }
 };
