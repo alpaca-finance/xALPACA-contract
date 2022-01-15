@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="ca150831-d3de-4fd2-95e4-9856fd20d3c5" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/contracts/8.10/alpaca-mate/GrassMaxi.sol" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/contracts/8.10/alpaca-mate/apis/pancakeV2/IPancakeRouter02.sol" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/contracts/8.10/interfaces/IxALPACA.sol" beforeDir="false" afterPath="$PROJECT_DIR$/contracts/8.10/interfaces/IxALPACA.sol" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
+  </component>
+  <component name="ProjectId" id="23MLky5cIE9TVn9qtLdstj8f09b" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/contracts/8.10/alpaca-mate/apis/pancakeV2" />
+    <property name="nodejs_package_manager_path" value="yarn" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+    <property name="ts.external.directory.path" value="$PROJECT_DIR$/node_modules/typescript/lib" />
+    <property name="vue.rearranger.settings.migration" value="true" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/contracts/8.10/alpaca-mate/apis/pancakeV2" />
+      <recent name="$PROJECT_DIR$/contracts/8.10/alpaca-mate" />
+      <recent name="$PROJECT_DIR$" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/contracts/8.10/alpaca-mate/apis" />
+    </key>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ca150831-d3de-4fd2-95e4-9856fd20d3c5" name="Changes" comment="" />
+      <created>1641539156665</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1641539156665</updated>
+      <workItem from="1641539159909" duration="1170000" />
+      <workItem from="1641549751557" duration="778000" />
+      <workItem from="1641790701407" duration="161000" />
+      <workItem from="1641965880407" duration="25637000" />
+      <workItem from="1642134030463" duration="16504000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+    <option name="exactExcludedFiles">
+      <list>
+        <option value="$PROJECT_DIR$/typechain/test.js" />
+        <option value="$PROJECT_DIR$/typechain/test.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/index.js" />
+        <option value="$PROJECT_DIR$/typechain/index.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/MockGrassHouse__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/IVault__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/IERC20Upgradeable__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/ERC20Upgradeable__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/OwnableUpgradeable__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/IERC20Upgradeable__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/IERC20MetadataUpgradeable__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/ScientixFeeder__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/GrassHouse__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/IERC20Metadata__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/MockFairLaunch__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/IERC20__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/ERC20__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/BEP20__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/IxALPACA__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/GrassHouseGateway__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/MockContractContext__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/BEP20__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/GrassMaxi__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/MockContractContext__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/IProxyToken__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/GrassHouse__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/GrassMaxi__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/IxALPACA__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/OwnableUpgradeable__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/IBEP20__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/IProxyToken__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/ProxyToken__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/IPancakeRouter02__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/MockGrassHouse__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/IFairLaunch__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/ERC20Interface__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/MockFairLaunch__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/MockProxyToken__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/IVault__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/IERC20MetadataUpgradeable__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/ERC20__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/IERC20Metadata__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/MockStakingPool__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/MockProxyToken__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/MockStakingPool__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/IStakingPool__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/Ownable__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/XALPACA__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/AlpacaFeeder__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/IGrassHouse__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/IGrassHouse__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/IPancakeRouter02__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/IERC20__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/AlpacaFeeder__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/XALPACA__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/GrassHouseGateway__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/IBEP20__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/ProxyToken__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/ERC20Interface__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/IFairLaunch__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/ScientixFeeder__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/ERC20Upgradeable__factory.d.ts" />
+        <option value="$PROJECT_DIR$/typechain/factories/Ownable__factory.js" />
+        <option value="$PROJECT_DIR$/typechain/factories/IStakingPool__factory.d.ts" />
+      </list>
+    </option>
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
