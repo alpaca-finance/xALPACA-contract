@@ -1,6 +1,6 @@
 {
   "name": "@alpaca-finance/xalpaca-contract",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "scripts": {
     "prepublish": "yarn build",
     "build": "yarn run build:cjs",
