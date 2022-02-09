@@ -20,6 +20,8 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/MerkleProofUpgradeable.sol";
 
+import "./RootStorage.sol";
+
 /// @title Tribute - A tribute to xALPACA holders on Capital chain.
 // solhint-disable not-rely-on-time
 contract Tribute is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable {
@@ -27,16 +29,18 @@ contract Tribute is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
 
   error Tribute_Killed();
   error Tribute_OnlyKeeper();
-  error Tribute_InvalidParams();
+  error Tribute_InvalidTimestamp();
+  error Tribute_InvalidMerkleProof();
+  error Tribute_Claimed();
+  error Tribute_MerkleRootNotSet();
 
   uint256 public constant WEEK = 7 days;
 
   IERC20Upgradeable public rewardToken;
+  RootStorage public rootStorage;
 
   mapping(uint256 => uint256) public tokensPerWeek;
-  mapping(uint256 => bytes32) public weeklyMerkleRoot;
   mapping(uint256 => mapping(uint256 => uint256)) public weeklyClaimedBitMap;
-  mapping(uint256 => uint256) public totalSupplyAt;
   uint256 public lastNotifyRewardWeekCursor;
 
   mapping(address => bool) public keepers;
@@ -44,7 +48,7 @@ contract Tribute is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
   bool public isKilled;
 
   event LogDispute(uint256 timestamp, bytes32 root, uint256 totalSupplyAt);
-  event LogNotifyBalance(uint256 timestamp, bytes32 root, uint256 totalSupplyAt);
+  event LogNotifyReward(uint256 timestamp, uint256 amount);
   event LogSetKeepersOk(address[] keepers, bool ok);
   event LogClaim(uint256 timestamp, address user, uint256 amount);
   event LogKilled();
@@ -59,11 +63,12 @@ contract Tribute is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
     _;
   }
 
-  function initialize(IERC20Upgradeable _rewardToken) external initializer {
+  function initialize(RootStorage _rootStorage, IERC20Upgradeable _rewardToken) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
     rewardToken = _rewardToken;
+    rootStorage = _rootStorage;
   }
 
   function claim(
@@ -75,44 +80,22 @@ contract Tribute is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
   ) external onlyLive nonReentrant {
     // Check
     _timestamp = _timestampToFloorWeek(_timestamp);
-    if (_timestamp >= lastNotifyRewardWeekCursor) revert Tribute_InvalidParams();
-    if (isClaimed(_timestamp, _index)) revert Tribute_InvalidParams();
+    if (_timestamp >= lastNotifyRewardWeekCursor) revert Tribute_InvalidTimestamp();
+    if (isClaimed(_timestamp, _index)) revert Tribute_Claimed();
     // Verify the merkle proof
     bytes32 _node = keccak256(abi.encodePacked(_index, _user, _amount));
-    if (!MerkleProofUpgradeable.verify(_merkleProof, weeklyMerkleRoot[_timestamp], _node))
-      revert Tribute_InvalidParams();
+    if (!MerkleProofUpgradeable.verify(_merkleProof, rootStorage.weeklyMerkleRoot(_timestamp), _node))
+      revert Tribute_InvalidMerkleProof();
 
     // Effect
     // Send the rewards
-    uint256 _rewards = (tokensPerWeek[_timestamp] * _amount) / totalSupplyAt[_timestamp];
+    uint256 _rewards = (tokensPerWeek[_timestamp] * _amount) / rootStorage.totalSupplyAt(_timestamp);
     _setClaimed(_timestamp, _index);
 
     // Interaction
     rewardToken.safeTransfer(_user, _rewards);
 
     emit LogClaim(_timestamp, _user, _rewards);
-  }
-
-  function dispute(
-    bytes32 _weeklyMerkleRoot,
-    uint256 _rewards,
-    uint256 _totalSupply
-  ) external onlyOwner nonReentrant {
-    // Check
-    uint256 _timestamp = _timestampToFloorWeek(block.timestamp);
-    if (weeklyMerkleRoot[_timestamp] == 0) revert Tribute_InvalidParams();
-
-    // Effect
-    uint256 _prevRewards = tokensPerWeek[_timestamp];
-    tokensPerWeek[_timestamp] = _rewards;
-    weeklyMerkleRoot[_timestamp] = _weeklyMerkleRoot;
-    totalSupplyAt[_timestamp] = _totalSupply;
-
-    // Interaction
-    rewardToken.safeTransfer(msg.sender, _prevRewards);
-    rewardToken.safeTransferFrom(msg.sender, address(this), _rewards);
-
-    emit LogDispute(_timestamp, _weeklyMerkleRoot, _totalSupply);
   }
 
   function isClaimed(uint256 _timestamp, uint256 _index) public view returns (bool) {
@@ -130,25 +113,19 @@ contract Tribute is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
     emit LogKilled();
   }
 
-  function notifyReward(
-    bytes32 _weeklyMerkleRoot,
-    uint256 _rewards,
-    uint256 _totalSupply
-  ) external onlyKeeper onlyLive nonReentrant {
+  function notifyReward(uint256 _amount) external onlyKeeper onlyLive nonReentrant {
     // Check
     uint256 _timestamp = _timestampToFloorWeek(block.timestamp);
-    if (weeklyMerkleRoot[_timestamp] != 0) revert Tribute_InvalidParams();
+    if (rootStorage.weeklyMerkleRoot(_timestamp) == 0) revert Tribute_MerkleRootNotSet();
 
     // Effect
-    tokensPerWeek[_timestamp] = _rewards;
-    weeklyMerkleRoot[_timestamp] = _weeklyMerkleRoot;
-    totalSupplyAt[_timestamp] = _totalSupply;
+    tokensPerWeek[_timestamp] = _amount;
     lastNotifyRewardWeekCursor = _timestamp;
 
     // Interaction
-    rewardToken.safeTransferFrom(msg.sender, address(this), _rewards);
+    rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
 
-    emit LogNotifyBalance(_timestamp, _weeklyMerkleRoot, _totalSupply);
+    emit LogNotifyReward(_timestamp, _amount);
   }
 
   function setKeepersOk(address[] calldata _keepers, bool _ok) external onlyOwner {
