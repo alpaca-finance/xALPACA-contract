@@ -20,6 +20,8 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/MerkleProofUpgradeable.sol";
 
+/// @title Tribute - A tribute to xALPACA holders on Capital chain.
+// solhint-disable not-rely-on-time
 contract Tribute is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -48,7 +50,7 @@ contract Tribute is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
   event LogKilled();
 
   modifier onlyLive() {
-    if (!isKilled) revert Tribute_Killed();
+    if (isKilled) revert Tribute_Killed();
     _;
   }
 

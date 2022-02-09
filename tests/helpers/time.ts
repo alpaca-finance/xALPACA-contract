@@ -8,6 +8,13 @@ export const YEAR = DAY.mul(365);
 
 const SEC_PER_BLOCK = 3;
 
+export async function setStartNextWeek(): Promise<BigNumber> {
+  const currentTimestamp = await latestTimestamp();
+  const nextWeek = currentTimestamp.div(WEEK).add(1).mul(WEEK);
+  setTimestamp(nextWeek);
+  return nextWeek;
+}
+
 export function timestampFloorWeek(t: BigNumberish): BigNumber {
   const bt = BigNumber.from(t);
   return bt.div(WEEK).mul(WEEK);
