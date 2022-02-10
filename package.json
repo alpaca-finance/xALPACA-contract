@@ -122,6 +122,7 @@
     "lodash": "^4.17.21",
     "underscore": "^1.12.1",
     "node-fetch": "^2.6.7",
-    "simple-get": "^2.8.2"
+    "simple-get": "^2.8.2",
+    "web3": "^1.7.0"
   }
 }
