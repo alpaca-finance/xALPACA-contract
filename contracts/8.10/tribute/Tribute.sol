@@ -27,6 +27,7 @@ import "./RootStorage.sol";
 contract Tribute is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
+  error Tribute_BadLength();
   error Tribute_Killed();
   error Tribute_OnlyKeeper();
   error Tribute_InvalidTimestamp();
@@ -71,13 +72,13 @@ contract Tribute is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
     rootStorage = _rootStorage;
   }
 
-  function claim(
+  function _claim(
     uint256 _timestamp,
     uint256 _index,
     address _user,
     uint256 _amount,
     bytes32[] calldata _merkleProof
-  ) external onlyLive nonReentrant {
+  ) internal returns (uint256) {
     // Check
     _timestamp = _timestampToFloorWeek(_timestamp);
     if (_timestamp >= lastNotifyRewardWeekCursor) revert Tribute_InvalidTimestamp();
@@ -96,6 +97,37 @@ contract Tribute is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
     rewardToken.safeTransfer(_user, _rewards);
 
     emit LogClaim(_timestamp, _user, _rewards);
+
+    return _rewards;
+  }
+
+  function claim(
+    uint256 _timestamp,
+    uint256 _index,
+    address _user,
+    uint256 _amount,
+    bytes32[] calldata _merkleProof
+  ) external onlyLive nonReentrant returns (uint256) {
+    return _claim(_timestamp, _index, _user, _amount, _merkleProof);
+  }
+
+  function claimMany(
+    uint256[] calldata _timestamps,
+    uint256[] calldata indexes,
+    address[] calldata _users,
+    uint256[] calldata _amounts,
+    bytes32[][] calldata _merkleProofs
+  ) external onlyLive nonReentrant {
+    if (
+      _timestamps.length != indexes.length ||
+      _timestamps.length != _users.length ||
+      _timestamps.length != _amounts.length ||
+      _timestamps.length != _merkleProofs.length
+    ) revert Tribute_BadLength();
+
+    for (uint256 i = 0; i < _timestamps.length; i++) {
+      _claim(_timestamps[i], indexes[i], _users[i], _amounts[i], _merkleProofs[i]);
+    }
   }
 
   function isClaimed(uint256 _timestamp, uint256 _index) public view returns (bool) {

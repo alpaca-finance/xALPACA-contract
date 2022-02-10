@@ -13,6 +13,7 @@ describe("Tribute", async () => {
   let bob: SignerWithAddress;
 
   let merkles: Array<{ merkle: MerkleDistributorInfo; totalSupply: BigNumber }>;
+  let disputeMerkles: Array<{ merkle: MerkleDistributorInfo; totalSupply: BigNumber }>;
 
   let rewardToken: BEP20;
   let rootStorage: RootStorage;
@@ -60,6 +61,19 @@ describe("Tribute", async () => {
           merkle: parseBalanceMap({
             [alice.address]: formatBigNumber(15, "purehex"),
             [bob.address]: formatBigNumber(7, "purehex"),
+          }),
+        },
+      ]
+    );
+
+    disputeMerkles = [];
+    disputeMerkles.push(
+      ...[
+        {
+          totalSupply: BigNumber.from("90"),
+          merkle: parseBalanceMap({
+            [alice.address]: formatBigNumber(50, "purehex"),
+            [bob.address]: formatBigNumber(40, "purehex"),
           }),
         },
       ]
@@ -184,6 +198,22 @@ describe("Tribute", async () => {
 
       context("when claim with valid proof", async () => {
         it("should work", async () => {
+          const expectedAliceReward = (await tribute.tokensPerWeek(stages["week0"]))
+            .mul(merkles[0].merkle.claims[alice.address].amount)
+            .div(merkles[0].totalSupply);
+
+          // Assert that callStatic return the expected rewards
+          expect(
+            await tribute.callStatic.claim(
+              stages["week0"],
+              merkles[0].merkle.claims[alice.address].index,
+              alice.address,
+              merkles[0].merkle.claims[alice.address].amount,
+              merkles[0].merkle.claims[alice.address].proof
+            )
+          ).to.be.eq(expectedAliceReward);
+
+          // Perform the actual claim
           const aliceRewardBefore = await rewardToken.balanceOf(alice.address);
           await tribute.claim(
             stages["week0"],
@@ -194,12 +224,24 @@ describe("Tribute", async () => {
           );
           const aliceRewardAfter = await rewardToken.balanceOf(alice.address);
 
-          expect(aliceRewardAfter.sub(aliceRewardBefore)).to.be.eq(
-            (await tribute.tokensPerWeek(stages["week0"]))
-              .mul(merkles[0].merkle.claims[alice.address].amount)
-              .div(merkles[0].totalSupply)
-          );
+          expect(aliceRewardAfter.sub(aliceRewardBefore)).to.be.eq(expectedAliceReward);
 
+          const expectedBobReward = (await tribute.tokensPerWeek(stages["week0"]))
+            .mul(merkles[0].merkle.claims[bob.address].amount)
+            .div(merkles[0].totalSupply);
+
+          // Assert that callStatic return the expected rewards
+          expect(
+            await tribute.callStatic.claim(
+              stages["week0"],
+              merkles[0].merkle.claims[bob.address].index,
+              bob.address,
+              merkles[0].merkle.claims[bob.address].amount,
+              merkles[0].merkle.claims[bob.address].proof
+            )
+          ).to.be.eq(expectedBobReward);
+
+          // Perform the actual claim
           const bobRewardBefore = await rewardToken.balanceOf(bob.address);
           await tribute.claim(
             stages["week0"],
@@ -210,11 +252,7 @@ describe("Tribute", async () => {
           );
           const bobRewardAfter = await rewardToken.balanceOf(bob.address);
 
-          expect(bobRewardAfter.sub(bobRewardBefore)).to.be.eq(
-            (await tribute.tokensPerWeek(stages["week0"]))
-              .mul(merkles[0].merkle.claims[bob.address].amount)
-              .div(merkles[0].totalSupply)
-          );
+          expect(bobRewardAfter.sub(bobRewardBefore)).to.be.eq(expectedBobReward);
         });
       });
 
@@ -259,6 +297,43 @@ describe("Tribute", async () => {
             (await tribute.tokensPerWeek(stages["week1"]))
               .mul(merkles[1].merkle.claims[alice.address].amount)
               .div(merkles[1].totalSupply)
+          );
+        });
+      });
+
+      context("when dispute happened on RootStorage", async () => {
+        it("should work with new proof", async () => {
+          await rootStorage.dispute(disputeMerkles[0].merkle.merkleRoot, disputeMerkles[0].totalSupply);
+          stages["week2"] = await timeHelpers.setStartNextWeek();
+          await rootStorage.notify(merkles[2].merkle.merkleRoot, merkles[2].totalSupply);
+          await tribute.notifyReward(0);
+
+          // When passing the old merkle root. This should revert as it is disputed.
+          await expect(
+            tribute.claim(
+              stages["week1"],
+              merkles[1].merkle.claims[alice.address].index,
+              alice.address,
+              merkles[1].merkle.claims[alice.address].amount,
+              merkles[1].merkle.claims[alice.address].proof
+            )
+          ).to.be.revertedWith("Tribute_InvalidMerkleProof()");
+
+          // When pass with the right merkle root. This should work.
+          const aliceRewardBefore = await rewardToken.balanceOf(alice.address);
+          await tribute.claim(
+            stages["week1"],
+            disputeMerkles[0].merkle.claims[alice.address].index,
+            alice.address,
+            disputeMerkles[0].merkle.claims[alice.address].amount,
+            disputeMerkles[0].merkle.claims[alice.address].proof
+          );
+          const aliceRewardAfter = await rewardToken.balanceOf(alice.address);
+
+          expect(aliceRewardAfter.sub(aliceRewardBefore)).to.be.eq(
+            (await tribute.tokensPerWeek(stages["week1"]))
+              .mul(disputeMerkles[0].merkle.claims[alice.address].amount)
+              .div(disputeMerkles[0].totalSupply)
           );
         });
       });
