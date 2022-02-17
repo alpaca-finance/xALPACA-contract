@@ -24,33 +24,29 @@ import "./interfaces/IAnyswapV4Router.sol";
 contract TaxFeeder is Initializable, OwnableUpgradeable {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
-  /// @notice Events
-  event LogFeed(
-    address _to,
-    uint256 _feedAmount,
-    address _taxCollector,
-    uint256 _taxCollectorChainId,
-    uint256 _feedTaxAmount
-  );
-
   /// @notice Errors
   error TaxFeeder_TooMuchTaxBps(uint64 _updatedTaxBps);
 
-  /// @notice constants
-  uint64 private constant BASIS_POINT = 10000;
+  /// @notice Events
+  event LogFeed(address _to, uint256 _amount);
+  event LogTax(address _to, uint256 _chainId, uint256 _amount);
+
+  /// @notice Configurable variable
+  uint64 public taxBps;
 
   /// @notice State
-  IERC20Upgradeable public alpacaToken;
+  IERC20Upgradeable public token;
   IAnyswapV4Router public anySwapRouter;
   address public alpacaFeeder;
 
   address public taxCollector;
   uint256 public taxCollectorChainId;
 
-  uint64 public taxBps;
+  /// @notice Constants
+  uint64 private constant BASIS_POINT = 10000;
 
   function initialize(
-    IERC20Upgradeable _alpacaToken,
+    IERC20Upgradeable _token,
     address _alpacaFeeder,
     IAnyswapV4Router _anySwapRouter,
     address _taxCollector,
@@ -59,7 +55,7 @@ contract TaxFeeder is Initializable, OwnableUpgradeable {
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
 
-    alpacaToken = _alpacaToken;
+    token = _token;
     anySwapRouter = _anySwapRouter;
     alpacaFeeder = _alpacaFeeder;
 
@@ -71,19 +67,20 @@ contract TaxFeeder is Initializable, OwnableUpgradeable {
 
   /// @notice feed to alpaca feeder
   function feed() external {
-    uint256 _rewardAmount = alpacaToken.balanceOf(address(this));
+    uint256 _rewardAmount = token.balanceOf(address(this));
 
     // send tax to BSC
     uint256 _feedTaxAmount = (_rewardAmount * taxBps) / BASIS_POINT;
-    alpacaToken.approve(address(anySwapRouter), _feedTaxAmount);
-    anySwapRouter.anySwapOutUnderlying(address(alpacaToken), taxCollector, _feedTaxAmount, taxCollectorChainId);
-    alpacaToken.approve(address(anySwapRouter), 0);
+    token.approve(address(anySwapRouter), _feedTaxAmount);
+    anySwapRouter.anySwapOutUnderlying(address(token), taxCollector, _feedTaxAmount, taxCollectorChainId);
+    token.approve(address(anySwapRouter), 0);
 
     // transfer reward to alpaca feeder
     uint256 _feedAmount = _rewardAmount - _feedTaxAmount;
-    alpacaToken.safeTransfer(alpacaFeeder, _feedAmount);
+    token.safeTransfer(alpacaFeeder, _feedAmount);
 
-    emit LogFeed(alpacaFeeder, _feedAmount, taxCollector, taxCollectorChainId, _feedTaxAmount);
+    emit LogFeed(alpacaFeeder, _feedAmount);
+    emit LogTax(taxCollector, taxCollectorChainId, _feedTaxAmount);
   }
 
   /// @notice set tax bps, should not exceed.

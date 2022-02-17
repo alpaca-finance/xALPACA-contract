@@ -133,7 +133,7 @@ describe("TaxFeeder", () => {
     context("when deployed", async () => {
       it("should correct data on tax feeder", async () => {
         expect(await taxFeeder.owner()).to.be.eq(deployerAddress);
-        expect(await taxFeeder.alpacaToken()).to.be.eq(alpaca.address);
+        expect(await taxFeeder.token()).to.be.eq(alpaca.address);
         expect(await taxFeeder.alpacaFeeder()).to.be.eq(alpacaFeeder.address);
         expect(await taxFeeder.anySwapRouter()).to.be.eq(mockAnySwapRouter.address);
         expect(await taxFeeder.taxCollector()).to.be.eq(mockAnySwapRouter.address);
@@ -145,7 +145,7 @@ describe("TaxFeeder", () => {
 
   describe("#setTaxBps", async () => {
     context("when set tax bps correct", async () => {
-      it("should chagned same what we set", async () => {
+      it("should work", async () => {
         const taxBps = BigNumber.from(3000);
         await taxFeeder.setTaxBps(taxBps);
         expect(await taxFeeder.taxBps()).to.be.eq(taxBps);
@@ -162,7 +162,7 @@ describe("TaxFeeder", () => {
   });
 
   describe("#feed", async () => {
-    context("when anyont call feed", async () => {
+    context("when feed() is called", async () => {
       it("should transfer alpaca token to AlpacaFeeder and Bridge to bsc chain", async () => {
         // assume reward send to tax feeder 10.000000000000000000
         await alpaca.transfer(taxFeeder.address, ethers.utils.parseEther("10"));
@@ -173,15 +173,11 @@ describe("TaxFeeder", () => {
         const expectedFeedAmount = ethers.utils.parseEther("6.000000000000000000");
         const expectedFeedTaxAmount = ethers.utils.parseEther("4.000000000000000000");
         const alpacaTokenBefore = await alpaca.balanceOf(alpacaFeeder.address);
-        await expect(taxFeeder.feed())
-          .to.be.emit(taxFeeder, "LogFeed")
-          .withArgs(
-            alpacaFeeder.address,
-            expectedFeedAmount,
-            mockAnySwapRouter.address,
-            BigNumber.from(TAX_COLLECTOR_CHAIN_ID),
-            expectedFeedTaxAmount
-          );
+        const feedTx = taxFeeder.feed();
+        await expect(feedTx).to.be.emit(taxFeeder, "LogFeed").withArgs(alpacaFeeder.address, expectedFeedAmount);
+        await expect(feedTx)
+          .to.be.emit(taxFeeder, "LogTax")
+          .withArgs(mockAnySwapRouter.address, BigNumber.from(TAX_COLLECTOR_CHAIN_ID), expectedFeedTaxAmount);
         const alpacaTokenAfter = await alpaca.balanceOf(alpacaFeeder.address);
         expect(alpacaTokenAfter.sub(alpacaTokenBefore)).to.be.eq(expectedFeedAmount);
 
