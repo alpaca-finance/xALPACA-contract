@@ -108,7 +108,7 @@ describe("TaxFeeder", () => {
       const TaxFeeder = (await ethers.getContractFactory("TaxFeeder", deployer)) as TaxFeeder__factory;
       await expect(
         upgrades.deployProxy(TaxFeeder, [alpaca.address, alpacaFeeder.address, BRIDGE_CHAIN_ID, 10000])
-      ).to.be.revertedWith("TaxFeeder_SetExceedTaxBps(10000)");
+      ).to.be.revertedWith("TaxFeeder_TooMuchTaxBps(10000)");
     });
 
     context("when deployed", async () => {
@@ -134,7 +134,7 @@ describe("TaxFeeder", () => {
     context("when set tax bps exceed", async () => {
       it("should revert", async () => {
         await expect(taxFeeder.setTaxBps(BigNumber.from(1000000))).to.be.revertedWith(
-          "TaxFeeder_SetExceedTaxBps(1000000)"
+          "TaxFeeder_TooMuchTaxBps(1000000)"
         );
       });
     });

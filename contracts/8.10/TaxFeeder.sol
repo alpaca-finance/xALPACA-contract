@@ -28,7 +28,7 @@ contract TaxFeeder is Initializable, OwnableUpgradeable {
   event Feed(address to, uint256 _feedAmount);
 
   /// @notice Errors
-  error TaxFeeder_SetExceedTaxBps(uint64 _updatedTaxBps);
+  error TaxFeeder_TooMuchTaxBps(uint64 _updatedTaxBps);
 
   /// @notice constants
   uint64 private constant BASIS_POINT = 10000;
@@ -73,7 +73,7 @@ contract TaxFeeder is Initializable, OwnableUpgradeable {
   /// @param _taxBps Tax bps that would be set.
   function setTaxBps(uint64 _taxBps) public onlyOwner {
     // TODO: validate exceed number [dicuss maximum percentage again]
-    if (_taxBps > 4000) revert TaxFeeder_SetExceedTaxBps(_taxBps);
+    if (_taxBps > 4000) revert TaxFeeder_TooMuchTaxBps(_taxBps);
     taxBps = _taxBps;
   }
 }
