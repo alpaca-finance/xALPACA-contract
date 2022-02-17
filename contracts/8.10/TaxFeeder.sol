@@ -25,7 +25,7 @@ contract TaxFeeder is Initializable, OwnableUpgradeable {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
   /// @notice Events
-  event Feed(
+  event LogFeed(
     address _to,
     uint256 _feedAmount,
     address _taxCollector,
@@ -83,7 +83,7 @@ contract TaxFeeder is Initializable, OwnableUpgradeable {
     uint256 _feedAmount = _rewardAmount - _feedTaxAmount;
     alpacaToken.safeTransfer(alpacaFeeder, _feedAmount);
 
-    emit Feed(alpacaFeeder, _feedAmount, taxCollector, taxCollectorChainId, _feedTaxAmount);
+    emit LogFeed(alpacaFeeder, _feedAmount, taxCollector, taxCollectorChainId, _feedTaxAmount);
   }
 
   /// @notice set tax bps, should not exceed.

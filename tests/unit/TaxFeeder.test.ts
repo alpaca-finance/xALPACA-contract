@@ -174,7 +174,7 @@ describe("TaxFeeder", () => {
         const expectedFeedTaxAmount = ethers.utils.parseEther("4.000000000000000000");
         const alpacaTokenBefore = await alpaca.balanceOf(alpacaFeeder.address);
         await expect(taxFeeder.feed())
-          .to.be.emit(taxFeeder, "Feed")
+          .to.be.emit(taxFeeder, "LogFeed")
           .withArgs(
             alpacaFeeder.address,
             expectedFeedAmount,
