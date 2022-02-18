@@ -23,4 +23,8 @@ contract MockAnySwapV4Router {
   ) external {
     IERC20Upgradeable(token).safeTransferFrom(msg.sender, address(this), amount);
   }
+
+  function mpc() public view returns (address) {
+    return address(this);
+  }
 }

@@ -28,7 +28,7 @@ describe("TaxFeeder", () => {
   const FAIR_LAUNCH_POOL_ID = 0;
   const MAXIMUM_TAX_BPS = 4000;
   const TAX_COLLECTOR_CHAIN_ID = 97;
-  const MINIMUM_TAX_AMOUNT = ethers.utils.parseEther("1");
+  const MINIMUM_REWARD_AMOUNT = ethers.utils.parseEther("1");
   let initParams: any[] = [];
 
   // Contract Instance
@@ -50,9 +50,6 @@ describe("TaxFeeder", () => {
 
   let deployerAddress: string;
   let aliceAddress: string;
-
-  // Contract Signer
-  let alpacaAsAlice: BEP20;
 
   async function fixture() {
     [deployer, alice] = await ethers.getSigners();
@@ -110,12 +107,10 @@ describe("TaxFeeder", () => {
       mockAnySwapRouter.address,
       TAX_COLLECTOR_CHAIN_ID,
       MAXIMUM_TAX_BPS,
-      MINIMUM_TAX_AMOUNT,
+      MINIMUM_REWARD_AMOUNT,
     ];
     taxFeeder = (await upgrades.deployProxy(TaxFeeder, initParams)) as TaxFeeder;
     await taxFeeder.deployed();
-
-    alpacaAsAlice = BEP20__factory.connect(alpaca.address, alice);
   }
 
   beforeEach(async () => {
@@ -133,37 +128,23 @@ describe("TaxFeeder", () => {
           mockAnySwapRouter.address,
           TAX_COLLECTOR_CHAIN_ID,
           10000,
-          MINIMUM_TAX_AMOUNT,
+          MINIMUM_REWARD_AMOUNT,
         ])
-      ).to.be.revertedWith("TaxFeeder_TooMuchTaxBps(10000)");
+      ).to.be.revertedWith("TaxFeeder_TaxBpsTooHigh(10000)");
     });
 
-    context("when try deploy with any zero address", async () => {
+    context("when try deploy with invalid contract", async () => {
       it("should revert when token is zero address", async () => {
         initParams[0] = zeroAddress();
         await expect(upgrades.deployProxy(TaxFeeder, initParams)).to.be.revertedWith(
-          "TaxFeeder_InvalidInitializedAddress()"
+          "Address: low-level delegate call failed"
         );
       });
 
-      it("should revert when feeder is zero address", async () => {
-        initParams[1] = zeroAddress();
-        await expect(upgrades.deployProxy(TaxFeeder, initParams)).to.be.revertedWith(
-          "TaxFeeder_InvalidInitializedAddress()"
-        );
-      });
-
-      it("should revert when any swap router is zero address", async () => {
+      it("should revert when any swap router is invalid", async () => {
         initParams[2] = zeroAddress();
         await expect(upgrades.deployProxy(TaxFeeder, initParams)).to.be.revertedWith(
-          "TaxFeeder_InvalidInitializedAddress()"
-        );
-      });
-
-      it("should revert when tax collector is zero address", async () => {
-        initParams[3] = zeroAddress();
-        await expect(upgrades.deployProxy(TaxFeeder, initParams)).to.be.revertedWith(
-          "TaxFeeder_InvalidInitializedAddress()"
+          "Address: low-level delegate call failed"
         );
       });
     });
@@ -177,7 +158,7 @@ describe("TaxFeeder", () => {
         expect(await taxFeeder.taxCollector()).to.be.eq(mockAnySwapRouter.address);
         expect(await taxFeeder.taxCollectorChainId()).to.be.eq(BigNumber.from(TAX_COLLECTOR_CHAIN_ID));
         expect(await taxFeeder.taxBps()).to.be.eq(BigNumber.from(MAXIMUM_TAX_BPS));
-        expect(await taxFeeder.minTaxAmount()).to.be.eq(BigNumber.from(MINIMUM_TAX_AMOUNT));
+        expect(await taxFeeder.minRewardAmount()).to.be.eq(BigNumber.from(MINIMUM_REWARD_AMOUNT));
       });
     });
   });
@@ -207,17 +188,16 @@ describe("TaxFeeder", () => {
       });
     });
 
-    it("should revert if tax amount is too small", async () => {
+    it("should revert if reward amount is too small", async () => {
       // assume reward send to tax feeder 1.000000000000000000
-      const rewardAmount = ethers.utils.parseEther("1");
+      const rewardAmount = ethers.utils.parseEther("0.9");
       await alpaca.transfer(taxFeeder.address, rewardAmount);
-      // calculation
-      // tax percentage = 40%
-      // tax amount = 1.000000000000000000 * 0.4 = 0.400000000000000000
-      // feed amount = 1.000000000000000000 - 0.400000000000000000 = 0.600000000000000000
+
       const alpacaTokenBefore = await alpaca.balanceOf(alpacaFeeder.address);
       const feedTx = taxFeeder.feed();
-      await expect(feedTx).to.be.revertedWith("TaxFeeder_TooSmallTaxAmount(400000000000000000, 1000000000000000000)");
+      await expect(feedTx).to.be.revertedWith(
+        "TaxFeeder_RewardAmountTooSmall(900000000000000000, 1000000000000000000)"
+      );
       const alpacaTokenAfter = await alpaca.balanceOf(alpacaFeeder.address);
       expect(alpacaTokenAfter).to.be.eq(alpacaTokenBefore);
 
@@ -239,19 +219,19 @@ describe("TaxFeeder", () => {
     context("when set tax bps exceed", async () => {
       it("should revert", async () => {
         await expect(taxFeeder.setTaxBps(BigNumber.from(1000000))).to.be.revertedWith(
-          "TaxFeeder_TooMuchTaxBps(1000000)"
+          "TaxFeeder_TaxBpsTooHigh(1000000)"
         );
       });
     });
   });
 
-  describe("#setMinTaxAmount", async () => {
+  describe("#setMinRewardAmount", async () => {
     context("when set minimum tax amount correct", async () => {
       it("should work", async () => {
-        expect(await taxFeeder.minTaxAmount()).to.be.eq(BigNumber.from(MINIMUM_TAX_AMOUNT));
-        const minTaxAmount = ethers.utils.parseEther("1.5");
-        await taxFeeder.setMinTaxAmount(minTaxAmount);
-        expect(await taxFeeder.minTaxAmount()).to.be.eq(minTaxAmount);
+        expect(await taxFeeder.minRewardAmount()).to.be.eq(BigNumber.from(MINIMUM_REWARD_AMOUNT));
+        const minRewardAmount = ethers.utils.parseEther("1.5");
+        await taxFeeder.setMinRewardAmount(minRewardAmount);
+        expect(await taxFeeder.minRewardAmount()).to.be.eq(minRewardAmount);
       });
     });
   });

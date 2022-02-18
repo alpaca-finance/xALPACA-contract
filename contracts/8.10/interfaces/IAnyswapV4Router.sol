@@ -18,4 +18,6 @@ interface IAnyswapV4Router {
     uint256 amount,
     uint256 toChainID
   ) external;
+
+  function mpc() external view returns (address);
 }
