@@ -20,8 +20,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 
 import "./interfaces/IAnyswapV4Router.sol";
 
-import "hardhat/console.sol";
-
 /// @title TaxFeeder
 contract TaxFeeder is Initializable, OwnableUpgradeable {
   using SafeERC20Upgradeable for IERC20Upgradeable;
