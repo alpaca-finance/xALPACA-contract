@@ -22,6 +22,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const scientixGrassHouseAddress = config.GrassHouses.find((gh) => gh.name === "SCIX");
   if (scientixGrassHouseAddress === undefined) throw new Error(`could not find Scientix GrassHouse`);
+  if (config.Scientix === undefined) throw new Error(`could not find Scientix config`);
+  if (config.Tokens.fdSCIX === undefined) throw new Error(`could not find config.Tokens.fdSCIX`);
 
   console.log(`>> Deploying ScientixFeeder`);
   const ScientixFeeder = (await ethers.getContractFactory("ScientixFeeder", deployer)) as ScientixFeeder__factory;

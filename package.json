@@ -63,7 +63,15 @@
     "deploy:mainnet:alpaca-feeder": "hardhat --network mainnet deploy --no-compile --reset --tags AlpacaFeeder",
     "deploy:mainnet:alpaca-feeder:upgrade": "hardhat --network mainnet deploy --no-compile --reset --tags UpgradeAlpacaFeeder",
     "deploy:mainnet:scix-feeder": "hardhat --network mainnet deploy --no-compile --reset --tags ScientixFeeder",
-    "deploy:mainnet:grasshouse:upgrade": "hardhat --network mainnet deploy --no-compile --reset --tags UpgradeGrassHouse"
+    "deploy:mainnet:grasshouse:upgrade": "hardhat --network mainnet deploy --no-compile --reset --tags UpgradeGrassHouse",
+    "deploy:fantom_testnet:xalpaca": "hardhat --network fantom_testnet deploy --no-compile --reset --tags XAlpaca",
+    "deploy:fantom_testnet:grasshouse": "hardhat --network fantom_testnet deploy --no-compile --reset --tags GrassHouse",
+    "deploy:fantom_testnet:tribute": "hardhat --network fantom_testnet deploy --no-compile --reset --tags Tribute",
+    "deploy:fantom_testnet:rootstorage": "hardhat --network fantom_testnet deploy --no-compile --reset --tags RootStorage",
+    "deploy:fantom_mainnet:xalpaca": "hardhat --network fantom_mainnet deploy --no-compile --reset --tags XAlpaca",
+    "deploy:fantom_mainnet:grasshouse": "hardhat --network fantom_mainnet deploy --no-compile --reset --tags GrassHouse",
+    "deploy:fantom_mainnet:tribute": "hardhat --network fantom_mainnet deploy --no-compile --reset --tags Tribute",
+    "deploy:fantom_mainnet:rootstorage": "hardhat --network fantom_mainnet deploy --no-compile --reset --tags RootStorage"
   },
   "devDependencies": {
     "@alpaca-finance/alpaca-contract": "1.2.23",
