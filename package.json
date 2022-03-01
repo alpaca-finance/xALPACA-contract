@@ -1,6 +1,6 @@
 {
   "name": "@alpaca-finance/xalpaca-contract",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "scripts": {
     "prepublish": "yarn build",
     "build": "yarn run build:cjs",
@@ -18,6 +18,7 @@
     "test:xAlpaca": "hardhat test ./tests/unit/xALPACA.test.ts",
     "test:grassHouse": "hardhat test ./tests/unit/GrassHouse.test.ts",
     "test:tribute": "hardhat test ./tests/unit/Tribute.test.ts",
+    "test:taxfeeder": "hardhat test ./tests/unit/TaxFeeder.test.ts",
     "test:mainnetfork:grass-house": "hardhat --network mainnetfork run --no-compile ./scripts/forks/grass-house.ts",
     "testnet": "hardhat console --no-compile --network testnet",
     "integration-test:feeder-fairlaunch": "hardhat test --no-compile ./tests/integration/AlpacaFeederWithFairLaunch.test.ts --config hardhat.config.forking.ts",
@@ -70,8 +71,8 @@
     "@nomiclabs/hardhat-ethers": "^2.0.1",
     "@nomiclabs/hardhat-etherscan": "^2.1.1",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
-    "@openzeppelin/contracts": "4.3.2",
-    "@openzeppelin/contracts-upgradeable": "4.3.2",
+    "@openzeppelin/contracts": "4.4.2",
+    "@openzeppelin/contracts-upgradeable": "4.4.2",
     "@openzeppelin/hardhat-upgrades": "^1.9.0",
     "@typechain/ethers-v5": "^5.0.0",
     "@types/chai": "^4.2.15",
@@ -111,5 +112,19 @@
   },
   "dependencies": {
     "@openzeppelin/test-helpers": "^0.5.15"
+  },
+  "resolutions": {
+    "shelljs": "^0.8.5",
+    "follow-redirects": "^1.14.7",
+    "glob-parent": "^5.1.2",
+    "yargs-parser": "^13.1.2",
+    "mem": "^4.0.0",
+    "json-schema": "^0.4.0",
+    "ansi-regex": "^5.0.1",
+    "lodash": "^4.17.21",
+    "underscore": "^1.12.1",
+    "node-fetch": "^2.6.7",
+    "simple-get": "^2.8.2",
+    "web3": "^1.7.0"
   }
 }
