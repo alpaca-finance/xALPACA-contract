@@ -1,8 +1,9 @@
 export interface Config {
   ProxyAdmin: string;
   Timelock: string;
-  FairLaunch: FairLaunch;
-  Scientix: Scientix;
+  FairLaunch?: FairLaunch;
+  MiniFL?: MiniFL;
+  Scientix?: Scientix;
   Tokens: Tokens;
   xALPACA: string;
   ALPACAFeeder: string;
@@ -14,6 +15,19 @@ export interface FairLaunch {
   address: string;
   deployedBlock: number;
   pools: Pool[];
+}
+
+export interface MiniFL {
+  address: string;
+  deployedBlock: number;
+  pools: PoolsEntity2[];
+}
+
+export interface PoolsEntity2 {
+  id: number;
+  stakingToken: string;
+  address: string;
+  rewarder: string;
 }
 
 export interface Pool {
@@ -40,10 +54,10 @@ export interface Pool2 {
 }
 
 export interface Tokens {
-  ALPACA: string;
-  fdALPACA: string;
-  SCIX: string;
-  fdSCIX: string;
+  ALPACA?: string;
+  fdALPACA?: string;
+  SCIX?: string;
+  fdSCIX?: string;
 }
 
 export interface GrassHouse {

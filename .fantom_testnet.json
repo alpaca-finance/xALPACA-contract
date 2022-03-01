@@ -1,0 +1,67 @@
+{
+  "ProxyAdmin": "0x25C8BF156cE1DcBC3f04E18621a0472aFe59d918",
+  "Timelock": "0x42E8faf92f83E43A0C1E6A559e4bEdFa1e9B45f4",
+  "MultiCall": "0x6Cd4EBb05d4f099c30137Ed878fB138b615EE988",
+  "MiniFL": {
+    "address": "0x59CfFf374CF8cd5BDb2Be478E4f94aCBCF811f28",
+    "deployedBlock": 6949550,
+    "pools": [
+      {
+        "id": 0,
+        "stakingToken": "debtIbFTM_V2",
+        "address": "0xA835C1e13A6DB3958b68b811e83dB50D7249eF0A",
+        "rewarder": "0x763a687E631A907baDd620E20e9A0869E3Ec543D"
+      },
+      {
+        "id": 1,
+        "stakingToken": "ibFTM",
+        "address": "0x000FeF1D21bD911a68229e947b53134bBb35473b",
+        "rewarder": "0x763a687E631A907baDd620E20e9A0869E3Ec543D"
+      },
+      {
+        "id": 2,
+        "stakingToken": "debtIbUSDC_V2 (deprecated)",
+        "address": "0x89c45bc7C96C6174A78EE62B6F72be8f55966779",
+        "rewarder": "0x763a687E631A907baDd620E20e9A0869E3Ec543D"
+      },
+      {
+        "id": 3,
+        "stakingToken": "ibUSDC (deprecated)",
+        "address": "0x736A082E1a4f9e8d9500591B852f06a1F42f224e",
+        "rewarder": "0x763a687E631A907baDd620E20e9A0869E3Ec543D"
+      },
+      {
+        "id": 4,
+        "stakingToken": "debtIbUSDC_V2",
+        "address": "0x310dBe264C9D3FBB78c266e7DB70E826Fc26695F",
+        "rewarder": "0x763a687E631A907baDd620E20e9A0869E3Ec543D"
+      },
+      {
+        "id": 5,
+        "stakingToken": "ibUSDC",
+        "address": "0xfd0B2279B866E245cAf1F0F1AeC6E87DA96b8B65",
+        "rewarder": "0x763a687E631A907baDd620E20e9A0869E3Ec543D"
+      },
+      {
+        "id": 6,
+        "stakingToken": "debtIbALPACA_V2",
+        "address": "0xe9C6FaF5F4C184FDAe9eA948dFC8Dd97897D7Fc5",
+        "rewarder": "0x763a687E631A907baDd620E20e9A0869E3Ec543D"
+      },
+      {
+        "id": 7,
+        "stakingToken": "ibALPACA",
+        "address": "0x19EC3914C98450d9DAFd3769Db33157e8600D060",
+        "rewarder": "0x763a687E631A907baDd620E20e9A0869E3Ec543D"
+      }
+    ]
+  },
+  "Tokens": {
+    "ALPACA": "0x17326e0677A4C89E22FBD6192F1fb1972200473a"
+  },
+  "xALPACA": "",
+  "ALPACAFeeder": "",
+  "GrassHouses": [
+  ],
+  "GrassHouseGateway": ""
+}
