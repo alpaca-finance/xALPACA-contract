@@ -20,6 +20,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   */
   const config = ConfigEntity.getConfig();
 
+  const KEEPER_WHITELIST: string[] = [""];
   const TRIBUTES: Array<ITribute> = [
     {
       ROORT_STORAGE_ADDRESS: "",
@@ -42,6 +43,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const deployTx = await tribute.deployTransaction.wait(3);
     console.log(`>> Deployed at ${tribute.address}`);
     console.log(`>> Deployed at: `, deployTx.blockNumber);
+    console.log("✅ Done");
+
+    console.log(">> Whitelist keeper");
+    const whitelistTx = await tribute.setKeepersOk(KEEPER_WHITELIST, true);
+    await whitelistTx.wait(3);
     console.log("✅ Done");
   }
 };
