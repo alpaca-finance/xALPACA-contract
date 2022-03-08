@@ -39,6 +39,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     uint256 timestamp
   );
   event LogWithdraw(address indexed locker, uint256 value, uint256 timestamp);
+  event LogEarlyWithdraw(address indexed locker, uint256 value, uint256 timestamp);
   event LogSetBreaker(uint256 previousBreaker, uint256 breaker);
   event LogSupply(uint256 previousSupply, uint256 supply);
 
@@ -91,6 +92,9 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   string public name;
   string public symbol;
   uint8 public decimals;
+
+  /// @notice Early Withdrawal Fee
+  uint64 public earlyWithdrawBps;
 
   /// @notice Initialize xALPACA
   /// @param _token The address of ALPACA token
@@ -600,37 +604,35 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
 
     uint256 _amount = SafeCastUpgradeable.toUint256(_lock.amount);
 
-    LockedBalance memory _prevLock = LockedBalance({ end: _lock.end, amount: _lock.amount });
-    _lock.end = 0;
-    _lock.amount = 0;
-    locks[msg.sender] = _lock;
-    uint256 _supplyBefore = supply;
-    supply = _supplyBefore - _amount;
-
-    // _prevLock can have either block.timstamp >= _lock.end or zero end
-    // _lock has only 0 end
-    // Both can have >= 0 amount
-    _checkpoint(msg.sender, _prevLock, _lock);
+    _unlock(_lock, _amount);
 
     token.safeTransfer(msg.sender, _amount);
 
     emit LogWithdraw(msg.sender, _amount, block.timestamp);
-    emit LogSupply(_supplyBefore, supply);
   }
 
-    /// @notice Withdraw all ALPACA when lock has expired.
+  /// @notice Withdraw all ALPACA when lock has expired.
   function earlyWithdraw(uint256 _intendAmount) external nonReentrant {
-    LockedBalance memory _lock = locks[msg.sender];
-    
+    _unlock(locks[msg.sender], _intendAmount);
+    // TODO: Accounting on Fee collected
+    // If breaker is on, should exempt all fee to behave in the same manner with withdraw()
+    uint256 _penalty = breaker == 0 ? (earlyWithdrawBps * _intendAmount) / 10000 : 0;
+    token.safeTransfer(msg.sender, _intendAmount - _penalty);
+
+    emit LogEarlyWithdraw(msg.sender, _intendAmount, block.timestamp);
+  }
+
+  function _unlock(LockedBalance memory _lock, uint256 _intendAmount) internal {
     // Cast here for readability
     uint256 _lockedAmount = SafeCastUpgradeable.toUint256(_lock.amount);
     require(_intendAmount <= _lockedAmount, "!enough");
 
     LockedBalance memory _prevLock = LockedBalance({ end: _lock.end, amount: _lock.amount });
-    //_lock.end stay the same as we do partially withdraw
+    //_lock.end should remain the same if we do partially withdraw
     _lock.end = _lockedAmount == _intendAmount ? 0 : _lock.end;
-    _lock.amount = SafeCastUpgradeable.toInt128(int256(_lockedAmount - _intendAmount)); 
+    _lock.amount = SafeCastUpgradeable.toInt128(int256(_lockedAmount - _intendAmount));
     locks[msg.sender] = _lock;
+
     uint256 _supplyBefore = supply;
     supply = _supplyBefore - _intendAmount;
 
@@ -638,11 +640,6 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     // _lock has only 0 end
     // Both can have >= 0 amount
     _checkpoint(msg.sender, _prevLock, _lock);
-
-    // TODO: Apply fee
-    token.safeTransfer(msg.sender, _intendAmount);
-
-    emit LogWithdraw(msg.sender, _intendAmount, block.timestamp);
     emit LogSupply(_supplyBefore, supply);
   }
 }

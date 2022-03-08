@@ -545,7 +545,7 @@ describe("xALPACA", () => {
     });
   });
 
-  describe.only("#withdraw", async () => {
+  describe("#withdraw", async () => {
     context("when lock not expired", async () => {
       it("should revert", async () => {
         const lockAmount = ethers.utils.parseEther("10");
@@ -561,8 +561,32 @@ describe("xALPACA", () => {
         await expect(xALPACAasAlice.withdraw()).to.be.revertedWith("!lock expired");
       });
     });
+    context("when lock is expired", async () => {
+      it("should work", async () => {
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
 
-    context("when lock not expired but early withdrawn", async () => {
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 1 week
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK));
+
+        // Move timestamp to 1 week + 1 second
+        await timeHelpers.increaseTimestamp(WEEK.add("1"));
+
+        // Alice try to withdrwa not expired lock
+        const aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
+        await xALPACAasAlice.withdraw();
+        const aliceAlpaceAfter = await ALPACA.balanceOf(aliceAddress);
+
+        expect(aliceAlpaceAfter.sub(aliceAlpacaBefore)).to.be.eq(lockAmount);
+      });
+    });
+  });
+
+  describe("#earlyWithdraw", async () => {
+    context("when lock not expired and fully withdraw", async () => {
       it("should works", async () => {
         const lockAmount = ethers.utils.parseEther("10");
         await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
@@ -619,30 +643,7 @@ describe("xALPACA", () => {
         console.log("supply after", (await xALPACA.totalSupply()).toString());
       });
     });
-
-    context("when lock is expired", async () => {
-      it("should work", async () => {
-        const lockAmount = ethers.utils.parseEther("10");
-        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
-
-        // Set timestamp to the starting of next week
-        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
-
-        // Alice create lock with expire in 1 week
-        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK));
-
-        // Move timestamp to 1 week + 1 second
-        await timeHelpers.increaseTimestamp(WEEK.add("1"));
-
-        // Alice try to withdrwa not expired lock
-        const aliceAlpacaBefore = await ALPACA.balanceOf(aliceAddress);
-        await xALPACAasAlice.withdraw();
-        const aliceAlpaceAfter = await ALPACA.balanceOf(aliceAddress);
-
-        expect(aliceAlpaceAfter.sub(aliceAlpacaBefore)).to.be.eq(lockAmount);
-      });
-    });
-  });
+  })
 
   describe("#breaker", async () => {
     context("when random user try to set breaker", async () => {
