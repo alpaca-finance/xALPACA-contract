@@ -3,6 +3,7 @@ import { Signer, BigNumber } from "ethers";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import {
+  AlpacaFeeder,
   BEP20,
   BEP20__factory,
   MockContractContext,
@@ -544,7 +545,7 @@ describe("xALPACA", () => {
     });
   });
 
-  describe("#withdraw", async () => {
+  describe.only("#withdraw", async () => {
     context("when lock not expired", async () => {
       it("should revert", async () => {
         const lockAmount = ethers.utils.parseEther("10");
@@ -558,6 +559,64 @@ describe("xALPACA", () => {
 
         // Alice try to withdrwa not expired lock
         await expect(xALPACAasAlice.withdraw()).to.be.revertedWith("!lock expired");
+      });
+    });
+
+    context("when lock not expired but early withdrawn", async () => {
+      it("should works", async () => {
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 1 week
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(52)));
+
+        const alpacaBefore = await ALPACA.balanceOf(aliceAddress);
+        const xALPACABefore = await xALPACA.balanceOf(aliceAddress);
+        const supplyBefore = await xALPACA.totalSupply();
+        console.log("alice before", xALPACABefore.toString());
+        console.log("supply before", supplyBefore.toString());
+        // Alice early withdraw
+        await xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("10"));
+
+        const alpacaAfter = await ALPACA.balanceOf(aliceAddress);
+
+        // Alice should get her locked alpaca back
+        await expect(alpacaAfter.sub(alpacaBefore)).to.be.eq(ethers.utils.parseEther("10"));
+
+        console.log("alice after", (await xALPACA.balanceOf(aliceAddress)).toString());
+        console.log("supply after", (await xALPACA.totalSupply()).toString());
+      });
+    });
+
+    context("when lock not expired but paritally early withdrawn", async () => {
+      it("should have xALPACA left", async () => {
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 1 week
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(52)));
+
+        const alpacaBefore = await ALPACA.balanceOf(aliceAddress);
+        const xALPACABefore = await xALPACA.balanceOf(aliceAddress);
+        const supplyBefore = await xALPACA.totalSupply();
+        console.log("alice before", xALPACABefore.toString());
+        console.log("supply before", supplyBefore.toString());
+        // Alice early withdraw
+        await xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("5"));
+
+        const alpacaAfter = await ALPACA.balanceOf(aliceAddress);
+
+        // Alice should get her locked alpaca back
+        await expect(alpacaAfter.sub(alpacaBefore)).to.be.eq(ethers.utils.parseEther("5"));
+
+        console.log("alice after", (await xALPACA.balanceOf(aliceAddress)).toString());
+        console.log("supply after", (await xALPACA.totalSupply()).toString());
       });
     });
 
