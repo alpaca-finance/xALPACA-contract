@@ -44,5 +44,6 @@ contract MockGrassHouse is IGrassHouse {
 
   function claim(address _for) external override returns (uint256) {
     rewardToken.safeTransfer(_for, rewardPerClaim);
+    return rewardPerClaim;
   }
 }

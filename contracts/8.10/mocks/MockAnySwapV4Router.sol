@@ -10,6 +10,9 @@
 　 ξ_ξξ_ξ　ξ_ξξ_ξ
 Alpaca Fin Corporation
 */
+
+pragma solidity 0.8.10;
+
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 contract MockAnySwapV4Router {
