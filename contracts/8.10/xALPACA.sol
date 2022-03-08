@@ -24,6 +24,8 @@ import "./interfaces/IBEP20.sol";
 
 import "./SafeToken.sol";
 
+import "hardhat/console.sol";
+
 /// @title xALPACA - The goverance token of Alpaca Finance
 // solhint-disable not-rely-on-time
 // solhint-disable-next-line contract-name-camelcase
@@ -42,6 +44,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   event LogEarlyWithdraw(address indexed locker, uint256 value, uint256 timestamp);
   event LogSetBreaker(uint256 previousBreaker, uint256 breaker);
   event LogSupply(uint256 previousSupply, uint256 supply);
+  event LogSetEarlyWithdrawBps(uint64 oldFeeBps, uint64 newFeeBps);
 
   struct Point {
     int128 bias; // Voting weight
@@ -613,10 +616,20 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
 
   /// @notice Withdraw all ALPACA when lock has expired.
   function earlyWithdraw(uint256 _intendAmount) external nonReentrant {
-    _unlock(locks[msg.sender], _intendAmount);
+    LockedBalance memory _lock = locks[msg.sender];
+
+    require(block.timestamp < _lock.end, "!early");
+
+    // prevent mutated memory in _unlock() function as it will be used in fee calculation afterward
+    uint256 _prevLockEnd = _lock.end;
+    _unlock(_lock, _intendAmount);
     // TODO: Accounting on Fee collected
+
+    // ceil the week by adding 1 week first
+    uint256 remainingWeeks = (_prevLockEnd + WEEK - block.timestamp) / WEEK;
+
     // If breaker is on, should exempt all fee to behave in the same manner with withdraw()
-    uint256 _penalty = breaker == 0 ? (earlyWithdrawBps * _intendAmount) / 10000 : 0;
+    uint256 _penalty = breaker == 0 ? (earlyWithdrawBps * remainingWeeks * _intendAmount) / 10000 : 0;
     token.safeTransfer(msg.sender, _intendAmount - _penalty);
 
     emit LogEarlyWithdraw(msg.sender, _intendAmount, block.timestamp);
@@ -641,5 +654,15 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     // Both can have >= 0 amount
     _checkpoint(msg.sender, _prevLock, _lock);
     emit LogSupply(_supplyBefore, supply);
+  }
+
+  function setEarlyWithdrawBps(uint64 _newEarlyWithdrawBps) external onlyOwner {
+    // Maximum bps = 1000
+    require(_newEarlyWithdrawBps <= 1000, "fee too high");
+
+    uint64 _oldBps = earlyWithdrawBps;
+    earlyWithdrawBps = _newEarlyWithdrawBps;
+
+    emit LogSetEarlyWithdrawBps(_oldBps, earlyWithdrawBps);
   }
 }
