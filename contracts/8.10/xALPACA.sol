@@ -623,13 +623,15 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     // prevent mutated memory in _unlock() function as it will be used in fee calculation afterward
     uint256 _prevLockEnd = _lock.end;
     _unlock(_lock, _amount);
-    // TODO: Accounting on Fee collected
 
     // ceil the week by adding 1 week first
     uint256 remainingWeeks = (_prevLockEnd + WEEK - block.timestamp) / WEEK;
 
     // If breaker is on, should exempt all fee to behave in the same manner with withdraw()
     uint256 _penalty = breaker == 0 ? (earlyWithdrawBps * remainingWeeks * _amount) / 10000 : 0;
+
+    // TODO: Accounting on Fee collected
+
     token.safeTransfer(msg.sender, _amount - _penalty);
 
     emit LogEarlyWithdraw(msg.sender, _amount, block.timestamp);

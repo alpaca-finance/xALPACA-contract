@@ -585,9 +585,10 @@ describe("xALPACA", () => {
     });
   });
 
-  describe("#earlyWithdraw", async () => {
+  describe.only("#earlyWithdraw", async () => {
     context("when lock not expired and fully withdraw", async () => {
       it("should works", async () => {
+        await xALPACA.setEarlyWithdrawBps(100);
         const lockAmount = ethers.utils.parseEther("10");
         await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
 
@@ -595,7 +596,7 @@ describe("xALPACA", () => {
         await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
         // Alice create lock with expire in 1 week
-        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(52)));
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(10)));
 
         const alpacaBefore = await ALPACA.balanceOf(aliceAddress);
         const xALPACABefore = await xALPACA.balanceOf(aliceAddress);
@@ -608,7 +609,10 @@ describe("xALPACA", () => {
         const alpacaAfter = await ALPACA.balanceOf(aliceAddress);
 
         // Alice should get her locked alpaca back
-        await expect(alpacaAfter.sub(alpacaBefore)).to.be.eq(ethers.utils.parseEther("10"));
+        // penalty = 1% * 10(remaining week) * 10(amount to withdraw)
+        // = 1
+        // expect to get 10 - 1 = 9 back
+        await expect(alpacaAfter.sub(alpacaBefore)).to.be.eq(ethers.utils.parseEther("9"));
 
         console.log("alice after", (await xALPACA.balanceOf(aliceAddress)).toString());
         console.log("supply after", (await xALPACA.totalSupply()).toString());
@@ -617,6 +621,7 @@ describe("xALPACA", () => {
 
     context("when lock not expired but paritally early withdrawn", async () => {
       it("should have xALPACA left", async () => {
+        await xALPACA.setEarlyWithdrawBps(100);
         const lockAmount = ethers.utils.parseEther("10");
         await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
 
@@ -624,7 +629,7 @@ describe("xALPACA", () => {
         await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
         // Alice create lock with expire in 1 week
-        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(52)));
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(20)));
 
         const alpacaBefore = await ALPACA.balanceOf(aliceAddress);
         const xALPACABefore = await xALPACA.balanceOf(aliceAddress);
@@ -637,7 +642,11 @@ describe("xALPACA", () => {
         const alpacaAfter = await ALPACA.balanceOf(aliceAddress);
 
         // Alice should get her locked alpaca back
-        await expect(alpacaAfter.sub(alpacaBefore)).to.be.eq(ethers.utils.parseEther("5"));
+        // Alice should get her locked alpaca back
+        // penalty = 1% * 20(remaining week) * 5(amount to withdraw)
+        // = 1
+        // expect to get 5 - 1 = 4 back
+        await expect(alpacaAfter.sub(alpacaBefore)).to.be.eq(ethers.utils.parseEther("4"));
 
         console.log("alice after", (await xALPACA.balanceOf(aliceAddress)).toString());
         console.log("supply after", (await xALPACA.totalSupply()).toString());
