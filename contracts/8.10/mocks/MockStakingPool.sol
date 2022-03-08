@@ -27,7 +27,7 @@ contract MockStakingPool is IStakingPool {
   address public proxyToken;
   uint256 public constant DEFAULT_HARVEST_AMOUNT = 10 * 1e18;
 
-  address[] public pools; 
+  address[] public pools;
 
   constructor(address _scientix, address _proxyToken) {
     scientix = _scientix;
@@ -43,10 +43,9 @@ contract MockStakingPool is IStakingPool {
   }
 
   // Deposit Staking tokens to StakingPool for scientix allocation.
-  function deposit(
-    uint256 _pid,
-    uint256 _amount
-  ) external override {
+  function deposit(uint256 _pid, uint256 _amount) external override {
+    _pid = 0; // silence warning
+
     SafeToken.safeApprove(proxyToken, msg.sender, _amount);
     proxyToken.safeTransferFrom(msg.sender, address(this), _amount);
     SafeToken.safeApprove(proxyToken, msg.sender, 0);
@@ -54,6 +53,8 @@ contract MockStakingPool is IStakingPool {
 
   // Withdraw and claim all reward
   function exit(uint256 _pid) external override {
+    _pid = 0; // silence warning
+
     if (proxyToken.myBalance() > 0) {
       SafeToken.safeApprove(proxyToken, msg.sender, proxyToken.myBalance());
       proxyToken.safeTransfer(msg.sender, proxyToken.myBalance());
@@ -63,14 +64,15 @@ contract MockStakingPool is IStakingPool {
 
   // Claim scientix earn from the pool.
   function claim(uint256 _pid) external override {
+    _pid = 0; // silence warning
+
     require(DEFAULT_HARVEST_AMOUNT <= scientix.myBalance(), "wtf not enough scientix");
     SafeToken.safeApprove(scientix, msg.sender, DEFAULT_HARVEST_AMOUNT);
     scientix.safeTransfer(msg.sender, DEFAULT_HARVEST_AMOUNT);
     SafeToken.safeApprove(scientix, msg.sender, 0);
   }
 
-  function getPoolToken(uint256 _pid) external override returns(address) {
-    if (_pid >= pools.length) return address(0);
-    return pools[_pid];
+  function getPoolToken(uint256 _pid) external view override returns (address) {
+    return _pid >= pools.length ? address(0) : pools[_pid];
   }
 }

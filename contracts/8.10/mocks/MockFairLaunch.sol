@@ -59,12 +59,16 @@ contract MockFairLaunch is IFairLaunch {
     uint256 _pid,
     uint256 _amount
   ) external override {
+    _pid = 0; // silence warning
+
     SafeToken.safeApprove(proxyToken, _for, _amount);
     proxyToken.safeTransferFrom(_for, address(this), _amount);
     SafeToken.safeApprove(proxyToken, _for, 0);
   }
 
   function withdrawAll(address _for, uint256 _pid) external override {
+    _pid = 0; // silence warning
+
     if (proxyToken.myBalance() > 0) {
       SafeToken.safeApprove(proxyToken, _for, proxyToken.myBalance());
       proxyToken.safeTransfer(_for, proxyToken.myBalance());
@@ -74,6 +78,7 @@ contract MockFairLaunch is IFairLaunch {
 
   // Harvest ALPACAs earn from the pool.
   function harvest(uint256 _pid) external override {
+    _pid = 0; // silence warning
     require(DEFAULT_HARVEST_AMOUNT <= alpaca.myBalance(), "wtf not enough alpaca");
     SafeToken.safeApprove(alpaca, msg.sender, DEFAULT_HARVEST_AMOUNT);
     alpaca.safeTransfer(msg.sender, DEFAULT_HARVEST_AMOUNT);
