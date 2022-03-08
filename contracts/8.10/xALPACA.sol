@@ -615,39 +615,39 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   }
 
   /// @notice Withdraw all ALPACA when lock has expired.
-  function earlyWithdraw(uint256 _intendAmount) external nonReentrant {
+  function earlyWithdraw(uint256 _amount) external nonReentrant {
     LockedBalance memory _lock = locks[msg.sender];
 
     require(block.timestamp < _lock.end, "!early");
 
     // prevent mutated memory in _unlock() function as it will be used in fee calculation afterward
     uint256 _prevLockEnd = _lock.end;
-    _unlock(_lock, _intendAmount);
+    _unlock(_lock, _amount);
     // TODO: Accounting on Fee collected
 
     // ceil the week by adding 1 week first
     uint256 remainingWeeks = (_prevLockEnd + WEEK - block.timestamp) / WEEK;
 
     // If breaker is on, should exempt all fee to behave in the same manner with withdraw()
-    uint256 _penalty = breaker == 0 ? (earlyWithdrawBps * remainingWeeks * _intendAmount) / 10000 : 0;
-    token.safeTransfer(msg.sender, _intendAmount - _penalty);
+    uint256 _penalty = breaker == 0 ? (earlyWithdrawBps * remainingWeeks * _amount) / 10000 : 0;
+    token.safeTransfer(msg.sender, _amount - _penalty);
 
-    emit LogEarlyWithdraw(msg.sender, _intendAmount, block.timestamp);
+    emit LogEarlyWithdraw(msg.sender, _amount, block.timestamp);
   }
 
-  function _unlock(LockedBalance memory _lock, uint256 _intendAmount) internal {
+  function _unlock(LockedBalance memory _lock, uint256 _withdrawAmount) internal {
     // Cast here for readability
     uint256 _lockedAmount = SafeCastUpgradeable.toUint256(_lock.amount);
-    require(_intendAmount <= _lockedAmount, "!enough");
+    require(_withdrawAmount <= _lockedAmount, "!enough");
 
     LockedBalance memory _prevLock = LockedBalance({ end: _lock.end, amount: _lock.amount });
     //_lock.end should remain the same if we do partially withdraw
-    _lock.end = _lockedAmount == _intendAmount ? 0 : _lock.end;
-    _lock.amount = SafeCastUpgradeable.toInt128(int256(_lockedAmount - _intendAmount));
+    _lock.end = _lockedAmount == _withdrawAmount ? 0 : _lock.end;
+    _lock.amount = SafeCastUpgradeable.toInt128(int256(_lockedAmount - _withdrawAmount));
     locks[msg.sender] = _lock;
 
     uint256 _supplyBefore = supply;
-    supply = _supplyBefore - _intendAmount;
+    supply = _supplyBefore - _withdrawAmount;
 
     // _prevLock can have either block.timstamp >= _lock.end or zero end
     // _lock has only 0 end
