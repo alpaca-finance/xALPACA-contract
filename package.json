@@ -13,6 +13,7 @@
     "test": "hardhat test",
     "integration-test": "hardhat test --config hardhat.config.forking.ts",
     "test:feeder": "hardhat test ./tests/unit/AlpacaFeeder.test.ts",
+    "test:feeder02": "hardhat test --no-compile ./tests/unit/AlpacaFeeder02.test.ts",
     "test:scientixFeeder": "hardhat test ./tests/unit/ScientixFeeder.test.ts",
     "test:gateway": "hardhat test ./tests/unit/GrassHouseGateway.test.ts",
     "test:xAlpaca": "hardhat test ./tests/unit/xALPACA.test.ts",
@@ -22,6 +23,7 @@
     "test:mainnetfork:grass-house": "hardhat --network mainnetfork run --no-compile ./scripts/forks/grass-house.ts",
     "testnet": "hardhat console --no-compile --network testnet",
     "integration-test:feeder-fairlaunch": "hardhat test --no-compile ./tests/integration/AlpacaFeederWithFairLaunch.test.ts --config hardhat.config.forking.ts",
+    "integration-test:feeder02-minifl": "hardhat test --no-compile ./tests/integration/AlpacaFeeder02WithMiniFL.test.ts --config hardhat.config.ftm.forking.ts",
     "integration-test:feeder-worker": "hardhat test --no-compile ./tests/integration/AlpacaFeederWithWorker.test.ts --config hardhat.config.forking.ts",
     "fork-test:upgrade-grasshouse": "hardhat test --no-compile ./tests/fork-tests/UpgradeGrassHouseWhitelistedCallers.test.ts --config hardhat.config.forking.ts",
     "coverage": "hardhat coverage",
@@ -74,7 +76,7 @@
     "deploy:fantom_mainnet:rootstorage": "hardhat --network fantom_mainnet deploy --no-compile --reset --tags RootStorage"
   },
   "devDependencies": {
-    "@alpaca-finance/alpaca-contract": "1.2.23",
+    "@alpaca-finance/alpaca-contract": "1.2.27",
     "@ethersproject/bignumber": "^5.0.14",
     "@nomiclabs/hardhat-ethers": "^2.0.1",
     "@nomiclabs/hardhat-etherscan": "^2.1.1",

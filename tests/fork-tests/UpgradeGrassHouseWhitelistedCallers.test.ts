@@ -5,7 +5,7 @@ import { GrassHouse__factory } from "../../typechain";
 import { Timelock, Timelock__factory } from "@alpaca-finance/alpaca-contract/typechain";
 import { BigNumber, Signer } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import * as addresses from "../constants/addresses";
+import * as addresses from "../constants/bsc/addresses";
 import * as deployHelper from "../helpers/deploy";
 import * as timeHelper from "../helpers/time";
 import { setTimestamp } from "../helpers/time";
