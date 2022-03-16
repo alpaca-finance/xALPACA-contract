@@ -40,6 +40,7 @@ export class TimelockHelper {
   }
 }
 
+// TODO: uncomment if miniFL owner is timelock else remove this
 // export class TimelockHelperFTM {
 //   private timelock: Timelock;
 //   private miniFL: MiniFL;
