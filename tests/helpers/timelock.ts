@@ -3,7 +3,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { zeroAddress } from "ethereumjs-util";
 import { ethers, BigNumber } from "ethers";
 import * as addresses from "../constants/bsc/addresses";
-import * as ftmAddresses from "../constants/bsc/addresses";
+import * as ftmAddresses from "../constants/ftm/addresses";
 import * as timeHelper from "./time";
 
 export class TimelockHelper {

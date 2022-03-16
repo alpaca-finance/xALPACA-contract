@@ -13,9 +13,11 @@ Alpaca Fin Corporation
 
 pragma solidity 0.8.10;
 
-import "../interfaces/IMiniFL.sol";
-import "../SafeToken.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+
+import "../interfaces/IMiniFL.sol";
+
+import "../SafeToken.sol";
 
 // FairLaunch is a smart contract for distributing ALPACA by asking user to stake the ERC20-based token.
 contract MockMiniFL is IMiniFL {
@@ -61,7 +63,6 @@ contract MockMiniFL is IMiniFL {
   }
 
   function addPool(address _stakeToken) external {
-    // do nothing
     stakingToken.push(IERC20Upgradeable(_stakeToken));
   }
 

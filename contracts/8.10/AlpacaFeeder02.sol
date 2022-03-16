@@ -29,6 +29,11 @@ contract AlpacaFeeder02 is IVault, Initializable, OwnableUpgradeable {
   /// @notice Libraries
   using SafeToken for address;
 
+  /// @notice Errors
+  error AlpacaFeeder02_InvalidToken();
+  error AlpacaFeeder02_InvalideRewardToken();
+  error AlpacaFeeder02_Deposited();
+
   /// @notice Events
   event LogFeedGrassHouse(uint256 _feedAmount);
   event LogMiniFLDeposit();
@@ -64,15 +69,15 @@ contract AlpacaFeeder02 is IVault, Initializable, OwnableUpgradeable {
 
     address _stakeToken = address(miniFL.stakingToken(_miniFLPoolId));
 
-    require(_stakeToken == _proxyToken, "!same stakeToken");
-    require(grassHouse.rewardToken() == _token, "!same rewardToken");
+    if (_stakeToken != _proxyToken) revert AlpacaFeeder02_InvalidToken();
+    if (grassHouse.rewardToken() != _token) revert AlpacaFeeder02_InvalideRewardToken();
 
     proxyToken.safeApprove(_miniFLAddress, type(uint256).max);
   }
 
   /// @notice Deposit token to MiniFL
   function miniFLDeposit() external onlyOwner {
-    require(IBEP20(proxyToken).balanceOf(address(miniFL)) == 0, "already deposit");
+    if (IBEP20(proxyToken).balanceOf(address(miniFL)) != 0) revert AlpacaFeeder02_Deposited();
     IProxyToken(proxyToken).mint(address(this), 1e18);
     miniFL.deposit(address(this), miniFLPoolId, 1e18);
     emit LogMiniFLDeposit();
