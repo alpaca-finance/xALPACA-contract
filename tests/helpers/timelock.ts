@@ -2,7 +2,7 @@ import { FairLaunch, Timelock, Timelock__factory, MiniFL } from "@alpaca-finance
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { zeroAddress } from "ethereumjs-util";
 import { ethers, BigNumber } from "ethers";
-import * as addresses from "../constants/bsc/addresses";
+import * as bscAddresses from "../constants/bsc/addresses";
 import * as ftmAddresses from "../constants/ftm/addresses";
 import * as timeHelper from "./time";
 
@@ -20,7 +20,7 @@ export class TimelockHelper {
       .add(timeHelper.duration.days(BigNumber.from(2)))
       .toNumber();
     await this.timelock.queueTransaction(
-      addresses.SHIELD,
+      bscAddresses.SHIELD,
       "0",
       "addPool(uint256,address,bool)",
       ethers.utils.defaultAbiCoder.encode(["uint256", "address", "bool"], [allocPoint, stakeToken, !!withUpdate]),
@@ -29,7 +29,7 @@ export class TimelockHelper {
 
     await timeHelper.increaseTimestamp(timeHelper.duration.days(ethers.BigNumber.from(2)));
     await this.timelock.executeTransaction(
-      addresses.SHIELD,
+      bscAddresses.SHIELD,
       "0",
       "addPool(uint256,address,bool)",
       ethers.utils.defaultAbiCoder.encode(["uint256", "address", "bool"], [allocPoint, stakeToken, !!withUpdate]),
