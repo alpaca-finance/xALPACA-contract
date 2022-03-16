@@ -29,6 +29,7 @@ describe("AlpacaFeeder", () => {
   let feeder: AlpacaFeeder02;
   let miniFL: MockMiniFL;
   let grassHouse: MockGrassHouse;
+  let newGrassHouse: MockGrassHouse;
 
   // Accounts
   let deployer: Signer;
@@ -55,7 +56,7 @@ describe("AlpacaFeeder", () => {
     const mockProxyToken = (await upgrades.deployProxy(MockProxyToken, ["PROXYTOKEN", "PROXYTOKEN"])) as MockProxyToken;
     proxyToken = await mockProxyToken.deployed();
 
-    // Deploy GrassHouse
+    // Deploy MiniFL
     const MockMiniFL = (await ethers.getContractFactory("MockMiniFL", deployer)) as MockMiniFL__factory;
     miniFL = await MockMiniFL.deploy(alpaca.address, proxyToken.address);
 
@@ -64,6 +65,7 @@ describe("AlpacaFeeder", () => {
     // Deploy GrassHouse
     const MockGrassHouse = (await ethers.getContractFactory("MockGrassHouse", deployer)) as MockGrassHouse__factory;
     grassHouse = await MockGrassHouse.deploy(alpaca.address);
+    newGrassHouse = await MockGrassHouse.deploy(alpaca.address);
 
     // Deploy feeder
     const AlpacaFeeder02 = (await ethers.getContractFactory("AlpacaFeeder02", deployer)) as AlpacaFeeder02__factory;
@@ -128,7 +130,7 @@ describe("AlpacaFeeder", () => {
             1,
             grassHouse.address,
           ])
-        ).to.be.revertedWith("!same stakeToken");
+        ).to.be.revertedWith("AlpacaFeeder02_InvalidToken()");
       });
     });
 
@@ -143,7 +145,7 @@ describe("AlpacaFeeder", () => {
             FAIR_LAUNCH_POOL_ID,
             grassHouse.address,
           ])
-        ).to.be.revertedWith("!same rewardToken");
+        ).to.be.revertedWith("AlpacaFeeder02_InvalidRewardToken()");
       });
     });
   });
@@ -158,7 +160,7 @@ describe("AlpacaFeeder", () => {
       it("should revert", async () => {
         await expect(feeder.miniFLDeposit()).to.be.emit(feeder, "LogMiniFLDeposit");
         expect(await proxyToken.balanceOf(miniFL.address)).to.be.eq(ethers.utils.parseEther("1"));
-        await expect(feeder.miniFLDeposit()).to.be.revertedWith("already deposit");
+        await expect(feeder.miniFLDeposit()).to.be.revertedWith("AlpacaFeeder02_Deposited()");
       });
     });
 
@@ -210,6 +212,12 @@ describe("AlpacaFeeder", () => {
         expect(await alpaca.balanceOf(feeder.address)).to.be.eq(ethers.utils.parseEther("0"));
         expect(await alpaca.balanceOf(grassHouse.address)).to.be.eq(ethers.utils.parseEther("20"));
       });
+    });
+  });
+  describe("#setGrassHouse", async () => {
+    it("should work correctly", async () => {
+      await expect(feeder.setGrassHouse(newGrassHouse.address)).to.be.emit(feeder, "LogSetGrassHouse");
+      expect(await feeder.grassHouse()).to.be.eq(newGrassHouse.address);
     });
   });
 });

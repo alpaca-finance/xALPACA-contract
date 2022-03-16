@@ -31,7 +31,7 @@ contract AlpacaFeeder02 is IVault, Initializable, OwnableUpgradeable {
 
   /// @notice Errors
   error AlpacaFeeder02_InvalidToken();
-  error AlpacaFeeder02_InvalideRewardToken();
+  error AlpacaFeeder02_InvalidRewardToken();
   error AlpacaFeeder02_Deposited();
 
   /// @notice Events
@@ -39,7 +39,7 @@ contract AlpacaFeeder02 is IVault, Initializable, OwnableUpgradeable {
   event LogMiniFLDeposit();
   event LogMiniFLWithdraw();
   event LogMiniFLHarvest(address _caller, uint256 _harvestAmount);
-  event LogSetNewGrassHouse(address indexed _caller, address _prevGrassHouse, address _newGrassHouse);
+  event LogSetGrassHouse(address indexed _caller, address _prevGrassHouse, address _newGrassHouse);
 
   /// @notice State
   IMiniFL public miniFL;
@@ -70,7 +70,7 @@ contract AlpacaFeeder02 is IVault, Initializable, OwnableUpgradeable {
     address _stakeToken = address(miniFL.stakingToken(_miniFLPoolId));
 
     if (_stakeToken != _proxyToken) revert AlpacaFeeder02_InvalidToken();
-    if (grassHouse.rewardToken() != _token) revert AlpacaFeeder02_InvalideRewardToken();
+    if (grassHouse.rewardToken() != _token) revert AlpacaFeeder02_InvalidRewardToken();
 
     proxyToken.safeApprove(_miniFLAddress, type(uint256).max);
   }
@@ -116,6 +116,6 @@ contract AlpacaFeeder02 is IVault, Initializable, OwnableUpgradeable {
   function setGrassHouse(IGrassHouse _newGrassHouse) external onlyOwner {
     address _prevGrassHouse = address(grassHouse);
     grassHouse = _newGrassHouse;
-    emit LogSetNewGrassHouse(msg.sender, _prevGrassHouse, address(_newGrassHouse));
+    emit LogSetGrassHouse(msg.sender, _prevGrassHouse, address(_newGrassHouse));
   }
 }

@@ -13,13 +13,13 @@ import {
   AlpacaFeeder02__factory,
   AlpacaFeeder02,
 } from "../../typechain";
-import * as addresses from "../constants/bsc/addresses";
+import * as bscAddresses from "../constants/bsc/addresses";
 import * as ftmAddresses from "../constants/ftm/addresses";
 import * as timeHelpers from "./time";
 
 export const deployXAlpaca = async (signer: SignerWithAddress): Promise<XALPACA> => {
   const XAlpaca = (await ethers.getContractFactory("xALPACA", signer)) as XALPACA__factory;
-  const xalpaca = (await upgrades.deployProxy(XAlpaca, [addresses.ALPACA])) as XALPACA;
+  const xalpaca = (await upgrades.deployProxy(XAlpaca, [bscAddresses.ALPACA])) as XALPACA;
   return xalpaca.deployed();
 };
 
@@ -34,7 +34,7 @@ export const deployProxyToken = async (signer: SignerWithAddress): Promise<Proxy
   const proxyToken = (await upgrades.deployProxy(PROXY_TOKEN, [
     `proxyToken`,
     `proxyToken`,
-    addresses.TIME_LOCK,
+    bscAddresses.TIME_LOCK,
   ])) as ProxyToken;
   return proxyToken.deployed();
 };
@@ -54,7 +54,7 @@ export const deployGrasshouse = async (signer: SignerWithAddress, xalpacaAddress
   const grassHouse = (await upgrades.deployProxy(GrassHouse, [
     xalpacaAddress,
     await timeHelpers.latestTimestamp(),
-    addresses.ALPACA,
+    bscAddresses.ALPACA,
     signer.address,
   ])) as GrassHouse;
   return grassHouse.deployed();
@@ -79,9 +79,9 @@ export const deployAlpacaFeeder = async (
 ): Promise<AlpacaFeeder> => {
   const AlpacaFeeder = (await ethers.getContractFactory("AlpacaFeeder", signer)) as AlpacaFeeder__factory;
   const alpacaFeeder = (await upgrades.deployProxy(AlpacaFeeder, [
-    addresses.ALPACA,
+    bscAddresses.ALPACA,
     proxyTokenAddress,
-    addresses.FAIR_LAUNCH,
+    bscAddresses.FAIR_LAUNCH,
     poolId,
     grassHouseAddress,
   ])) as AlpacaFeeder;
