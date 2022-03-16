@@ -214,6 +214,7 @@ describe("AlpacaFeeder", () => {
       });
     });
   });
+
   describe("#setGrassHouse", async () => {
     it("should work correctly", async () => {
       await expect(feeder.setGrassHouse(newGrassHouse.address)).to.be.emit(feeder, "LogSetGrassHouse");
