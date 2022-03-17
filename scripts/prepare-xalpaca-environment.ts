@@ -11,7 +11,7 @@ import {
   XALPACA,
 } from "../typechain";
 import * as timeHelpers from "../tests/helpers/time";
-import * as addresses from "../tests/constants/addresses";
+import * as addresses from "../tests/constants/bsc/addresses";
 import {
   Timelock__factory,
   FairLaunch__factory,
