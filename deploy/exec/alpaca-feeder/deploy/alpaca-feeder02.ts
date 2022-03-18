@@ -34,7 +34,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   if (config.MiniFL === undefined) throw new Error(`could not find config.MiniFL`);
 
   console.log(`>> Deploying AlpacaFeeder`);
-  const AlpacaFeeder = (await ethers.getContractFactory("AlpacaFeeder", deployer)) as AlpacaFeeder02__factory;
+  const AlpacaFeeder = (await ethers.getContractFactory("AlpacaFeeder02", deployer)) as AlpacaFeeder02__factory;
   const alpacaFeeder = (await upgrades.deployProxy(AlpacaFeeder, [
     config.Tokens.ALPACA,
     config.Tokens.fdALPACA,
