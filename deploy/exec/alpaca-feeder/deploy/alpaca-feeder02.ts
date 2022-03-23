@@ -11,6 +11,7 @@ import {
 } from "../../../../typechain";
 import { FairLaunch__factory, Timelock__factory } from "@alpaca-finance/alpaca-contract/typechain";
 import { ConfigEntity } from "../../../entities";
+import { getDeployer } from "../../../../utils/deployer-helper";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   /*
@@ -25,7 +26,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const POOL_ID = "";
 
   const config = ConfigEntity.getConfig();
-  const deployer = (await ethers.getSigners())[0];
+  const deployer = await getDeployer();
   let nonce = await deployer.getTransactionCount();
 
   const alpacaGrassHouseAddress = config.GrassHouses.find((gh) => gh.name === "ALPACA");

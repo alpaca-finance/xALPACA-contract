@@ -3,6 +3,7 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { ethers, upgrades } from "hardhat";
 import { GrassHouse, GrassHouse__factory } from "../../../../typechain";
 import { ConfigEntity } from "../../../entities";
+import { getDeployer } from "../../../../utils/deployer-helper";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   interface IGrassHouse {
@@ -18,7 +19,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           Check all variables below before execute the deployment script
     */
   const GRASSHOUSES: Array<IGrassHouse> = [{ NAME: "" }, { NAME: "" }];
-  const deployer = (await ethers.getSigners())[0];
+  const deployer = await getDeployer();
   const config = ConfigEntity.getConfig();
 
   for (const grassHouseConfig of GRASSHOUSES) {
