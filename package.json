@@ -79,7 +79,14 @@
     "deploy:fantom_mainnet:alpaca-feeder:deploy:alpaca-feeder02": "hardhat --network fantom_mainnet deploy --no-compile --reset --tags AlpacaFeeder02",
     "deploy:fantom_mainnet:grasshouse:deploy:grasshouse-gateway": "hardhat --network fantom_mainnet deploy --no-compile --reset --tags GrassHouseGateway",
     "deploy:fantom_mainnet:tribute": "hardhat --network fantom_mainnet deploy --no-compile --reset --tags Tribute",
-    "deploy:fantom_mainnet:rootstorage": "hardhat --network fantom_mainnet deploy --no-compile --reset --tags RootStorage"
+    "deploy:fantom_mainnet:rootstorage": "hardhat --network fantom_mainnet deploy --no-compile --reset --tags RootStorage",
+    "deploy:fantom_mainnetfork:proxy-token:deploy:proxy-token": "hardhat --network fantom_mainnetfork deploy --no-compile --reset --tags ProxyToken",
+    "deploy:fantom_mainnetfork:xalpaca:deploy:xalpaca": "hardhat --network fantom_mainnetfork deploy --no-compile --reset --tags XAlpaca",
+    "deploy:fantom_mainnetfork:grasshouse:deploy:grasshouse": "hardhat --network fantom_mainnetfork deploy --no-compile --reset --tags GrassHouse",
+    "deploy:fantom_mainnetfork:alpaca-feeder:deploy:alpaca-feeder02": "hardhat --network fantom_mainnetfork deploy --no-compile --reset --tags AlpacaFeeder02",
+    "deploy:fantom_mainnetfork:grasshouse:deploy:grasshouse-gateway": "hardhat --network fantom_mainnetfork deploy --no-compile --reset --tags GrassHouseGateway",
+    "deploy:fantom_mainnetfork:tribute": "hardhat --network fantom_mainnetfork deploy --no-compile --reset --tags Tribute",
+    "deploy:fantom_mainnetfork:rootstorage": "hardhat --network fantom_mainnetfork deploy --no-compile --reset --tags RootStorage"
   },
   "devDependencies": {
     "@alpaca-finance/alpaca-contract": "1.2.27",
