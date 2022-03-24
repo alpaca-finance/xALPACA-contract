@@ -35,7 +35,7 @@ module.exports = {
       accounts: [process.env.FANTOM_MAINNET_PRIVATE_KEY],
     },
     fantom_mainnetfork: {
-      url: process.env.TENDERLY_FORK_RPC,
+      url: process.env.FTM_MAINNET_FORK_RPC,
       accounts: [process.env.FANTOM_MAINNET_PRIVATE_KEY],
     },
     mainnetfork: {
