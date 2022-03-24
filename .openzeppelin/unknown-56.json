@@ -84,6 +84,16 @@
       "address": "0xdf4445022725C08D1E66E68387816F365a14A963",
       "txHash": "0xbe2e73ecc2691430dc9effcd72356b24a311f01ff62246e2a191fbbf7f747fe5",
       "kind": "transparent"
+    },
+    {
+      "address": "0x58BD8fBe2156d3C9ef7B33cFe6D2CFB3F5F0C52A",
+      "txHash": "0xdbddbdc57ecfaf620978f78bf75d4c075060bcad73d6c19f475dabd34edbdf87",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x6eFA5037a0d7bE675D0B937eDEb41554871CdD16",
+      "txHash": "0xcf10350f2a36250468847218ef73f119702758bd84b0d125b9ae9d284148459a",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -1083,6 +1093,166 @@
             "label": "__gap",
             "type": "t_array(t_uint256)49_storage",
             "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:77"
+          },
+          {
+            "contract": "GrassHouse",
+            "label": "startWeekCursor",
+            "type": "t_uint256",
+            "src": "contracts/8.10/GrassHouse.sol:48"
+          },
+          {
+            "contract": "GrassHouse",
+            "label": "weekCursor",
+            "type": "t_uint256",
+            "src": "contracts/8.10/GrassHouse.sol:48"
+          },
+          {
+            "contract": "GrassHouse",
+            "label": "weekCursorOf",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/8.10/GrassHouse.sol:49"
+          },
+          {
+            "contract": "GrassHouse",
+            "label": "userEpochOf",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/8.10/GrassHouse.sol:51"
+          },
+          {
+            "contract": "GrassHouse",
+            "label": "lastTokenTimestamp",
+            "type": "t_uint256",
+            "src": "contracts/8.10/GrassHouse.sol:52"
+          },
+          {
+            "contract": "GrassHouse",
+            "label": "tokensPerWeek",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "contracts/8.10/GrassHouse.sol:54"
+          },
+          {
+            "contract": "GrassHouse",
+            "label": "xALPACA",
+            "type": "t_address",
+            "src": "contracts/8.10/GrassHouse.sol:56"
+          },
+          {
+            "contract": "GrassHouse",
+            "label": "rewardToken",
+            "type": "t_address",
+            "src": "contracts/8.10/GrassHouse.sol:58"
+          },
+          {
+            "contract": "GrassHouse",
+            "label": "lastTokenBalance",
+            "type": "t_uint256",
+            "src": "contracts/8.10/GrassHouse.sol:58"
+          },
+          {
+            "contract": "GrassHouse",
+            "label": "totalSupplyAt",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "contracts/8.10/GrassHouse.sol:61"
+          },
+          {
+            "contract": "GrassHouse",
+            "label": "canCheckpointToken",
+            "type": "t_bool",
+            "src": "contracts/8.10/GrassHouse.sol:63"
+          },
+          {
+            "contract": "GrassHouse",
+            "label": "isKilled",
+            "type": "t_bool",
+            "src": "contracts/8.10/GrassHouse.sol:67"
+          },
+          {
+            "contract": "GrassHouse",
+            "label": "emergencyReturn",
+            "type": "t_address",
+            "src": "contracts/8.10/GrassHouse.sol:67"
+          },
+          {
+            "contract": "GrassHouse",
+            "label": "whitelistedCheckpointCallers",
+            "type": "t_mapping(t_address,t_bool)",
+            "src": "contracts/8.10/GrassHouse.sol:70"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "e7394b7d16076d998a3c76f09d1f7e57aa906ee4dff884839826327122845feb": {
+      "address": "0x16716EE0A61eB9A34b42327bf442F873F15981D7",
+      "txHash": "0xffeffbe0564ea172d10aebb9ea5d4e44da9fae813d57031eb0fd1e5e3a971b89",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:39"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:44"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "_status",
+            "type": "t_uint256",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:68"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:82"
           },
           {
             "contract": "GrassHouse",
