@@ -22,8 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   */
   const CHECKPOINT_WHITELIST: string[] = ["0xe45216ac4816a5ec5378b1d13de8aa9f262ce9de"];
   const GRASSHOUSES: Array<IGrassHouse> = [
-    { SYMBOL: "DEP", TOKEN_ADDRESS: "0xcaf5191fc480f43e4df80106c7695eca56e48b18", START_TIME: "1647475200" },
-    { SYMBOL: "XWG", TOKEN_ADDRESS: "0x6b23c89196deb721e6fd9726e6c76e4810a464bc", START_TIME: "1647475200" },
+    { SYMBOL: "ALPACA", TOKEN_ADDRESS: "0xad996a45fd2373ed0b10efa4a8ecb9de445a4302", START_TIME: "1648684800" },
   ];
 
   const config = ConfigEntity.getConfig();

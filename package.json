@@ -7,6 +7,7 @@
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "compile": "hardhat typechain --config hardhat.config.ts && yarn build",
     "mainnet": "hardhat console --no-compile --network mainnet",
+    "fantom_mainnet": "hardhat console --no-compile --network fantom_mainnet",
     "badges": "istanbul-badges-readme --coverageDir=./",
     "test:case": "mocha tests --require hardhat/register --file tests/**/* --extension ts -g",
     "test:parallel": "mocha --require hardhat/register --recursive --parallel --extension ts --exit",

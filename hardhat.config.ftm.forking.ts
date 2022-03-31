@@ -22,7 +22,7 @@ module.exports = {
       },
     },
     mainnetfork: {
-      url: process.env.MAINNET_FORK_URL,
+      url: process.env.FTM_MAINNET_FORK_RPC,
       accounts: [process.env.BSC_MAINNET_PRIVATE_KEY],
     },
   },
