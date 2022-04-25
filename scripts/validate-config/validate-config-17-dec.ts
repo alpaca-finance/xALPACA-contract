@@ -3,7 +3,7 @@ import { expect } from "chai";
 import "@openzeppelin/test-helpers";
 import { AlpacaFeeder__factory, BEP20__factory, GrassHouse__factory, XALPACA__factory } from "../../typechain";
 import { ConfigEntity } from "../../deploy/entities";
-import * as addresses from "../../tests/constants/addresses";
+import * as addresses from "../../tests/constants/bsc/addresses";
 import { FairLaunch__factory } from "@alpaca-finance/alpaca-contract/typechain";
 
 const config = ConfigEntity.getConfig();

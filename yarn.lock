@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@alpaca-finance/alpaca-contract@1.2.23":
-  version "1.2.23"
-  resolved "https://registry.yarnpkg.com/@alpaca-finance/alpaca-contract/-/alpaca-contract-1.2.23.tgz#c61df2fe0f0088c42ef755d3a3d8bd5b4d15fe28"
-  integrity sha512-i3kwlCr/d3u1ZY8cHpN+OeuyF0788ZQgMRTAvY85MGKaOWs1HaJ9iq/qiWEY5kzREqsQphMgLmH14JzmzG+TuQ==
+"@alpaca-finance/alpaca-contract@1.2.27":
+  version "1.2.27"
+  resolved "https://registry.yarnpkg.com/@alpaca-finance/alpaca-contract/-/alpaca-contract-1.2.27.tgz#eacbd2f31d31878277e28e3af1985147c99e7b69"
+  integrity sha512-ScvTUW7HzsURaxppCa+bgmccPyJdWXSmEUprKLHp7X82vjc5bKH3os41E7Gjge2zz8z5pEo6Pg4EYrN1I8VZ9Q==
 
 "@babel/code-frame@^7.0.0":
   version "7.16.0"

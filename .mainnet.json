@@ -134,6 +134,7 @@
   },
   "xALPACA": "0xB7d85Ab25b9D478961face285fa3D8AAecAd24a9",
   "ALPACAFeeder": "0x44B3868cbba5fbd2c5D8d1445BDB14458806B3B4",
+  "ScientixFeeder": "0xf64c61183dCA4FDE0f608e0Be442bd2dFEaEeFfD",
   "GrassHouses": [
     {
       "name": "ALPACA",
@@ -164,6 +165,21 @@
       "name": "DLTA",
       "address": "0xdf4445022725C08D1E66E68387816F365a14A963",
       "rewardToken": "0x3a06212763CAF64bf101DaA4b0cEbb0cD393fA1a"
+    },
+    {
+      "name": "SCIX",
+      "address": "0x5876bea7920f4a542D8906470bCbCD56c554DD6E",
+      "rewardToken": "0x2CFC48CdFea0678137854F010b5390c5144C0Aa5"
+    },
+    {
+      "name": "DEP",
+      "address": "0x58BD8fBe2156d3C9ef7B33cFe6D2CFB3F5F0C52A",
+      "rewardToken": "0xcaf5191fc480f43e4df80106c7695eca56e48b18"
+    },
+    {
+      "name": "XWG",
+      "address": "0x6eFA5037a0d7bE675D0B937eDEb41554871CdD16",
+      "rewardToken": "0x6b23c89196deb721e6fd9726e6c76e4810a464bc"
     }
   ],
   "GrassHouseGateway": "0x50309398E3AbCBD3357b0DD54A624C1251026ee5"

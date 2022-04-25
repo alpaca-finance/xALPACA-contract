@@ -1,6 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { task, types } from "hardhat/config";
-import * as addresses from "../tests/constants/addresses";
+import * as addresses from "../tests/constants/bsc/addresses";
 import { parseEther } from "@ethersproject/units";
 import {
   BEP20,

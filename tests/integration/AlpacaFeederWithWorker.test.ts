@@ -30,7 +30,7 @@ import {
   WBNB,
   MDEX,
   BUSD,
-} from "../constants/addresses";
+} from "../constants/bsc/addresses";
 import * as deployHelper from "../helpers/deploy";
 
 chai.use(solidity);
@@ -101,7 +101,10 @@ describe("AlpacaFeeder - Integration test", () => {
 
     // Deploy AlpacaFeeder
     alpacaFeeder = await deployHelper.deployAlpacaFeeder(deployer, proxyToken.address, poolId, grassHouse.address);
-    await expect(proxyToken.setOkHolders([alpacaFeeder.address, fairlaunch.address], true)).to.be.emit(proxyToken, "LogSetOkHolder");
+    await expect(proxyToken.setOkHolders([alpacaFeeder.address, fairlaunch.address], true)).to.be.emit(
+      proxyToken,
+      "LogSetOkHolder"
+    );
 
     await proxyToken.transferOwnership(alpacaFeeder.address);
 

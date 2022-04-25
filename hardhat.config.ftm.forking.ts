@@ -4,8 +4,8 @@ dotEnvConfig();
 import "@openzeppelin/hardhat-upgrades";
 import "@nomiclabs/hardhat-waffle";
 import "hardhat-typechain";
-import "hardhat-deploy";
 import "solidity-coverage";
+require("./scripts/tasks-mainnetfork");
 
 module.exports = {
   defaultNetwork: "hardhat",
@@ -17,31 +17,13 @@ module.exports = {
       allowUnlimitedContractSize: true,
       timeout: 1800000,
       accounts: { mnemonic: "test test test test test test test test test test test junk" },
-    },
-    testnet: {
-      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
-      accounts: [process.env.BSC_TESTNET_PRIVATE_KEY, process.env.LOCAL_PRIVATE_KEY_1],
-    },
-    mainnet: {
-      url: process.env.BSC_MAINNET_RPC,
-      accounts: [process.env.BSC_MAINNET_PRIVATE_KEY],
-    },
-    fantom_testnet: {
-      url: "https://rpc.testnet.fantom.network/",
-      accounts: [process.env.FANTOM_TESTNET_PRIVATE_KEY],
-    },
-    fantom_mainnet: {
-      url: process.env.FTM_MAINNET_RPC,
-      accounts: [process.env.FANTOM_MAINNET_PRIVATE_KEY],
-    },
-    fantom_mainnetfork: {
-      url: process.env.FTM_MAINNET_FORK_RPC,
-      accounts: [process.env.FANTOM_MAINNET_PRIVATE_KEY],
+      forking: {
+        url: process.env.FTM_MAINNET_FORK_RPC,
+      },
     },
     mainnetfork: {
-      url: "http://127.0.0.1:8545",
+      url: process.env.FTM_MAINNET_FORK_RPC,
       accounts: [process.env.BSC_MAINNET_PRIVATE_KEY],
-      timeout: 500000,
     },
   },
   namedAccounts: {
@@ -60,7 +42,7 @@ module.exports = {
   },
   paths: {
     sources: "./contracts/8.10",
-    tests: "./tests/unit",
+    tests: "./tests/integration",
     cache: "./cache",
     artifacts: "./artifacts",
   },
@@ -69,6 +51,6 @@ module.exports = {
     target: "ethers-v5",
   },
   mocha: {
-    timeout: 50000,
+    timeout: 100000,
   },
 };

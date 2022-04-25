@@ -218,6 +218,8 @@ describe("GrassHouse", () => {
             const latestTimestamp = await timeHelpers.latestTimestamp();
 
             await timeHelpers.setTimestamp(latestTimestamp.add(DAY).add(1));
+            await grassHouse.setWhitelistedCheckpointCallers([aliceAddress], true);
+            await grassHouseAsAlice.checkpointToken();
 
             await ALPACA.transfer(grassHouse.address, ethers.utils.parseEther("888"));
             await expect(grassHouseAsAlice.checkpointToken()).to.be.emit(grassHouse, "LogCheckpointToken");

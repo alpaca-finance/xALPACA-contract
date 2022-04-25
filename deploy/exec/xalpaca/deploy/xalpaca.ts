@@ -3,6 +3,7 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { ethers, upgrades } from "hardhat";
 import { XALPACA, XALPACA__factory } from "../../../../typechain";
 import { ConfigEntity } from "../../../entities";
+import { getDeployer } from "../../../../utils/deployer-helper";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   /*
@@ -15,7 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     Check all variables below before execute the deployment script
 */
   const config = ConfigEntity.getConfig();
-  const deployer = (await ethers.getSigners())[0];
+  const deployer = await getDeployer();
 
   console.log(`>> Deploying xALPACA`);
   const XALPACA = (await ethers.getContractFactory("xALPACA", deployer)) as XALPACA__factory;

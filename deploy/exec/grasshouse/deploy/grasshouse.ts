@@ -3,6 +3,7 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { ethers, upgrades } from "hardhat";
 import { GrassHouse, GrassHouse__factory } from "../../../../typechain";
 import { ConfigEntity } from "../../../entities";
+import { getDeployer } from "../../../../utils/deployer-helper";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   interface IGrassHouse {
@@ -21,12 +22,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   */
   const CHECKPOINT_WHITELIST: string[] = ["0xe45216ac4816a5ec5378b1d13de8aa9f262ce9de"];
   const GRASSHOUSES: Array<IGrassHouse> = [
-    { SYMBOL: "HIGH", TOKEN_ADDRESS: "0x5f4bde007dc06b867f86ebfe4802e34a1ffeed63", START_TIME: "1642032000" },
-    { SYMBOL: "DLTA", TOKEN_ADDRESS: "0x3a06212763CAF64bf101DaA4b0cEbb0cD393fA1a", START_TIME: "1642032000" },
+    { SYMBOL: "ALPACA", TOKEN_ADDRESS: "0xad996a45fd2373ed0b10efa4a8ecb9de445a4302", START_TIME: "1648684800" },
   ];
 
   const config = ConfigEntity.getConfig();
-  const deployer = (await ethers.getSigners())[0];
+  const deployer = await getDeployer();
 
   for (const grassHouseConfig of GRASSHOUSES) {
     console.log(`>> Deploying GrassHouse ${grassHouseConfig.SYMBOL}`);

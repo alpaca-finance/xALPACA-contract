@@ -2,6 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers, upgrades } from "hardhat";
 import { GrassHouse, GrassHouseGateway__factory, GrassHouse__factory } from "../../../../typechain";
+import { getDeployer } from "../../../../utils/deployer-helper";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   /*
@@ -14,7 +15,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       Check all variables below before execute the deployment script
 */
 
-  const deployer = (await ethers.getSigners())[0];
+  const deployer = await getDeployer();
 
   console.log(`>> Deploying GrassHouseGateway`);
   const grassHouseGateWayAsDeployer = (await ethers.getContractFactory(
