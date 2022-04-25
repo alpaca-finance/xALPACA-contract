@@ -25,8 +25,6 @@ import "./interfaces/IVault.sol";
 
 import "./SafeToken.sol";
 
-import "hardhat/console.sol";
-
 /// @title xALPACA - The goverance token of Alpaca Finance
 // solhint-disable not-rely-on-time
 // solhint-disable-next-line contract-name-camelcase
@@ -56,6 +54,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     address oldFeeder,
     address newFeeder
   );
+  event LogRedistribute(address indexed caller, address destination, uint256 amount);
 
   struct Point {
     int128 bias; // Voting weight
@@ -656,6 +655,16 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     token.safeTransfer(msg.sender, _amount - _penalty);
 
     emit LogEarlyWithdraw(msg.sender, _amount, block.timestamp);
+  }
+
+  function redistribute() external nonReentrant {
+    uint256 _amount = accumRedistribute;
+
+    accumRedistribute = 0;
+
+    token.safeTransfer(redistributeAddr, _amount);
+
+    emit LogRedistribute(msg.sender, redistributeAddr, _amount);
   }
 
   function _unlock(LockedBalance memory _lock, uint256 _withdrawAmount) internal {
