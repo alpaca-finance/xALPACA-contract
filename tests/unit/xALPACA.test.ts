@@ -601,8 +601,7 @@ describe("xALPACA", () => {
         const alpacaBefore = await ALPACA.balanceOf(aliceAddress);
         const xALPACABefore = await xALPACA.balanceOf(aliceAddress);
         const supplyBefore = await xALPACA.totalSupply();
-        console.log("alice before", xALPACABefore.toString());
-        console.log("supply before", supplyBefore.toString());
+
         // Alice early withdraw
         await xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("10"));
 
@@ -613,9 +612,6 @@ describe("xALPACA", () => {
         // = 1
         // expect to get 10 - 1 = 9 back
         await expect(alpacaAfter.sub(alpacaBefore)).to.be.eq(ethers.utils.parseEther("9"));
-
-        console.log("alice after", (await xALPACA.balanceOf(aliceAddress)).toString());
-        console.log("supply after", (await xALPACA.totalSupply()).toString());
       });
     });
 
@@ -634,8 +630,7 @@ describe("xALPACA", () => {
         const alpacaBefore = await ALPACA.balanceOf(aliceAddress);
         const xALPACABefore = await xALPACA.balanceOf(aliceAddress);
         const supplyBefore = await xALPACA.totalSupply();
-        console.log("alice before", xALPACABefore.toString());
-        console.log("supply before", supplyBefore.toString());
+
         // Alice early withdraw
         await xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("5"));
 
@@ -647,9 +642,6 @@ describe("xALPACA", () => {
         // = 1
         // expect to get 5 - 1 = 4 back
         await expect(alpacaAfter.sub(alpacaBefore)).to.be.eq(ethers.utils.parseEther("4"));
-
-        console.log("alice after", (await xALPACA.balanceOf(aliceAddress)).toString());
-        console.log("supply after", (await xALPACA.totalSupply()).toString());
       });
     });
   })
