@@ -180,6 +180,11 @@
       "name": "XWG",
       "address": "0x6eFA5037a0d7bE675D0B937eDEb41554871CdD16",
       "rewardToken": "0x6b23c89196deb721e6fd9726e6c76e4810a464bc"
+    },
+    {
+      "name": "BSW",
+      "address": "0x99494EbC70930c2924117C84de55f0924F7309da",
+      "rewardToken": "0x965F527D9159dCe6288a2219DB51fc6Eef120dD1"
     }
   ],
   "GrassHouseGateway": "0x50309398E3AbCBD3357b0DD54A624C1251026ee5"
