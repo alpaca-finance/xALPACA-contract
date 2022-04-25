@@ -48,10 +48,10 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     uint64 newEarlyWithdrawFeeBps,
     uint64 oldRedistributeBps,
     uint64 newRedistribiteBps,
-    address oldTreasury,
-    address newTreasury,
-    address oldFeeder,
-    address newFeeder
+    address oldTreasuryAddr,
+    address newTreasuryAddr,
+    address oldRedistributeAddr,
+    address newRedistributeAddr
   );
   event LogRedistribute(address indexed caller, address destination, uint256 amount);
 
