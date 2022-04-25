@@ -588,7 +588,9 @@ describe("xALPACA", () => {
   describe("#earlyWithdraw", async () => {
     context("when lock not expired and fully withdraw", async () => {
       it("should works", async () => {
-        await xALPACA.setEarlyWithdrawConfig(100, 0);
+        // deployer as treasury, eve as redistributor
+        // 1% per remaining week penalty, 50% goes to treasury
+        await xALPACA.setEarlyWithdrawConfig(100, 5000, deployerAddress, eveAddress);
         const lockAmount = ethers.utils.parseEther("10");
         await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
 
@@ -598,26 +600,31 @@ describe("xALPACA", () => {
         // Alice create lock with expire in 1 week
         await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(10)));
 
-        const alpacaBefore = await ALPACA.balanceOf(aliceAddress);
-        const xALPACABefore = await xALPACA.balanceOf(aliceAddress);
-        const supplyBefore = await xALPACA.totalSupply();
+        const alpacaAliceBefore = await ALPACA.balanceOf(aliceAddress);
+        const alpacaDeployerBefore = await ALPACA.balanceOf(deployerAddress);
 
         // Alice early withdraw
         await xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("10"));
 
-        const alpacaAfter = await ALPACA.balanceOf(aliceAddress);
+        const alpacaAliceAfter = await ALPACA.balanceOf(aliceAddress);
+        const alpacaDeployerAfter = await ALPACA.balanceOf(deployerAddress);
 
         // Alice should get her locked alpaca back
         // penalty = 1% * 10(remaining week) * 10(amount to withdraw)
         // = 1
         // expect to get 10 - 1 = 9 back
-        await expect(alpacaAfter.sub(alpacaBefore)).to.be.eq(ethers.utils.parseEther("9"));
+        await expect(alpacaAliceAfter.sub(alpacaAliceBefore)).to.be.eq(ethers.utils.parseEther("9"));
+
+        // Deployer should get 50% of penalty
+        // 1 * 50% = 0.5 alpaca
+        await expect(alpacaDeployerAfter.sub(alpacaDeployerBefore)).to.be.eq(ethers.utils.parseEther("0.5"));
       });
     });
 
     context("when lock not expired but paritally early withdrawn", async () => {
       it("should have xALPACA left", async () => {
-        await xALPACA.setEarlyWithdrawConfig(100, 0);
+        // deployer as treasury, eve as redistributor
+        await xALPACA.setEarlyWithdrawConfig(100, 5000, deployerAddress, eveAddress);
         const lockAmount = ethers.utils.parseEther("10");
         await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
 
@@ -627,21 +634,24 @@ describe("xALPACA", () => {
         // Alice create lock with expire in 1 week
         await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(20)));
 
-        const alpacaBefore = await ALPACA.balanceOf(aliceAddress);
-        const xALPACABefore = await xALPACA.balanceOf(aliceAddress);
-        const supplyBefore = await xALPACA.totalSupply();
+        const alpacaAliceBefore = await ALPACA.balanceOf(aliceAddress);
+        const alpacaDeployerBefore = await ALPACA.balanceOf(deployerAddress);
 
         // Alice early withdraw
         await xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("5"));
 
-        const alpacaAfter = await ALPACA.balanceOf(aliceAddress);
+        const alpacaAliceAfter = await ALPACA.balanceOf(aliceAddress);
+        const alpacaDeployerAfter = await ALPACA.balanceOf(deployerAddress);
 
-        // Alice should get her locked alpaca back
         // Alice should get her locked alpaca back
         // penalty = 1% * 20(remaining week) * 5(amount to withdraw)
         // = 1
         // expect to get 5 - 1 = 4 back
-        await expect(alpacaAfter.sub(alpacaBefore)).to.be.eq(ethers.utils.parseEther("4"));
+        await expect(alpacaAliceAfter.sub(alpacaAliceBefore)).to.be.eq(ethers.utils.parseEther("4"));
+
+        // Deployer should get 50% of penalty
+        // 1 * 50% = 0.5 alpaca
+        await expect(alpacaDeployerAfter.sub(alpacaDeployerBefore)).to.be.eq(ethers.utils.parseEther("0.5"));
       });
     });
   })

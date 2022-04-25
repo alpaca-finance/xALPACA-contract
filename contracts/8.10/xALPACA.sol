@@ -21,6 +21,7 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
 import "./interfaces/IBEP20.sol";
+import "./interfaces/IVault.sol";
 
 import "./SafeToken.sol";
 
@@ -49,7 +50,11 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     uint64 oldEarlyWithdrawFeeBps,
     uint64 newEarlyWithdrawFeeBps,
     uint64 oldRedistributeBps,
-    uint64 newRedistribiteBps
+    uint64 newRedistribiteBps,
+    address oldTreasury,
+    address newTreasury,
+    address oldFeeder,
+    address newFeeder
   );
 
   struct Point {
@@ -102,10 +107,12 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   string public symbol;
   uint8 public decimals;
 
-  /// @notice Early Withdrawal Fee
+  /// @notice Early Withdrawal
   uint64 public earlyWithdrawBps;
   uint64 public redistributeBps;
-  uint256 public outstandingPenalty;
+  uint256 public accumRedistribute;
+  address public treasuryAddr;
+  address public redistributeAddr;
 
   /// @notice Initialize xALPACA
   /// @param _token The address of ALPACA token
@@ -638,11 +645,14 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     // If breaker is on, should exempt all fee to behave in the same manner with withdraw()
     uint256 _penalty = breaker == 0 ? (earlyWithdrawBps * remainingWeeks * _amount) / 10000 : 0;
 
-    // TODO: Accounting on Fee collected
-    // 1. split penalty into two parts
-    // 2. one for burn wallet
-    // 3. one to be feed to feeder later. or grasshouse.
+    // split penalty into two parts
+    uint256 _redistribute = (_penalty * redistributeBps) / 10000;
+    // accumulate alpaca for redistribution
+    accumRedistribute = accumRedistribute + _redistribute;
 
+    // transfer one part of the penalty to treasury
+    token.safeTransfer(treasuryAddr, _penalty - _redistribute);
+    // transfer remaining back to owner
     token.safeTransfer(msg.sender, _amount - _penalty);
 
     emit LogEarlyWithdraw(msg.sender, _amount, block.timestamp);
@@ -669,7 +679,12 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     emit LogSupply(_supplyBefore, supply);
   }
 
-  function setEarlyWithdrawConfig(uint64 _newEarlyWithdrawBps, uint64 _newRedistributeBps) external onlyOwner {
+  function setEarlyWithdrawConfig(
+    uint64 _newEarlyWithdrawBps,
+    uint64 _newRedistributeBps,
+    address _newTreasuryAddr,
+    address _newRedistributeAddr
+  ) external onlyOwner {
     // Maximum early withdraw fee per week bps = 1000 (10%)
     require(_newEarlyWithdrawBps <= 1000, "fee too high");
     // Maximum redistributeBps = 10000 (100%)
@@ -681,12 +696,21 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     uint64 _oldRedistributeBps = redistributeBps;
     redistributeBps = _newRedistributeBps;
 
+    address _oldTreasuryAddr = treasuryAddr;
+    treasuryAddr = _newTreasuryAddr;
+    address _oldRedistributeAddr = redistributeAddr;
+    redistributeAddr = _newRedistributeAddr;
+
     emit LogSetEarlyWithdrawConfig(
       msg.sender,
       _oldEarlyWithdrawBps,
       _newEarlyWithdrawBps,
       _oldRedistributeBps,
-      _newRedistributeBps
+      _newRedistributeBps,
+      _oldTreasuryAddr,
+      _newTreasuryAddr,
+      _oldRedistributeAddr,
+      _newRedistributeAddr
     );
   }
 }
