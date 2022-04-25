@@ -585,7 +585,7 @@ describe("xALPACA", () => {
     });
   });
 
-  describe.only("#earlyWithdraw", async () => {
+  describe("#earlyWithdraw", async () => {
     context("when lock not expired and fully withdraw", async () => {
       it("should works", async () => {
         await xALPACA.setEarlyWithdrawBps(100);
