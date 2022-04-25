@@ -21,7 +21,6 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
 import "./interfaces/IBEP20.sol";
-import "./interfaces/IVault.sol";
 
 import "./SafeToken.sol";
 
