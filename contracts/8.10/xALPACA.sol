@@ -44,7 +44,13 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   event LogEarlyWithdraw(address indexed locker, uint256 value, uint256 timestamp);
   event LogSetBreaker(uint256 previousBreaker, uint256 breaker);
   event LogSupply(uint256 previousSupply, uint256 supply);
-  event LogSetEarlyWithdrawBps(uint64 oldFeeBps, uint64 newFeeBps);
+  event LogSetEarlyWithdrawConfig(
+    address indexed caller,
+    uint64 oldEarlyWithdrawFeeBps,
+    uint64 newEarlyWithdrawFeeBps,
+    uint64 oldRedistributeBps,
+    uint64 newRedistribiteBps
+  );
 
   struct Point {
     int128 bias; // Voting weight
@@ -98,6 +104,8 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
 
   /// @notice Early Withdrawal Fee
   uint64 public earlyWithdrawBps;
+  uint64 public redistributeBps;
+  uint256 public outstandingPenalty;
 
   /// @notice Initialize xALPACA
   /// @param _token The address of ALPACA token
@@ -631,6 +639,9 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     uint256 _penalty = breaker == 0 ? (earlyWithdrawBps * remainingWeeks * _amount) / 10000 : 0;
 
     // TODO: Accounting on Fee collected
+    // 1. split penalty into two parts
+    // 2. one for burn wallet
+    // 3. one to be feed to feeder later. or grasshouse.
 
     token.safeTransfer(msg.sender, _amount - _penalty);
 
@@ -658,13 +669,24 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     emit LogSupply(_supplyBefore, supply);
   }
 
-  function setEarlyWithdrawBps(uint64 _newEarlyWithdrawBps) external onlyOwner {
-    // Maximum bps = 1000
+  function setEarlyWithdrawConfig(uint64 _newEarlyWithdrawBps, uint64 _newRedistributeBps) external onlyOwner {
+    // Maximum early withdraw fee per week bps = 1000 (10%)
     require(_newEarlyWithdrawBps <= 1000, "fee too high");
+    // Maximum redistributeBps = 10000 (100%)
+    require(_newRedistributeBps <= 10000, "!valid bps");
 
-    uint64 _oldBps = earlyWithdrawBps;
+    uint64 _oldEarlyWithdrawBps = earlyWithdrawBps;
     earlyWithdrawBps = _newEarlyWithdrawBps;
 
-    emit LogSetEarlyWithdrawBps(_oldBps, earlyWithdrawBps);
+    uint64 _oldRedistributeBps = redistributeBps;
+    redistributeBps = _newRedistributeBps;
+
+    emit LogSetEarlyWithdrawConfig(
+      msg.sender,
+      _oldEarlyWithdrawBps,
+      _newEarlyWithdrawBps,
+      _oldRedistributeBps,
+      _newRedistributeBps
+    );
   }
 }

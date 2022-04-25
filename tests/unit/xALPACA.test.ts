@@ -588,7 +588,7 @@ describe("xALPACA", () => {
   describe("#earlyWithdraw", async () => {
     context("when lock not expired and fully withdraw", async () => {
       it("should works", async () => {
-        await xALPACA.setEarlyWithdrawBps(100);
+        await xALPACA.setEarlyWithdrawConfig(100, 0);
         const lockAmount = ethers.utils.parseEther("10");
         await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
 
@@ -617,7 +617,7 @@ describe("xALPACA", () => {
 
     context("when lock not expired but paritally early withdrawn", async () => {
       it("should have xALPACA left", async () => {
-        await xALPACA.setEarlyWithdrawBps(100);
+        await xALPACA.setEarlyWithdrawConfig(100, 0);
         const lockAmount = ethers.utils.parseEther("10");
         await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
 
