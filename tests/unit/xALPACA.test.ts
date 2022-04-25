@@ -3,7 +3,6 @@ import { Signer, BigNumber } from "ethers";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import {
-  AlpacaFeeder,
   BEP20,
   BEP20__factory,
   MockContractContext,
