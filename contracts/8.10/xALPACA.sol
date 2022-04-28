@@ -693,8 +693,8 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     address _newTreasuryAddr,
     address _newRedistributeAddr
   ) external onlyOwner {
-    // Maximum early withdraw fee per week bps = 1000 (10%)
-    require(_newEarlyWithdrawBps <= 1000, "fee too high");
+    // Maximum early withdraw fee per week bps = 100% / 52 week = 1.923%)
+    require(_newEarlyWithdrawBps <= 192, "fee too high");
     // Maximum redistributeBps = 10000 (100%)
     require(_newRedistributeBps <= 10000, "!valid bps");
 
