@@ -105,7 +105,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   string public symbol;
   uint8 public decimals;
 
-  /// @notice Early Withdrawal
+  // --- Early Withdrawal Configs ---
   uint64 public earlyWithdrawBps;
   uint64 public redistributeBps;
   uint256 public accumRedistribute;
