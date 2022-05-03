@@ -30,7 +30,7 @@ import "./SafeToken.sol";
 contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeable {
   using SafeToken for address;
 
-  /// @dev Events
+  // --- Events ---
   event LogDeposit(
     address indexed locker,
     uint256 value,
