@@ -106,7 +106,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   uint8 public decimals;
 
   // --- Early Withdrawal Configs ---
-  uint64 public earlyWithdrawBps;
+  uint64 public earlyWithdrawBpsPerWeek;
   uint64 public redistributeBps;
   uint256 public accumRedistribute;
   address public treasuryAddr;
@@ -632,6 +632,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     LockedBalance memory _lock = locks[msg.sender];
 
     require(block.timestamp < _lock.end, "!early");
+    require(breaker == 0, "breaker");
 
     // prevent mutated memory in _unlock() function as it will be used in fee calculation afterward
     uint256 _prevLockEnd = _lock.end;
@@ -640,8 +641,8 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     // ceil the week by adding 1 week first
     uint256 remainingWeeks = (_prevLockEnd + WEEK - block.timestamp) / WEEK;
 
-    // If breaker is on, should exempt all fee to behave in the same manner with withdraw()
-    uint256 _penalty = breaker == 0 ? (earlyWithdrawBps * remainingWeeks * _amount) / 10000 : 0;
+    // caculate penalty
+    uint256 _penalty =  (earlyWithdrawBpsPerWeek * remainingWeeks * _amount) / 10000 ;
 
     // split penalty into two parts
     uint256 _redistribute = (_penalty * redistributeBps) / 10000;
@@ -688,18 +689,18 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   }
 
   function setEarlyWithdrawConfig(
-    uint64 _newEarlyWithdrawBps,
+    uint64 _newEarlyWithdrawBpsPerWeek,
     uint64 _newRedistributeBps,
     address _newTreasuryAddr,
     address _newRedistributeAddr
   ) external onlyOwner {
     // Maximum early withdraw fee per week bps = 100% / 52 week = 1.923%)
-    require(_newEarlyWithdrawBps <= 192, "fee too high");
+    require(_newEarlyWithdrawBpsPerWeek <= 192, "fee too high");
     // Maximum redistributeBps = 10000 (100%)
     require(_newRedistributeBps <= 10000, "!valid bps");
 
-    uint64 _oldEarlyWithdrawBps = earlyWithdrawBps;
-    earlyWithdrawBps = _newEarlyWithdrawBps;
+    uint64 _oldEarlyWithdrawBpsPerWeek = earlyWithdrawBpsPerWeek;
+    earlyWithdrawBpsPerWeek = _newEarlyWithdrawBpsPerWeek;
 
     uint64 _oldRedistributeBps = redistributeBps;
     redistributeBps = _newRedistributeBps;
@@ -711,8 +712,8 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
 
     emit LogSetEarlyWithdrawConfig(
       msg.sender,
-      _oldEarlyWithdrawBps,
-      _newEarlyWithdrawBps,
+      _oldEarlyWithdrawBpsPerWeek,
+      _newEarlyWithdrawBpsPerWeek,
       _oldRedistributeBps,
       _newRedistributeBps,
       _oldTreasuryAddr,

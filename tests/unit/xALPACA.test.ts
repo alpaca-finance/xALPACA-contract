@@ -653,6 +653,27 @@ describe("xALPACA", () => {
         expect(alpacaDeployerAfter.sub(alpacaDeployerBefore)).to.be.eq(ethers.utils.parseEther("0.5"));
       });
     });
+
+    context("when breaker is on", async () => {
+      it("should revert", async () => {
+        // deployer as treasury, eve as redistributor
+        await xALPACA.setEarlyWithdrawConfig(100, 5000, deployerAddress, eveAddress);
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 1 week
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(20)));
+
+        // put the breaker on
+        await xALPACA.setBreaker(1);
+
+        // Alice early withdraw should revert
+        await expect(xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("5"))).to.be.revertedWith("breaker");
+      });
+    });
   });
 
   describe("#redistribute", async () => {
