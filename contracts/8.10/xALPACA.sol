@@ -67,40 +67,40 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     uint256 end;
   }
 
-  /// @dev Constants
+  // --- Constants ---
   uint256 public constant ACTION_DEPOSIT_FOR = 0;
   uint256 public constant ACTION_CREATE_LOCK = 1;
   uint256 public constant ACTION_INCREASE_LOCK_AMOUNT = 2;
   uint256 public constant ACTION_INCREASE_UNLOCK_TIME = 3;
 
   uint256 public constant WEEK = 7 days;
-  /// @dev MAX_LOCK 53 weeks - 1 seconds
+  // MAX_LOCK 53 weeks - 1 seconds
   uint256 public constant MAX_LOCK = (53 * WEEK) - 1;
   uint256 public constant MULTIPLIER = 10**18;
 
-  /// @dev Token to be locked (ALPACA)
+  // Token to be locked (ALPACA)
   address public token;
-  /// @dev Total supply of ALPACA that get locked
+  // Total supply of ALPACA that get locked
   uint256 public supply;
 
-  /// @dev Mapping (user => LockedBalance) to keep locking information for each user
+  // Mapping (user => LockedBalance) to keep locking information for each user
   mapping(address => LockedBalance) public locks;
 
-  /// @dev A global point of time.
+  // A global point of time.
   uint256 public epoch;
-  /// @dev An array of points (global).
+  // An array of points (global).
   Point[] public pointHistory;
-  /// @dev Mapping (user => Point) to keep track of user point of a given epoch (index of Point is epoch)
+  // Mapping (user => Point) to keep track of user point of a given epoch (index of Point is epoch)
   mapping(address => Point[]) public userPointHistory;
-  /// @dev Mapping (user => epoch) to keep track which epoch user at
+  // Mapping (user => epoch) to keep track which epoch user at
   mapping(address => uint256) public userPointEpoch;
-  /// @dev Mapping (round off timestamp to week => slopeDelta) to keep track slope changes over epoch
+  // Mapping (round off timestamp to week => slopeDelta) to keep track slope changes over epoch
   mapping(uint256 => int128) public slopeChanges;
 
-  /// @dev Circuit breaker
+  // Circuit breaker
   uint256 public breaker;
 
-  /// @notice BEP20 compatible variables
+  // --- BEP20 compatible variables ---
   string public name;
   string public symbol;
   uint8 public decimals;
