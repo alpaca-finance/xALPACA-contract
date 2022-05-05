@@ -596,7 +596,7 @@ describe("xALPACA", () => {
         // Set timestamp to the starting of next week
         await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
-        // Alice create lock with expire in 1 week
+        // Alice create lock with expire in 10 week
         await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(10)));
 
         const alpacaAliceBefore = await ALPACA.balanceOf(aliceAddress);
@@ -630,7 +630,7 @@ describe("xALPACA", () => {
         // Set timestamp to the starting of next week
         await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
-        // Alice create lock with expire in 1 week
+        // Alice create lock with expire in 20 week
         await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(20)));
 
         const alpacaAliceBefore = await ALPACA.balanceOf(aliceAddress);
@@ -688,7 +688,7 @@ describe("xALPACA", () => {
         // Set timestamp to the starting of next week
         await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
 
-        // Alice create lock with expire in 1 week
+        // Alice create lock with expire in 20 week
         await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(20)));
 
         const alpacaEveBefore = await ALPACA.balanceOf(eveAddress);
@@ -696,7 +696,7 @@ describe("xALPACA", () => {
         // Alice should get her locked alpaca back
         // penalty = 1% * 20(remaining week) * 5(amount to withdraw)
         // = 1
-        // expect to get 10 - 1 = 9 back
+        // expect to get 5 - 1 = 4 back
 
         // Deployer should get 50% of penalty
         // 1 * 50% = 0.5 alpaca
