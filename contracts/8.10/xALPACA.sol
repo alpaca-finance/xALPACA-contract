@@ -631,6 +631,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   function earlyWithdraw(uint256 _amount) external nonReentrant {
     LockedBalance memory _lock = locks[msg.sender];
 
+    require(_amount> 0, "!>0");
     require(block.timestamp < _lock.end, "!early");
     require(breaker == 0, "breaker");
 

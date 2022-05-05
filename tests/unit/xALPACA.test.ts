@@ -674,6 +674,43 @@ describe("xALPACA", () => {
         await expect(xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("5"))).to.be.revertedWith("breaker");
       });
     });
+
+    context("when withdraw amount = 0", async () => {
+      it("should revert", async () => {
+        // deployer as treasury, eve as redistributor
+        await xALPACA.setEarlyWithdrawConfig(100, 5000, deployerAddress, eveAddress);
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 1 week
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(20)));
+
+        // Alice early withdraw should revert since amount = 0
+        await expect(xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("0"))).to.be.revertedWith("!>0");
+      });
+    });
+
+
+    context("when alice try to withdraw more than locked", async () => {
+      it("should revert", async () => {
+        // deployer as treasury, eve as redistributor
+        await xALPACA.setEarlyWithdrawConfig(100, 5000, deployerAddress, eveAddress);
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 1 week
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(20)));
+
+        // Alice early withdraw should revert since amount = 0
+        await expect(xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("11"))).to.be.revertedWith("!enough");
+      });
+    });
   });
 
   describe("#redistribute", async () => {
