@@ -185,6 +185,11 @@
       "name": "BSW",
       "address": "0x99494EbC70930c2924117C84de55f0924F7309da",
       "rewardToken": "0x965F527D9159dCe6288a2219DB51fc6Eef120dD1"
+    },
+    {
+      "name": "TINC",
+      "address": "0x35d76C2bAcFbfd5E4769Bbd5d4334848ee35085b",
+      "rewardToken": "0x05aD6E30A855BE07AfA57e08a4f30d00810a402e"
     }
   ],
   "GrassHouseGateway": "0x50309398E3AbCBD3357b0DD54A624C1251026ee5"
