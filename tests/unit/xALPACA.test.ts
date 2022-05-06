@@ -560,7 +560,6 @@ describe("xALPACA", () => {
         await expect(xALPACAasAlice.withdraw()).to.be.revertedWith("!lock expired");
       });
     });
-
     context("when lock is expired", async () => {
       it("should work", async () => {
         const lockAmount = ethers.utils.parseEther("10");
@@ -581,6 +580,185 @@ describe("xALPACA", () => {
         const aliceAlpaceAfter = await ALPACA.balanceOf(aliceAddress);
 
         expect(aliceAlpaceAfter.sub(aliceAlpacaBefore)).to.be.eq(lockAmount);
+      });
+    });
+  });
+
+  describe("#earlyWithdraw", async () => {
+    context("when lock not expired and fully withdraw", async () => {
+      it("should works", async () => {
+        // deployer as treasury, eve as redistributor
+        // 1% per remaining week penalty, 50% goes to treasury
+        await xALPACA.setEarlyWithdrawConfig(100, 5000, deployerAddress, eveAddress);
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 10 week
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(10)));
+
+        const alpacaAliceBefore = await ALPACA.balanceOf(aliceAddress);
+        const alpacaDeployerBefore = await ALPACA.balanceOf(deployerAddress);
+
+        // Alice early withdraw
+        await xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("10"));
+
+        const alpacaAliceAfter = await ALPACA.balanceOf(aliceAddress);
+        const alpacaDeployerAfter = await ALPACA.balanceOf(deployerAddress);
+
+        // Alice should get her locked alpaca back
+        // penalty = 1% * 10(remaining week) * 10(amount to withdraw)
+        // = 1
+        // expect to get 10 - 1 = 9 back
+        expect(alpacaAliceAfter.sub(alpacaAliceBefore)).to.be.eq(ethers.utils.parseEther("9"));
+
+        // Deployer should get 50% of penalty
+        // 1 * 50% = 0.5 alpaca
+        expect(alpacaDeployerAfter.sub(alpacaDeployerBefore)).to.be.eq(ethers.utils.parseEther("0.5"));
+      });
+    });
+
+    context("when lock not expired but paritally early withdrawn", async () => {
+      it("should have xALPACA left", async () => {
+        // deployer as treasury, eve as redistributor
+        await xALPACA.setEarlyWithdrawConfig(100, 5000, deployerAddress, eveAddress);
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 20 week
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(20)));
+
+        const alpacaAliceBefore = await ALPACA.balanceOf(aliceAddress);
+        const alpacaDeployerBefore = await ALPACA.balanceOf(deployerAddress);
+
+        // Alice early withdraw
+        await xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("5"));
+
+        const alpacaAliceAfter = await ALPACA.balanceOf(aliceAddress);
+        const alpacaDeployerAfter = await ALPACA.balanceOf(deployerAddress);
+
+        // Alice should get her locked alpaca back
+        // penalty = 1% * 20(remaining week) * 5(amount to withdraw)
+        // = 1
+        // expect to get 5 - 1 = 4 back
+        expect(alpacaAliceAfter.sub(alpacaAliceBefore)).to.be.eq(ethers.utils.parseEther("4"));
+
+        // Deployer should get 50% of penalty
+        // 1 * 50% = 0.5 alpaca
+        expect(alpacaDeployerAfter.sub(alpacaDeployerBefore)).to.be.eq(ethers.utils.parseEther("0.5"));
+      });
+    });
+
+    context("when breaker is on", async () => {
+      it("should revert", async () => {
+        // deployer as treasury, eve as redistributor
+        await xALPACA.setEarlyWithdrawConfig(100, 5000, deployerAddress, eveAddress);
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 1 week
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(20)));
+
+        // put the breaker on
+        await xALPACA.setBreaker(1);
+
+        // Alice early withdraw should revert
+        await expect(xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("5"))).to.be.revertedWith("breaker");
+      });
+    });
+
+    context("when withdraw amount = 0", async () => {
+      it("should revert", async () => {
+        // deployer as treasury, eve as redistributor
+        await xALPACA.setEarlyWithdrawConfig(100, 5000, deployerAddress, eveAddress);
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 1 week
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(20)));
+
+        // Alice early withdraw should revert since amount = 0
+        await expect(xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("0"))).to.be.revertedWith("!>0");
+      });
+    });
+
+
+    context("when alice try to withdraw more than locked", async () => {
+      it("should revert", async () => {
+        // deployer as treasury, eve as redistributor
+        await xALPACA.setEarlyWithdrawConfig(100, 5000, deployerAddress, eveAddress);
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 1 week
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(20)));
+
+        // Alice early withdraw should revert since amount = 0
+        await expect(xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("11"))).to.be.revertedWith("!enough");
+      });
+    });
+  });
+
+  describe("#redistribute", async () => {
+    context("when there's outstanding redistribute", async () => {
+      it("should work", async () => {
+        // deployer as treasury, eve as redistributor
+        // 1% per remaining week penalty, 50% goes to treasury
+        await xALPACA.setEarlyWithdrawConfig(100, 5000, deployerAddress, eveAddress);
+        const lockAmount = ethers.utils.parseEther("10");
+        await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
+
+        // Set timestamp to the starting of next week
+        await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
+
+        // Alice create lock with expire in 20 week
+        await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(20)));
+
+        const alpacaEveBefore = await ALPACA.balanceOf(eveAddress);
+
+        // Alice should get her locked alpaca back
+        // penalty = 1% * 20(remaining week) * 5(amount to withdraw)
+        // = 1
+        // expect to get 5 - 1 = 4 back
+
+        // Deployer should get 50% of penalty
+        // 1 * 50% = 0.5 alpaca
+
+        // Eve should get the rest for redistribution
+        // penalty - treasury = 1 - 0.5 = 0.5
+
+        // Alice early withdraw
+        await xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("5"));
+        expect(await xALPACA.accumRedistribute()).to.be.eq(ethers.utils.parseEther("0.5"))
+
+        // Alice earlywithdraw again. This should add more to accum redistribute
+        await xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("5"));
+
+        // Now eve should be eligible for 
+        // 0.5 + 0.5 = 1 alpaca
+        let alpacaEveAfter = await ALPACA.balanceOf(eveAddress);
+        expect(alpacaEveAfter.sub(alpacaEveBefore)).to.be.eq(ethers.utils.parseEther("0"));
+        expect(await xALPACA.accumRedistribute()).to.be.eq(ethers.utils.parseEther("1"))
+
+        await xALPACA.redistribute();
+
+        alpacaEveAfter = await ALPACA.balanceOf(eveAddress);
+        expect(alpacaEveAfter.sub(alpacaEveBefore)).to.be.eq(ethers.utils.parseEther("1"));
+        expect(await xALPACA.accumRedistribute()).to.be.eq(ethers.utils.parseEther("0"))
       });
     });
   });

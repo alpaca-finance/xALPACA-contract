@@ -30,7 +30,7 @@ import "./SafeToken.sol";
 contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeable {
   using SafeToken for address;
 
-  /// @dev Events
+  // --- Events ---
   event LogDeposit(
     address indexed locker,
     uint256 value,
@@ -39,8 +39,21 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     uint256 timestamp
   );
   event LogWithdraw(address indexed locker, uint256 value, uint256 timestamp);
+  event LogEarlyWithdraw(address indexed locker, uint256 value, uint256 timestamp);
   event LogSetBreaker(uint256 previousBreaker, uint256 breaker);
   event LogSupply(uint256 previousSupply, uint256 supply);
+  event LogSetEarlyWithdrawConfig(
+    address indexed caller,
+    uint64 oldEarlyWithdrawFeeBps,
+    uint64 newEarlyWithdrawFeeBps,
+    uint64 oldRedistributeBps,
+    uint64 newRedistribiteBps,
+    address oldTreasuryAddr,
+    address newTreasuryAddr,
+    address oldRedistributeAddr,
+    address newRedistributeAddr
+  );
+  event LogRedistribute(address indexed caller, address destination, uint256 amount);
 
   struct Point {
     int128 bias; // Voting weight
@@ -54,43 +67,50 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     uint256 end;
   }
 
-  /// @dev Constants
+  // --- Constants ---
   uint256 public constant ACTION_DEPOSIT_FOR = 0;
   uint256 public constant ACTION_CREATE_LOCK = 1;
   uint256 public constant ACTION_INCREASE_LOCK_AMOUNT = 2;
   uint256 public constant ACTION_INCREASE_UNLOCK_TIME = 3;
 
   uint256 public constant WEEK = 7 days;
-  /// @dev MAX_LOCK 53 weeks - 1 seconds
+  // MAX_LOCK 53 weeks - 1 seconds
   uint256 public constant MAX_LOCK = (53 * WEEK) - 1;
   uint256 public constant MULTIPLIER = 10**18;
 
-  /// @dev Token to be locked (ALPACA)
+  // Token to be locked (ALPACA)
   address public token;
-  /// @dev Total supply of ALPACA that get locked
+  // Total supply of ALPACA that get locked
   uint256 public supply;
 
-  /// @dev Mapping (user => LockedBalance) to keep locking information for each user
+  // Mapping (user => LockedBalance) to keep locking information for each user
   mapping(address => LockedBalance) public locks;
 
-  /// @dev A global point of time.
+  // A global point of time.
   uint256 public epoch;
-  /// @dev An array of points (global).
+  // An array of points (global).
   Point[] public pointHistory;
-  /// @dev Mapping (user => Point) to keep track of user point of a given epoch (index of Point is epoch)
+  // Mapping (user => Point) to keep track of user point of a given epoch (index of Point is epoch)
   mapping(address => Point[]) public userPointHistory;
-  /// @dev Mapping (user => epoch) to keep track which epoch user at
+  // Mapping (user => epoch) to keep track which epoch user at
   mapping(address => uint256) public userPointEpoch;
-  /// @dev Mapping (round off timestamp to week => slopeDelta) to keep track slope changes over epoch
+  // Mapping (round off timestamp to week => slopeDelta) to keep track slope changes over epoch
   mapping(uint256 => int128) public slopeChanges;
 
-  /// @dev Circuit breaker
+  // Circuit breaker
   uint256 public breaker;
 
-  /// @notice BEP20 compatible variables
+  // --- BEP20 compatible variables ---
   string public name;
   string public symbol;
   uint8 public decimals;
+
+  // --- Early Withdrawal Configs ---
+  uint64 public earlyWithdrawBpsPerWeek;
+  uint64 public redistributeBps;
+  uint256 public accumRedistribute;
+  address public treasuryAddr;
+  address public redistributeAddr;
 
   /// @notice Initialize xALPACA
   /// @param _token The address of ALPACA token
@@ -600,21 +620,107 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
 
     uint256 _amount = SafeCastUpgradeable.toUint256(_lock.amount);
 
+    _unlock(_lock, _amount);
+
+    token.safeTransfer(msg.sender, _amount);
+
+    emit LogWithdraw(msg.sender, _amount, block.timestamp);
+  }
+
+  /// @notice Withdraw all ALPACA when lock has expired.
+  function earlyWithdraw(uint256 _amount) external nonReentrant {
+    LockedBalance memory _lock = locks[msg.sender];
+
+    require(_amount> 0, "!>0");
+    require(block.timestamp < _lock.end, "!early");
+    require(breaker == 0, "breaker");
+
+    // prevent mutated memory in _unlock() function as it will be used in fee calculation afterward
+    uint256 _prevLockEnd = _lock.end;
+    _unlock(_lock, _amount);
+
+    // ceil the week by adding 1 week first
+    uint256 remainingWeeks = (_prevLockEnd + WEEK - block.timestamp) / WEEK;
+
+    // caculate penalty
+    uint256 _penalty =  (earlyWithdrawBpsPerWeek * remainingWeeks * _amount) / 10000 ;
+
+    // split penalty into two parts
+    uint256 _redistribute = (_penalty * redistributeBps) / 10000;
+    // accumulate alpaca for redistribution
+    accumRedistribute = accumRedistribute + _redistribute;
+
+    // transfer one part of the penalty to treasury
+    token.safeTransfer(treasuryAddr, _penalty - _redistribute);
+    // transfer remaining back to owner
+    token.safeTransfer(msg.sender, _amount - _penalty);
+
+    emit LogEarlyWithdraw(msg.sender, _amount, block.timestamp);
+  }
+
+  function redistribute() external nonReentrant {
+    uint256 _amount = accumRedistribute;
+
+    accumRedistribute = 0;
+
+    token.safeTransfer(redistributeAddr, _amount);
+
+    emit LogRedistribute(msg.sender, redistributeAddr, _amount);
+  }
+
+  function _unlock(LockedBalance memory _lock, uint256 _withdrawAmount) internal {
+    // Cast here for readability
+    uint256 _lockedAmount = SafeCastUpgradeable.toUint256(_lock.amount);
+    require(_withdrawAmount <= _lockedAmount, "!enough");
+
     LockedBalance memory _prevLock = LockedBalance({ end: _lock.end, amount: _lock.amount });
-    _lock.end = 0;
-    _lock.amount = 0;
+    //_lock.end should remain the same if we do partially withdraw
+    _lock.end = _lockedAmount == _withdrawAmount ? 0 : _lock.end;
+    _lock.amount = SafeCastUpgradeable.toInt128(int256(_lockedAmount - _withdrawAmount));
     locks[msg.sender] = _lock;
+
     uint256 _supplyBefore = supply;
-    supply = _supplyBefore - _amount;
+    supply = _supplyBefore - _withdrawAmount;
 
     // _prevLock can have either block.timstamp >= _lock.end or zero end
     // _lock has only 0 end
     // Both can have >= 0 amount
     _checkpoint(msg.sender, _prevLock, _lock);
-
-    token.safeTransfer(msg.sender, _amount);
-
-    emit LogWithdraw(msg.sender, _amount, block.timestamp);
     emit LogSupply(_supplyBefore, supply);
+  }
+
+  function setEarlyWithdrawConfig(
+    uint64 _newEarlyWithdrawBpsPerWeek,
+    uint64 _newRedistributeBps,
+    address _newTreasuryAddr,
+    address _newRedistributeAddr
+  ) external onlyOwner {
+    // Maximum early withdraw fee per week bps = 100% / 52 week = 1.923%)
+    require(_newEarlyWithdrawBpsPerWeek <= 192, "fee too high");
+    // Maximum redistributeBps = 10000 (100%)
+    require(_newRedistributeBps <= 10000, "!valid bps");
+
+    uint64 _oldEarlyWithdrawBpsPerWeek = earlyWithdrawBpsPerWeek;
+    earlyWithdrawBpsPerWeek = _newEarlyWithdrawBpsPerWeek;
+
+    uint64 _oldRedistributeBps = redistributeBps;
+    redistributeBps = _newRedistributeBps;
+
+    address _oldTreasuryAddr = treasuryAddr;
+    treasuryAddr = _newTreasuryAddr;
+    address _oldRedistributeAddr = redistributeAddr;
+    redistributeAddr = _newRedistributeAddr;
+
+    emit LogSetEarlyWithdrawConfig(
+      msg.sender,
+      _oldEarlyWithdrawBpsPerWeek,
+      _newEarlyWithdrawBpsPerWeek,
+      _oldRedistributeBps,
+      _newRedistributeBps,
+      _oldTreasuryAddr,
+      _newTreasuryAddr,
+      _oldRedistributeAddr,
+      _newRedistributeAddr
+    );
   }
 }
