@@ -2,7 +2,6 @@
   "name": "@alpaca-finance/xalpaca-contract",
   "version": "0.0.6",
   "scripts": {
-    "prepublish": "yarn build",
     "build": "yarn run build:cjs",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "compile": "hardhat typechain --config hardhat.config.ts && yarn build",
