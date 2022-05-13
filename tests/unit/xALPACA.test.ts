@@ -181,7 +181,7 @@ describe("xALPACA", () => {
     });
 
     context("when invalid contract call", async () => {
-      it("should be able to createLock", async () => {
+      it("should revert", async () => {
         await expect(
           contractContext.executeTransaction(
             xALPACA.address,
@@ -194,7 +194,7 @@ describe("xALPACA", () => {
     });
 
     context("when whitelisted contract call", async () => {
-      it("should work", async () => {
+      it("should be able to create lock", async () => {
         const amount = ethers.utils.parseEther("10")
         await whitelistedContract.executeTransaction(
           ALPACA.address,
@@ -594,7 +594,6 @@ describe("xALPACA", () => {
           const [lockedAmountAfterExtend,unlockTimeAfterExtend] = await xALPACA["locks(address)"](whitelistedContract.address)
           expect(amount.add(amount)).to.be.eq(lockedAmountAfterExtend)
           expect(unlockTime).to.be.eq(unlockTimeAfterExtend)
-          
       });
     });
     
