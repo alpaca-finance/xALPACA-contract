@@ -989,24 +989,6 @@ describe("xALPACA", () => {
     });
   });
 
-  describe("#setWhitelistedCallers", async () => {
-    context("when caller is owner", async () => {
-      it("should be able to setWhitelist", async () => {
-        await expect(xALPACA.setWhitelistedCallers([eveAddress], true))
-          .to.be.emit(xALPACA, "LogSetWhitelistedCaller")
-          .withArgs(deployerAddress, eveAddress, true);
-      });
-    });
-
-    context("when caller is not owner", async () => {
-      it("should reverted setWhitelistedCallers", async () => {
-        await expect(xALPACAasBob.setWhitelistedCallers([eveAddress], true)).to.be.revertedWith(
-          "Ownable: caller is not the owner"
-        );
-      });
-    });
-  });
-
   describe("#setWhitelistedRedistributors", async () => {
     context("when caller is owner", async () => {
       it("should be able to setWhitelist", async () => {
