@@ -99,7 +99,6 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   // Mapping (round off timestamp to week => slopeDelta) to keep track slope changes over epoch
   mapping(uint256 => int128) public slopeChanges;
 
-
   // Circuit breaker
   uint256 public breaker;
 
