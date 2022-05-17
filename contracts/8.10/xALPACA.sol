@@ -57,9 +57,6 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   event LogSetWhitelistedCaller(address indexed caller, address indexed addr, bool ok);
   event LogSetWhitelistedRedistributors(address indexed caller, address indexed addr, bool ok);
 
-  /// @dev Errors
-  error XALPACA_Unauthorized(address _caller);
-
   struct Point {
     int128 bias; // Voting weight
     int128 slope; // Multiplier factor to get voting weight at a given time
@@ -123,9 +120,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
 
   /// @dev Require that the caller must be an EOA account if not whitelisted.
   modifier onlyRedistributors() {
-    if (!whitelistedRedistributors[msg.sender]) {
-      revert XALPACA_Unauthorized(msg.sender);
-    }
+    require(whitelistedRedistributors[msg.sender],"not redistributors");
     _;
   }
 
