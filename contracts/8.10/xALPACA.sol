@@ -55,6 +55,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   );
   event LogRedistribute(address indexed caller, address destination, uint256 amount);
   event LogSetWhitelistedCaller(address indexed caller, address indexed addr, bool ok);
+  event LogSetWhitelistedRedistributors(address indexed caller, address indexed addr, bool ok);
 
   struct Point {
     int128 bias; // Voting weight
@@ -97,8 +98,6 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   mapping(address => uint256) public userPointEpoch;
   // Mapping (round off timestamp to week => slopeDelta) to keep track slope changes over epoch
   mapping(uint256 => int128) public slopeChanges;
-  // list of whitelisted callers
-  mapping(address => bool) public whitelistedCallers;
 
   // Circuit breaker
   uint256 public breaker;
@@ -108,12 +107,28 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   string public symbol;
   uint8 public decimals;
 
-  // --- Early Withdrawal Configs ---
+  // --- Early Withdrawal Configs --- 
   uint64 public earlyWithdrawBpsPerWeek;
   uint64 public redistributeBps;
   uint256 public accumRedistribute;
   address public treasuryAddr;
   address public redistributeAddr;
+
+  // --- whitelist address  ---
+  mapping(address => bool) public whitelistedCallers;
+  mapping(address => bool) public whitelistedRedistributors;
+
+  modifier onlyRedistributors() {
+    require(whitelistedRedistributors[msg.sender],"not redistributors");
+    _;
+  }
+
+  modifier onlyEOAorWhitelisted() {
+    if (!whitelistedCallers[msg.sender]) {
+      require(msg.sender == tx.origin, "not eoa");
+    }
+    _;
+  }
 
   /// @notice Initialize xALPACA
   /// @param _token The address of ALPACA token
@@ -132,12 +147,6 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     symbol = "xALPACA";
   }
 
-   modifier onlyEOAorWhitelisted() {
-    if (!whitelistedCallers[msg.sender]) {
-      require(msg.sender == tx.origin, "not eoa");
-    }
-    _;
-  }
 
   /// @notice Return the balance of xALPACA at a given "_blockNumber"
   /// @param _user The address to get a balance of xALPACA
@@ -663,7 +672,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     emit LogEarlyWithdraw(msg.sender, _amount, block.timestamp);
   }
 
-  function redistribute() external nonReentrant {
+  function redistribute() external onlyRedistributors nonReentrant {
     uint256 _amount = accumRedistribute;
 
     accumRedistribute = 0;
@@ -735,4 +744,12 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
       emit LogSetWhitelistedCaller(_msgSender(), callers[idx], ok);
     }
   }
+
+  function setWhitelistedRedistributors(address[] calldata callers, bool ok) external onlyOwner {
+    for (uint256 idx = 0; idx < callers.length; idx++) {
+      whitelistedRedistributors[callers[idx]] = ok;
+      emit LogSetWhitelistedRedistributors(_msgSender(), callers[idx], ok);
+    }
+  }
+
 }
