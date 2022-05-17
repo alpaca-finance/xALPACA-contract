@@ -106,8 +106,6 @@ describe("xALPACA", () => {
     xALPACAasAlice = XALPACA__factory.connect(xALPACA.address, alice);
     xALPACAasBob = XALPACA__factory.connect(xALPACA.address, bob);
     xALPACAasEve = XALPACA__factory.connect(xALPACA.address, eve);
-
-    
   }
 
   beforeEach(async () => {
@@ -741,7 +739,6 @@ describe("xALPACA", () => {
       it("should have xALPACA left", async () => {
         // deployer as treasury, eve as redistributor
         await xALPACA.setEarlyWithdrawConfig(100, 5000, deployerAddress, eveAddress);
-
         const lockAmount = ethers.utils.parseEther("10");
         await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
 
