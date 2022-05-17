@@ -29,7 +29,7 @@ describe("xALPACA", () => {
   let xALPACA: XALPACA;
 
   let contractContext: MockContractContext;
-  let whitelistedContract: MockContractContext
+  let whitelistedContract: MockContractContext;
 
   // Accounts
   let deployer: Signer;
@@ -46,12 +46,10 @@ describe("xALPACA", () => {
   let ALPACAasAlice: BEP20;
   let ALPACAasBob: BEP20;
   let ALPACAasEve: BEP20;
-  
 
   let xALPACAasAlice: XALPACA;
   let xALPACAasBob: XALPACA;
   let xALPACAasEve: XALPACA;
-
 
   async function fixture() {
     [deployer, alice, bob, eve] = await ethers.getSigners();
@@ -72,7 +70,6 @@ describe("xALPACA", () => {
 
     whitelistedContract = await MockContractContext.deploy();
     await whitelistedContract.deployed();
-
 
     // Deploy ALPACA
     const BEP20 = (await ethers.getContractFactory("BEP20", deployer)) as BEP20__factory;
@@ -96,7 +93,7 @@ describe("xALPACA", () => {
       ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [xALPACA.address, ethers.constants.MaxUint256])
     );
 
-    await xALPACA.setWhitelistedCallers([whitelistedContract.address],true)
+    await xALPACA.setWhitelistedCallers([whitelistedContract.address], true);
 
     // Assign contract signer
     ALPACAasAlice = BEP20__factory.connect(ALPACA.address, alice);
@@ -195,7 +192,7 @@ describe("xALPACA", () => {
 
     context("when whitelisted contract call", async () => {
       it("should be able to create lock", async () => {
-        const amount = ethers.utils.parseEther("10")
+        const amount = ethers.utils.parseEther("10");
         await whitelistedContract.executeTransaction(
           ALPACA.address,
           "0",
@@ -203,20 +200,19 @@ describe("xALPACA", () => {
           ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [xALPACA.address, ethers.utils.parseEther("10")])
         );
 
-        const lock = (await timeHelpers.latestTimestamp()).add(WEEK.mul(10))
+        const lock = (await timeHelpers.latestTimestamp()).add(WEEK.mul(10));
 
-        await 
-          whitelistedContract.executeTransaction(
-            xALPACA.address,
-            "0",
-            "createLock(uint256,uint256)",
-            ethers.utils.defaultAbiCoder.encode(["uint256", "uint256"], [amount, lock])
-          )
+        await whitelistedContract.executeTransaction(
+          xALPACA.address,
+          "0",
+          "createLock(uint256,uint256)",
+          ethers.utils.defaultAbiCoder.encode(["uint256", "uint256"], [amount, lock])
+        );
 
-         const [lockedAmount,unlockTime] = await xALPACA["locks(address)"](whitelistedContract.address)
+        const [lockedAmount, unlockTime] = await xALPACA["locks(address)"](whitelistedContract.address);
 
-          expect(lockedAmount).to.be.eq(amount)
-          expect(lock).gte(unlockTime)
+        expect(lockedAmount).to.be.eq(amount);
+        expect(lock).gte(unlockTime);
       });
     });
 
@@ -428,7 +424,7 @@ describe("xALPACA", () => {
 
     context("whitelistedcontract call", async () => {
       it("should be able to increaseUnlockTime", async () => {
-        const amount = ethers.utils.parseEther("10")
+        const amount = ethers.utils.parseEther("10");
         await whitelistedContract.executeTransaction(
           ALPACA.address,
           "0",
@@ -436,33 +432,33 @@ describe("xALPACA", () => {
           ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [xALPACA.address, ethers.utils.parseEther("10")])
         );
 
-        const lock = (await timeHelpers.latestTimestamp()).add(WEEK.mul(10))
+        const lock = (await timeHelpers.latestTimestamp()).add(WEEK.mul(10));
 
-        await 
-          whitelistedContract.executeTransaction(
-            xALPACA.address,
-            "0",
-            "createLock(uint256,uint256)",
-            ethers.utils.defaultAbiCoder.encode(["uint256", "uint256"], [amount, lock])
-          )
+        await whitelistedContract.executeTransaction(
+          xALPACA.address,
+          "0",
+          "createLock(uint256,uint256)",
+          ethers.utils.defaultAbiCoder.encode(["uint256", "uint256"], [amount, lock])
+        );
 
-         const [lockedAmount,unlockTime] = await xALPACA["locks(address)"](whitelistedContract.address)
-          expect(lockedAmount).to.be.eq(amount)
-          expect(lock).gte(unlockTime)
+        const [lockedAmount, unlockTime] = await xALPACA["locks(address)"](whitelistedContract.address);
+        expect(lockedAmount).to.be.eq(amount);
+        expect(lock).gte(unlockTime);
 
-          // lock more another week
-        const extendUnlockTime = unlockTime.add(WEEK)
-        await 
-          whitelistedContract.executeTransaction(
-            xALPACA.address,
-            "0",
-            "increaseUnlockTime(uint256)",
-            ethers.utils.defaultAbiCoder.encode(["uint256"], [extendUnlockTime])
-          )
-          const [lockedAmountAfterExtend,unlockTimeAfterExtend] = await xALPACA["locks(address)"](whitelistedContract.address)
+        // lock more another week
+        const extendUnlockTime = unlockTime.add(WEEK);
+        await whitelistedContract.executeTransaction(
+          xALPACA.address,
+          "0",
+          "increaseUnlockTime(uint256)",
+          ethers.utils.defaultAbiCoder.encode(["uint256"], [extendUnlockTime])
+        );
+        const [lockedAmountAfterExtend, unlockTimeAfterExtend] = await xALPACA["locks(address)"](
+          whitelistedContract.address
+        );
 
-          expect(amount).to.be.eq(lockedAmountAfterExtend)
-          expect(extendUnlockTime).to.be.eq(unlockTimeAfterExtend)      
+        expect(amount).to.be.eq(lockedAmountAfterExtend);
+        expect(extendUnlockTime).to.be.eq(unlockTimeAfterExtend);
       });
     });
 
@@ -561,7 +557,7 @@ describe("xALPACA", () => {
 
     context("when whitelisted contract call", async () => {
       it("should be able increaseLockAmount", async () => {
-        const amount = ethers.utils.parseEther("10")
+        const amount = ethers.utils.parseEther("10");
         await whitelistedContract.executeTransaction(
           ALPACA.address,
           "0",
@@ -569,34 +565,34 @@ describe("xALPACA", () => {
           ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [xALPACA.address, ethers.utils.parseEther("20")])
         );
 
-        const lock = (await timeHelpers.latestTimestamp()).add(WEEK.mul(10))
+        const lock = (await timeHelpers.latestTimestamp()).add(WEEK.mul(10));
 
-        await 
-          whitelistedContract.executeTransaction(
-            xALPACA.address,
-            "0",
-            "createLock(uint256,uint256)",
-            ethers.utils.defaultAbiCoder.encode(["uint256", "uint256"], [amount, lock])
-          )
+        await whitelistedContract.executeTransaction(
+          xALPACA.address,
+          "0",
+          "createLock(uint256,uint256)",
+          ethers.utils.defaultAbiCoder.encode(["uint256", "uint256"], [amount, lock])
+        );
 
-         const [lockedAmount,unlockTime] = await xALPACA["locks(address)"](whitelistedContract.address)
-          expect(lockedAmount).to.be.eq(amount)
-          expect(lock).gte(unlockTime)
+        const [lockedAmount, unlockTime] = await xALPACA["locks(address)"](whitelistedContract.address);
+        expect(lockedAmount).to.be.eq(amount);
+        expect(lock).gte(unlockTime);
 
-        await 
-        whitelistedContract.executeTransaction(
-            xALPACA.address,
-            "0",
-            "increaseLockAmount(uint256)",
-            ethers.utils.defaultAbiCoder.encode(["uint256"], [amount])
-          )
-       
-          const [lockedAmountAfterExtend,unlockTimeAfterExtend] = await xALPACA["locks(address)"](whitelistedContract.address)
-          expect(amount.add(amount)).to.be.eq(lockedAmountAfterExtend)
-          expect(unlockTime).to.be.eq(unlockTimeAfterExtend)
+        await whitelistedContract.executeTransaction(
+          xALPACA.address,
+          "0",
+          "increaseLockAmount(uint256)",
+          ethers.utils.defaultAbiCoder.encode(["uint256"], [amount])
+        );
+
+        const [lockedAmountAfterExtend, unlockTimeAfterExtend] = await xALPACA["locks(address)"](
+          whitelistedContract.address
+        );
+        expect(amount.add(amount)).to.be.eq(lockedAmountAfterExtend);
+        expect(unlockTime).to.be.eq(unlockTimeAfterExtend);
       });
     });
-    
+
     context("when invalid contract call", async () => {
       it("should revert", async () => {
         await expect(
@@ -808,7 +804,6 @@ describe("xALPACA", () => {
       });
     });
 
-
     context("when alice try to withdraw more than locked", async () => {
       it("should revert", async () => {
         // deployer as treasury, eve as redistributor
@@ -829,101 +824,100 @@ describe("xALPACA", () => {
   });
 
   describe("#redistribute", async () => {
-    describe("when there's outstanding redistribute",async ()=> {
-
+    describe("when there's outstanding redistribute", async () => {
       context("when redistributors call", async () => {
         it("should work", async () => {
           // deployer as treasury, eve as redistributor
           // 1% per remaining week penalty, 50% goes to treasury
           await xALPACA.setEarlyWithdrawConfig(100, 5000, deployerAddress, eveAddress);
-          await xALPACA.setWhitelistedRedistributors([aliceAddress],true);
+          await xALPACA.setWhitelistedRedistributors([aliceAddress], true);
           const lockAmount = ethers.utils.parseEther("10");
           await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
-  
+
           // Set timestamp to the starting of next week
           await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
-  
+
           // Alice create lock with expire in 20 week
           await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(20)));
-  
+
           const alpacaEveBefore = await ALPACA.balanceOf(eveAddress);
-  
+
           // Alice should get her locked alpaca back
           // penalty = 1% * 20(remaining week) * 5(amount to withdraw)
           // = 1
           // expect to get 5 - 1 = 4 back
-  
+
           // Deployer should get 50% of penalty
           // 1 * 50% = 0.5 alpaca
-  
+
           // Eve should get the rest for redistribution
           // penalty - treasury = 1 - 0.5 = 0.5
-  
+
           // Alice early withdraw
           await xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("5"));
-          expect(await xALPACA.accumRedistribute()).to.be.eq(ethers.utils.parseEther("0.5"))
-  
+          expect(await xALPACA.accumRedistribute()).to.be.eq(ethers.utils.parseEther("0.5"));
+
           // Alice earlywithdraw again. This should add more to accum redistribute
           await xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("5"));
-  
-          // Now eve should be eligible for 
+
+          // Now eve should be eligible for
           // 0.5 + 0.5 = 1 alpaca
           let alpacaEveAfter = await ALPACA.balanceOf(eveAddress);
           expect(alpacaEveAfter.sub(alpacaEveBefore)).to.be.eq(ethers.utils.parseEther("0"));
-          expect(await xALPACA.accumRedistribute()).to.be.eq(ethers.utils.parseEther("1"))
-  
-        //  const a = await xALPACA.redistribute();
+          expect(await xALPACA.accumRedistribute()).to.be.eq(ethers.utils.parseEther("1"));
+
+          //  const a = await xALPACA.redistribute();
           await xALPACAasAlice.redistribute();
-  
+
           alpacaEveAfter = await ALPACA.balanceOf(eveAddress);
           expect(alpacaEveAfter.sub(alpacaEveBefore)).to.be.eq(ethers.utils.parseEther("1"));
-          expect(await xALPACA.accumRedistribute()).to.be.eq(ethers.utils.parseEther("0"))
+          expect(await xALPACA.accumRedistribute()).to.be.eq(ethers.utils.parseEther("0"));
         });
       });
 
-      context("when not redistributors call",async () => {
-        it("should revert", async() => {
+      context("when not redistributors call", async () => {
+        it("should revert", async () => {
           // deployer as treasury, eve as redistributor
           // 1% per remaining week penalty, 50% goes to treasury
           await xALPACA.setEarlyWithdrawConfig(100, 5000, deployerAddress, eveAddress);
           const lockAmount = ethers.utils.parseEther("10");
           await ALPACAasAlice.approve(xALPACA.address, ethers.constants.MaxUint256);
-  
+
           // Set timestamp to the starting of next week
           await timeHelpers.setTimestamp((await timeHelpers.latestTimestamp()).div(WEEK).add(1).mul(WEEK));
-  
+
           // Alice create lock with expire in 20 week
           await xALPACAasAlice.createLock(lockAmount, (await timeHelpers.latestTimestamp()).add(WEEK.mul(20)));
-  
+
           const alpacaEveBefore = await ALPACA.balanceOf(eveAddress);
-  
+
           // Alice should get her locked alpaca back
           // penalty = 1% * 20(remaining week) * 5(amount to withdraw)
           // = 1
           // expect to get 5 - 1 = 4 back
-  
+
           // Deployer should get 50% of penalty
           // 1 * 50% = 0.5 alpaca
-  
+
           // Eve should get the rest for redistribution
           // penalty - treasury = 1 - 0.5 = 0.5
-  
+
           // Alice early withdraw
           await xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("5"));
-          expect(await xALPACA.accumRedistribute()).to.be.eq(ethers.utils.parseEther("0.5"))
-  
+          expect(await xALPACA.accumRedistribute()).to.be.eq(ethers.utils.parseEther("0.5"));
+
           // Alice earlywithdraw again. This should add more to accum redistribute
           await xALPACAasAlice.earlyWithdraw(ethers.utils.parseEther("5"));
-  
-          // Now eve should be eligible for 
+
+          // Now eve should be eligible for
           // 0.5 + 0.5 = 1 alpaca
           let alpacaEveAfter = await ALPACA.balanceOf(eveAddress);
           expect(alpacaEveAfter.sub(alpacaEveBefore)).to.be.eq(ethers.utils.parseEther("0"));
-          expect(await xALPACA.accumRedistribute()).to.be.eq(ethers.utils.parseEther("1"))
-  
+          expect(await xALPACA.accumRedistribute()).to.be.eq(ethers.utils.parseEther("1"));
+
           await expect(xALPACA.redistribute()).to.be.revertedWith("not redistributors");
         });
-      })
+      });
     });
   });
 
@@ -980,13 +974,17 @@ describe("xALPACA", () => {
   describe("#setWhitelistedCallers", async () => {
     context("when caller is owner", async () => {
       it("should be able to setWhitelist", async () => {
-        await expect(xALPACA.setWhitelistedCallers([eveAddress],true)).to.be.emit(xALPACA,"LogSetWhitelistedCaller").withArgs(deployerAddress,eveAddress,true)  
+        await expect(xALPACA.setWhitelistedCallers([eveAddress], true))
+          .to.be.emit(xALPACA, "LogSetWhitelistedCaller")
+          .withArgs(deployerAddress, eveAddress, true);
       });
     });
 
     context("when caller is not owner", async () => {
       it("should reverted setWhitelistedCallers", async () => {
-        await expect(xALPACAasBob.setWhitelistedCallers([eveAddress],true)).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(xALPACAasBob.setWhitelistedCallers([eveAddress], true)).to.be.revertedWith(
+          "Ownable: caller is not the owner"
+        );
       });
     });
   });
@@ -994,13 +992,17 @@ describe("xALPACA", () => {
   describe("#setWhitelistedCallers", async () => {
     context("when caller is owner", async () => {
       it("should be able to setWhitelist", async () => {
-        await expect(xALPACA.setWhitelistedCallers([eveAddress],true)).to.be.emit(xALPACA,"LogSetWhitelistedCaller").withArgs(deployerAddress,eveAddress,true)  
+        await expect(xALPACA.setWhitelistedCallers([eveAddress], true))
+          .to.be.emit(xALPACA, "LogSetWhitelistedCaller")
+          .withArgs(deployerAddress, eveAddress, true);
       });
     });
 
     context("when caller is not owner", async () => {
       it("should reverted setWhitelistedCallers", async () => {
-        await expect(xALPACAasBob.setWhitelistedCallers([eveAddress],true)).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(xALPACAasBob.setWhitelistedCallers([eveAddress], true)).to.be.revertedWith(
+          "Ownable: caller is not the owner"
+        );
       });
     });
   });
@@ -1008,18 +1010,20 @@ describe("xALPACA", () => {
   describe("#setWhitelistedRedistributors", async () => {
     context("when caller is owner", async () => {
       it("should be able to setWhitelist", async () => {
-        await expect(xALPACA["setWhitelistedRedistributors(address[],bool)"]([aliceAddress],true)).to.be.emit(xALPACA,"LogSetWhitelistedRedistributors").withArgs(deployerAddress,aliceAddress,true)  
+        await expect(xALPACA["setWhitelistedRedistributors(address[],bool)"]([aliceAddress], true))
+          .to.be.emit(xALPACA, "LogSetWhitelistedRedistributors")
+          .withArgs(deployerAddress, aliceAddress, true);
       });
     });
 
     context("when caller is not owner", async () => {
       it("should reverted setWhitelistedRedistributors", async () => {
-        await expect(xALPACAasBob.setWhitelistedRedistributors([eveAddress],true)).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(xALPACAasBob.setWhitelistedRedistributors([eveAddress], true)).to.be.revertedWith(
+          "Ownable: caller is not the owner"
+        );
       });
     });
   });
-
-
 
   // Complex scneario based on:
   // https://github.com/curvefi/curve-dao-contracts/blob/master/tests/integration/VotingEscrow/test_voting_escrow.py
@@ -1442,7 +1446,4 @@ describe("xALPACA", () => {
       });
     });
   });
-
-
-  
 });
