@@ -831,7 +831,7 @@ describe("xALPACA", () => {
   describe("#redistribute", async () => {
     describe("when there's outstanding redistribute",async ()=> {
 
-      context("when whitelisted call", async () => {
+      context("when redistributors call", async () => {
         it("should work", async () => {
           // deployer as treasury, eve as redistributor
           // 1% per remaining week penalty, 50% goes to treasury
@@ -925,9 +925,6 @@ describe("xALPACA", () => {
         });
       })
     });
-
-    
-    
   });
 
   describe("#breaker", async () => {
