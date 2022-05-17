@@ -866,7 +866,6 @@ describe("xALPACA", () => {
           expect(alpacaEveAfter.sub(alpacaEveBefore)).to.be.eq(ethers.utils.parseEther("0"));
           expect(await xALPACA.accumRedistribute()).to.be.eq(ethers.utils.parseEther("1"));
 
-          //  const a = await xALPACA.redistribute();
           await xALPACAasAlice.redistribute();
 
           alpacaEveAfter = await ALPACA.balanceOf(eveAddress);
