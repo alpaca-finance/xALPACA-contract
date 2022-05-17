@@ -29,6 +29,7 @@ describe("xALPACA", () => {
   let xALPACA: XALPACA;
 
   let contractContext: MockContractContext;
+  let whitelistedContract: MockContractContext
 
   // Accounts
   let deployer: Signer;
@@ -45,10 +46,12 @@ describe("xALPACA", () => {
   let ALPACAasAlice: BEP20;
   let ALPACAasBob: BEP20;
   let ALPACAasEve: BEP20;
+  
 
   let xALPACAasAlice: XALPACA;
   let xALPACAasBob: XALPACA;
   let xALPACAasEve: XALPACA;
+
 
   async function fixture() {
     [deployer, alice, bob, eve] = await ethers.getSigners();
@@ -65,6 +68,11 @@ describe("xALPACA", () => {
       deployer
     )) as MockContractContext__factory;
     contractContext = await MockContractContext.deploy();
+    await contractContext.deployed();
+
+    whitelistedContract = await MockContractContext.deploy();
+    await whitelistedContract.deployed();
+
 
     // Deploy ALPACA
     const BEP20 = (await ethers.getContractFactory("BEP20", deployer)) as BEP20__factory;
@@ -74,7 +82,7 @@ describe("xALPACA", () => {
     await ALPACA.mint(bobAddress, ethers.utils.parseEther("8888888"));
     await ALPACA.mint(eveAddress, ethers.utils.parseEther("8888888"));
     await ALPACA.mint(contractContext.address, ethers.utils.parseEther("8888888"));
-
+    await ALPACA.mint(whitelistedContract.address, ethers.utils.parseEther("8888888"));
     // Deploy xALPACA
     const XALPACA = (await ethers.getContractFactory("xALPACA", deployer)) as XALPACA__factory;
     xALPACA = (await upgrades.deployProxy(XALPACA, [ALPACA.address])) as XALPACA;
@@ -87,6 +95,8 @@ describe("xALPACA", () => {
       "approve(address,uint256)",
       ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [xALPACA.address, ethers.constants.MaxUint256])
     );
+
+    await xALPACA.setWhitelistedCallers([whitelistedContract.address],true)
 
     // Assign contract signer
     ALPACAasAlice = BEP20__factory.connect(ALPACA.address, alice);
@@ -172,7 +182,7 @@ describe("xALPACA", () => {
       });
     });
 
-    context("when msg.sender is not EOA", async () => {
+    context("when invalid contract call", async () => {
       it("should revert", async () => {
         await expect(
           contractContext.executeTransaction(
@@ -181,7 +191,34 @@ describe("xALPACA", () => {
             "createLock(uint256,uint256)",
             ethers.utils.defaultAbiCoder.encode(["uint256", "uint256"], ["1", "1"])
           )
-        ).to.be.revertedWith("only EOA");
+        ).to.be.revertedWith("not eoa");
+      });
+    });
+
+    context("when whitelisted contract call", async () => {
+      it("should be able to create lock", async () => {
+        const amount = ethers.utils.parseEther("10")
+        await whitelistedContract.executeTransaction(
+          ALPACA.address,
+          "0",
+          "approve(address,uint256)",
+          ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [xALPACA.address, ethers.utils.parseEther("10")])
+        );
+
+        const lock = (await timeHelpers.latestTimestamp()).add(WEEK.mul(10))
+
+        await 
+          whitelistedContract.executeTransaction(
+            xALPACA.address,
+            "0",
+            "createLock(uint256,uint256)",
+            ethers.utils.defaultAbiCoder.encode(["uint256", "uint256"], [amount, lock])
+          )
+
+         const [lockedAmount,unlockTime] = await xALPACA["locks(address)"](whitelistedContract.address)
+
+          expect(lockedAmount).to.be.eq(amount)
+          expect(lock).gte(unlockTime)
       });
     });
 
@@ -391,7 +428,47 @@ describe("xALPACA", () => {
       });
     });
 
-    context("when msg.sender is not EOA", async () => {
+    context("whitelistedcontract call", async () => {
+      it("should be able to increaseUnlockTime", async () => {
+        const amount = ethers.utils.parseEther("10")
+        await whitelistedContract.executeTransaction(
+          ALPACA.address,
+          "0",
+          "approve(address,uint256)",
+          ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [xALPACA.address, ethers.utils.parseEther("10")])
+        );
+
+        const lock = (await timeHelpers.latestTimestamp()).add(WEEK.mul(10))
+
+        await 
+          whitelistedContract.executeTransaction(
+            xALPACA.address,
+            "0",
+            "createLock(uint256,uint256)",
+            ethers.utils.defaultAbiCoder.encode(["uint256", "uint256"], [amount, lock])
+          )
+
+         const [lockedAmount,unlockTime] = await xALPACA["locks(address)"](whitelistedContract.address)
+          expect(lockedAmount).to.be.eq(amount)
+          expect(lock).gte(unlockTime)
+
+          // lock more another week
+        const extendUnlockTime = unlockTime.add(WEEK)
+        await 
+          whitelistedContract.executeTransaction(
+            xALPACA.address,
+            "0",
+            "increaseUnlockTime(uint256)",
+            ethers.utils.defaultAbiCoder.encode(["uint256"], [extendUnlockTime])
+          )
+          const [lockedAmountAfterExtend,unlockTimeAfterExtend] = await xALPACA["locks(address)"](whitelistedContract.address)
+
+          expect(amount).to.be.eq(lockedAmountAfterExtend)
+          expect(extendUnlockTime).to.be.eq(unlockTimeAfterExtend)      
+      });
+    });
+
+    context("when invalid contract call", async () => {
       it("should revert", async () => {
         await expect(
           contractContext.executeTransaction(
@@ -400,7 +477,7 @@ describe("xALPACA", () => {
             "increaseUnlockTime(uint256)",
             ethers.utils.defaultAbiCoder.encode(["uint256"], ["1"])
           )
-        ).to.be.revertedWith("only EOA");
+        ).to.be.revertedWith("not eoa");
       });
     });
 
@@ -484,7 +561,45 @@ describe("xALPACA", () => {
       });
     });
 
-    context("when msg.sender is not EOA", async () => {
+    context("when whitelisted contract call", async () => {
+      it("should be able increaseLockAmount", async () => {
+        const amount = ethers.utils.parseEther("10")
+        await whitelistedContract.executeTransaction(
+          ALPACA.address,
+          "0",
+          "approve(address,uint256)",
+          ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [xALPACA.address, ethers.utils.parseEther("20")])
+        );
+
+        const lock = (await timeHelpers.latestTimestamp()).add(WEEK.mul(10))
+
+        await 
+          whitelistedContract.executeTransaction(
+            xALPACA.address,
+            "0",
+            "createLock(uint256,uint256)",
+            ethers.utils.defaultAbiCoder.encode(["uint256", "uint256"], [amount, lock])
+          )
+
+         const [lockedAmount,unlockTime] = await xALPACA["locks(address)"](whitelistedContract.address)
+          expect(lockedAmount).to.be.eq(amount)
+          expect(lock).gte(unlockTime)
+
+        await 
+        whitelistedContract.executeTransaction(
+            xALPACA.address,
+            "0",
+            "increaseLockAmount(uint256)",
+            ethers.utils.defaultAbiCoder.encode(["uint256"], [amount])
+          )
+       
+          const [lockedAmountAfterExtend,unlockTimeAfterExtend] = await xALPACA["locks(address)"](whitelistedContract.address)
+          expect(amount.add(amount)).to.be.eq(lockedAmountAfterExtend)
+          expect(unlockTime).to.be.eq(unlockTimeAfterExtend)
+      });
+    });
+    
+    context("when invalid contract call", async () => {
       it("should revert", async () => {
         await expect(
           contractContext.executeTransaction(
@@ -493,7 +608,7 @@ describe("xALPACA", () => {
             "increaseLockAmount(uint256)",
             ethers.utils.defaultAbiCoder.encode(["uint256"], ["1"])
           )
-        ).to.be.revertedWith("only EOA");
+        ).to.be.revertedWith("not eoa");
       });
     });
 
@@ -867,6 +982,21 @@ describe("xALPACA", () => {
       });
     });
   });
+
+  describe("#setWhitelistedCallers", async () => {
+    context("when caller is owner", async () => {
+      it("should be able to setWhitelist", async () => {
+        await expect(xALPACA.setWhitelistedCallers([eveAddress],true)).to.be.emit(xALPACA,"LogSetWhitelistedCaller").withArgs(deployerAddress,eveAddress,true)  
+      });
+    });
+
+    context("when caller is not owner", async () => {
+      it("should reverted setWhitelistedCallers", async () => {
+        await expect(xALPACAasBob.setWhitelistedCallers([eveAddress],true)).to.be.revertedWith("Ownable: caller is not the owner");
+      });
+    });
+  });
+
 
   // Complex scneario based on:
   // https://github.com/curvefi/curve-dao-contracts/blob/master/tests/integration/VotingEscrow/test_voting_escrow.py

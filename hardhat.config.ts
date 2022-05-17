@@ -20,27 +20,27 @@ module.exports = {
     },
     testnet: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
-      accounts: [process.env.BSC_TESTNET_PRIVATE_KEY || "", process.env.LOCAL_PRIVATE_KEY_1 || ""].filter(o=> !!o),
+      accounts: [process.env.BSC_TESTNET_PRIVATE_KEY  || "", process.env.LOCAL_PRIVATE_KEY_1 || ""].filter((o)=> !!o),
     },
     mainnet: {
       url: process.env.BSC_MAINNET_RPC || "",
-      accounts: [process.env.BSC_MAINNET_PRIVATE_KEY || ""].filter(o=> !!o),
+      accounts: process.env.BSC_MAINNET_PRIVATE_KEY ? [process.env.BSC_MAINNET_PRIVATE_KEY]:[],
     },
     fantom_testnet: {
       url: "https://rpc.testnet.fantom.network/",
-      accounts: [process.env.FANTOM_TESTNET_PRIVATE_KEY || ""].filter(o=> !!o),
+      accounts: process.env.FANTOM_TESTNET_PRIVATE_KEY  ? [process.env.FANTOM_TESTNET_PRIVATE_KEY] : [],
     },
     fantom_mainnet: {
       url: process.env.FTM_MAINNET_RPC || "",
-      accounts: [process.env.FANTOM_MAINNET_PRIVATE_KEY || ""].filter(o=> !!o),
+      accounts: process.env.FANTOM_MAINNET_PRIVATE_KEY ? [process.env.FANTOM_MAINNET_PRIVATE_KEY]: [],
     },
     fantom_mainnetfork: {
-      url: process.env.FTM_MAINNET_FORK_RPC || "",
-      accounts: [process.env.FANTOM_MAINNET_PRIVATE_KEY || ""].filter(o=> !!o),
+      url: process.env.FTM_MAINNET_FORK_RPC|| "",
+      accounts: process.env.FANTOM_MAINNET_PRIVATE_KEY? [process.env.FANTOM_MAINNET_PRIVATE_KEY]: [],
     },
     mainnetfork: {
       url: "http://127.0.0.1:8545",
-      accounts: [process.env.BSC_MAINNET_PRIVATE_KEY || ""].filter(o=> !!o),
+      accounts: process.env.BSC_MAINNET_PRIVATE_KEY? [process.env.BSC_MAINNET_PRIVATE_KEY]: [],
       timeout: 500000,
     },
   },

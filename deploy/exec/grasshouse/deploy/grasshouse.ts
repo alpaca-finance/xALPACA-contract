@@ -22,7 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   */
   const CHECKPOINT_WHITELIST: string[] = ["0xe45216ac4816a5ec5378b1d13de8aa9f262ce9de"];
   const GRASSHOUSES: Array<IGrassHouse> = [
-    { SYMBOL: "TINC", TOKEN_ADDRESS: "0x05aD6E30A855BE07AfA57e08a4f30d00810a402e", START_TIME: "1651708800" },
+    { SYMBOL: "GYMNET", TOKEN_ADDRESS: "0x3a0d9d7764FAE860A659eb96A500F1323b411e68", START_TIME: "1652918400" },
   ];
 
   const config = ConfigEntity.getConfig();

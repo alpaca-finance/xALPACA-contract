@@ -141,8 +141,10 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     symbol = "xALPACA";
   }
 
-  modifier onlyEOA() {
-    require(!AddressUpgradeable.isContract(msg.sender) && tx.origin == msg.sender, "only EOA");
+   modifier onlyEOAorWhitelisted() {
+    if (!whitelistedCallers[msg.sender]) {
+      require(msg.sender == tx.origin, "not eoa");
+    }
     _;
   }
 
@@ -406,7 +408,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   /// @param _amount the amount that user wishes to deposit
   /// @param _unlockTime the timestamp when ALPACA get unlocked, it will be
   /// floored down to whole weeks
-  function createLock(uint256 _amount, uint256 _unlockTime) external onlyEOA nonReentrant {
+  function createLock(uint256 _amount, uint256 _unlockTime) external onlyEOAorWhitelisted nonReentrant {
     _unlockTime = _timestampToFloorWeek(_unlockTime);
     LockedBalance memory _locked = locks[msg.sender];
 
@@ -515,7 +517,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
 
   /// @notice Increase lock amount without increase "end"
   /// @param _amount The amount of ALPACA to be added to the lock
-  function increaseLockAmount(uint256 _amount) external onlyEOA nonReentrant {
+  function increaseLockAmount(uint256 _amount) external onlyEOAorWhitelisted nonReentrant {
     LockedBalance memory _lock = LockedBalance({ amount: locks[msg.sender].amount, end: locks[msg.sender].end });
 
     require(_amount > 0, "bad _amount");
@@ -527,7 +529,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
 
   /// @notice Increase unlock time without changing locked amount
   /// @param _newUnlockTime The new unlock time to be updated
-  function increaseUnlockTime(uint256 _newUnlockTime) external onlyEOA nonReentrant {
+  function increaseUnlockTime(uint256 _newUnlockTime) external onlyEOAorWhitelisted nonReentrant {
     LockedBalance memory _lock = LockedBalance({ amount: locks[msg.sender].amount, end: locks[msg.sender].end });
     _newUnlockTime = _timestampToFloorWeek(_newUnlockTime);
 
