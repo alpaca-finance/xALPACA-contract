@@ -118,9 +118,15 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   address public treasuryAddr;
   address public redistributeAddr;
 
-  /// @dev Require that the caller must be an EOA account if not whitelisted.
   modifier onlyRedistributors() {
     require(whitelistedRedistributors[msg.sender],"not redistributors");
+    _;
+  }
+
+  modifier onlyEOAorWhitelisted() {
+    if (!whitelistedCallers[msg.sender]) {
+      require(msg.sender == tx.origin, "not eoa");
+    }
     _;
   }
 
@@ -141,12 +147,6 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     symbol = "xALPACA";
   }
 
-   modifier onlyEOAorWhitelisted() {
-    if (!whitelistedCallers[msg.sender]) {
-      require(msg.sender == tx.origin, "not eoa");
-    }
-    _;
-  }
 
   /// @notice Return the balance of xALPACA at a given "_blockNumber"
   /// @param _user The address to get a balance of xALPACA
