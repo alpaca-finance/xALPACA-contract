@@ -831,7 +831,7 @@ describe("xALPACA", () => {
     });
   });
 
-  describe.only("#redistribute", async () => {
+  describe("#redistribute", async () => {
     describe("when there's outstanding redistribute",async ()=> {
 
       context("when whitelisted call", async () => {
@@ -996,6 +996,35 @@ describe("xALPACA", () => {
       });
     });
   });
+
+  describe("#setWhitelistedCallers", async () => {
+    context("when caller is owner", async () => {
+      it("should be able to setWhitelist", async () => {
+        await expect(xALPACA.setWhitelistedCallers([eveAddress],true)).to.be.emit(xALPACA,"LogSetWhitelistedCaller").withArgs(deployerAddress,eveAddress,true)  
+      });
+    });
+
+    context("when caller is not owner", async () => {
+      it("should reverted setWhitelistedCallers", async () => {
+        await expect(xALPACAasBob.setWhitelistedCallers([eveAddress],true)).to.be.revertedWith("Ownable: caller is not the owner");
+      });
+    });
+  });
+
+  describe("#setWhitelistedRedistributors", async () => {
+    context("when caller is owner", async () => {
+      it("should be able to setWhitelist", async () => {
+        await expect(xALPACA["setWhitelistedRedistributors(address[],bool)"]([aliceAddress],true)).to.be.emit(xALPACA,"LogSetWhitelistedRedistributors").withArgs(deployerAddress,aliceAddress,true)  
+      });
+    });
+
+    context("when caller is not owner", async () => {
+      it("should reverted setWhitelistedRedistributors", async () => {
+        await expect(xALPACAasBob.setWhitelistedRedistributors([eveAddress],true)).to.be.revertedWith("Ownable: caller is not the owner");
+      });
+    });
+  });
+
 
 
   // Complex scneario based on:
