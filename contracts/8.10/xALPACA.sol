@@ -54,6 +54,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     address newRedistributeAddr
   );
   event LogRedistribute(address indexed caller, address destination, uint256 amount);
+  event LogSetWhitelistedCaller(address indexed caller, address indexed addr, bool ok);
 
   struct Point {
     int128 bias; // Voting weight
@@ -96,6 +97,8 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   mapping(address => uint256) public userPointEpoch;
   // Mapping (round off timestamp to week => slopeDelta) to keep track slope changes over epoch
   mapping(uint256 => int128) public slopeChanges;
+  // list of whitelisted callers
+  mapping(address => bool) public whitelistedCallers;
 
   // Circuit breaker
   uint256 public breaker;
@@ -129,8 +132,10 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     symbol = "xALPACA";
   }
 
-  modifier onlyEOA() {
-    require(!AddressUpgradeable.isContract(msg.sender) && tx.origin == msg.sender, "only EOA");
+   modifier onlyEOAorWhitelisted() {
+    if (!whitelistedCallers[msg.sender]) {
+      require(msg.sender == tx.origin, "not eoa");
+    }
     _;
   }
 
@@ -394,7 +399,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   /// @param _amount the amount that user wishes to deposit
   /// @param _unlockTime the timestamp when ALPACA get unlocked, it will be
   /// floored down to whole weeks
-  function createLock(uint256 _amount, uint256 _unlockTime) external onlyEOA nonReentrant {
+  function createLock(uint256 _amount, uint256 _unlockTime) external onlyEOAorWhitelisted nonReentrant {
     _unlockTime = _timestampToFloorWeek(_unlockTime);
     LockedBalance memory _locked = locks[msg.sender];
 
@@ -503,7 +508,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
 
   /// @notice Increase lock amount without increase "end"
   /// @param _amount The amount of ALPACA to be added to the lock
-  function increaseLockAmount(uint256 _amount) external onlyEOA nonReentrant {
+  function increaseLockAmount(uint256 _amount) external onlyEOAorWhitelisted nonReentrant {
     LockedBalance memory _lock = LockedBalance({ amount: locks[msg.sender].amount, end: locks[msg.sender].end });
 
     require(_amount > 0, "bad _amount");
@@ -515,7 +520,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
 
   /// @notice Increase unlock time without changing locked amount
   /// @param _newUnlockTime The new unlock time to be updated
-  function increaseUnlockTime(uint256 _newUnlockTime) external onlyEOA nonReentrant {
+  function increaseUnlockTime(uint256 _newUnlockTime) external onlyEOAorWhitelisted nonReentrant {
     LockedBalance memory _lock = LockedBalance({ amount: locks[msg.sender].amount, end: locks[msg.sender].end });
     _newUnlockTime = _timestampToFloorWeek(_newUnlockTime);
 
@@ -722,5 +727,12 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
       _oldRedistributeAddr,
       _newRedistributeAddr
     );
+  }
+
+  function setWhitelistedCallers(address[] calldata callers, bool ok) external onlyOwner {
+    for (uint256 idx = 0; idx < callers.length; idx++) {
+      whitelistedCallers[callers[idx]] = ok;
+      emit LogSetWhitelistedCaller(_msgSender(), callers[idx], ok);
+    }
   }
 }
