@@ -98,10 +98,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   mapping(address => uint256) public userPointEpoch;
   // Mapping (round off timestamp to week => slopeDelta) to keep track slope changes over epoch
   mapping(uint256 => int128) public slopeChanges;
-  // list of whitelisted callers
-  mapping(address => bool) public whitelistedCallers;
-  // list of whiteisted redistribute
-  mapping(address => bool) public whitelistedRedistributors;
+
 
   // Circuit breaker
   uint256 public breaker;
@@ -111,12 +108,16 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   string public symbol;
   uint8 public decimals;
 
-  // --- Early Withdrawal Configs ---
+  // --- Early Withdrawal Configs --- 
   uint64 public earlyWithdrawBpsPerWeek;
   uint64 public redistributeBps;
   uint256 public accumRedistribute;
   address public treasuryAddr;
   address public redistributeAddr;
+
+  // --- whitelist address  ---
+  mapping(address => bool) public whitelistedCallers;
+  mapping(address => bool) public whitelistedRedistributors;
 
   modifier onlyRedistributors() {
     require(whitelistedRedistributors[msg.sender],"not redistributors");
