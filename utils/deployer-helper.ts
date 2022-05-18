@@ -3,7 +3,7 @@ import { ethers, network } from "hardhat";
 import { JsonRpcProvider } from "@ethersproject/providers";
 
 export async function getDeployer(): Promise<SignerWithAddress> {
-  const defaultDeployer = (await ethers.getSigners())[0];
+  const [defaultDeployer] = await ethers.getSigners();
 
   if (isFork(network.name)) {
     const provider = ethers.getDefaultProvider(process.env.FORK_RPC) as JsonRpcProvider;
