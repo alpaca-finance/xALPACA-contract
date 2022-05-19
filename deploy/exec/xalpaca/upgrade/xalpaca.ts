@@ -1,13 +1,14 @@
-import { XALPACA__factory } from "./../../../../typechain/factories/XALPACA__factory";
+import { XALPACA__factory } from "./../../../../typechain";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers, upgrades, network } from "hardhat";
 import { getConfig } from "../../../entities/config";
-import { fileService, TimelockService } from "../../../services";
+import { fileService } from "../../../services";
 import { getDeployer, isFork } from "../../../../utils/deployer-helper";
 import { compare } from "../../../../utils/address";
 import { ProxyAdmin__factory } from "@alpaca-finance/alpaca-contract/typechain";
 import { TimelockEntity } from "../../../entities";
+import { CompLike } from "../../../services/timelock/comp-like";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   /*
@@ -45,8 +46,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log("> Prepare upgrade & deploy if needed a new IMPL automatically.");
     console.log(`> Implementation address: ${preparedNewXALPACA}`);
 
+    const timelockService = new CompLike(config.Timelock, deployer);
+
     timelockTransactions.push(
-      await TimelockService.queueTransaction(
+      await timelockService.queueTransaction(
         `> Queue tx to upgrade ${TARGET_XALPACA_ADDRESS}`,
         config.ProxyAdmin,
         "0",
@@ -61,7 +64,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log("> Executing without Timelock");
     console.log(`> Implementation address: ${preparedNewXALPACA}`);
     const proxyAdmin = ProxyAdmin__factory.connect(config.ProxyAdmin, deployer);
-    await proxyAdmin.upgrade(TARGET_XALPACA_ADDRESS, preparedNewXALPACA, ops);
+    await (await proxyAdmin.upgrade(TARGET_XALPACA_ADDRESS, preparedNewXALPACA, ops)).wait(3);
 
     console.log("✅ Done");
   }
