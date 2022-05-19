@@ -38,7 +38,7 @@ async function main() {
   let xALPACA: XALPACA;
 
   let poolId: BigNumber;
-  const provider = new ethers.providers.JsonRpcProvider(process.env.MAINNET_FORK_URL);
+  const provider = new ethers.providers.JsonRpcProvider(process.env.FORK_RPC);
   await provider.send("hardhat_impersonateAccount", [addresses.DEPLOYER]);
   const signer = provider.getSigner(addresses.DEPLOYER);
   const deployer = await SignerWithAddress.create(signer);
