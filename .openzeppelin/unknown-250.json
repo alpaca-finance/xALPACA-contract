@@ -632,6 +632,251 @@
           }
         }
       }
+    },
+    "9c1482533879b8e516b876312dd44f8394912852e305c0a3bc539521df25c9a3": {
+      "address": "0x41fD8D96E0691Cc35E0b82f2d45760faAB72EA9C",
+      "txHash": "0x4bb9f0b4ef85673fd1727381d5030333604850eadbf02103f1ee4713ef4d12d7",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:39"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:44"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "_status",
+            "type": "t_uint256",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:68"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:82"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "token",
+            "type": "t_address",
+            "src": "contracts/8.10/xALPACA.sol:86"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "supply",
+            "type": "t_uint256",
+            "src": "contracts/8.10/xALPACA.sol:88"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "locks",
+            "type": "t_mapping(t_address,t_struct(LockedBalance)8355_storage)",
+            "src": "contracts/8.10/xALPACA.sol:91"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "epoch",
+            "type": "t_uint256",
+            "src": "contracts/8.10/xALPACA.sol:94"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "pointHistory",
+            "type": "t_array(t_struct(Point)8350_storage)dyn_storage",
+            "src": "contracts/8.10/xALPACA.sol:95"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "userPointHistory",
+            "type": "t_mapping(t_address,t_array(t_struct(Point)8350_storage)dyn_storage)",
+            "src": "contracts/8.10/xALPACA.sol:97"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "userPointEpoch",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/8.10/xALPACA.sol:99"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "slopeChanges",
+            "type": "t_mapping(t_uint256,t_int128)",
+            "src": "contracts/8.10/xALPACA.sol:103"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "breaker",
+            "type": "t_uint256",
+            "src": "contracts/8.10/xALPACA.sol:106"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "name",
+            "type": "t_string_storage",
+            "src": "contracts/8.10/xALPACA.sol:110"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "symbol",
+            "type": "t_string_storage",
+            "src": "contracts/8.10/xALPACA.sol:110"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "decimals",
+            "type": "t_uint8",
+            "src": "contracts/8.10/xALPACA.sol:111"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "earlyWithdrawBpsPerWeek",
+            "type": "t_uint64",
+            "src": "contracts/8.10/xALPACA.sol:112"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "redistributeBps",
+            "type": "t_uint64",
+            "src": "contracts/8.10/xALPACA.sol:114"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "accumRedistribute",
+            "type": "t_uint256",
+            "src": "contracts/8.10/xALPACA.sol:115"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "treasuryAddr",
+            "type": "t_address",
+            "src": "contracts/8.10/xALPACA.sol:117"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "redistributeAddr",
+            "type": "t_address",
+            "src": "contracts/8.10/xALPACA.sol:118"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "whitelistedCallers",
+            "type": "t_mapping(t_address,t_bool)",
+            "src": "contracts/8.10/xALPACA.sol:119"
+          },
+          {
+            "contract": "xALPACA",
+            "label": "whitelistedRedistributors",
+            "type": "t_mapping(t_address,t_bool)",
+            "src": "contracts/8.10/xALPACA.sol:121"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_address,t_struct(LockedBalance)8355_storage)": {
+            "label": "mapping(address => struct xALPACA.LockedBalance)"
+          },
+          "t_struct(LockedBalance)8355_storage": {
+            "label": "struct xALPACA.LockedBalance",
+            "members": [
+              {
+                "label": "amount",
+                "type": "t_int128"
+              },
+              {
+                "label": "end",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_int128": {
+            "label": "int128"
+          },
+          "t_array(t_struct(Point)8350_storage)dyn_storage": {
+            "label": "struct xALPACA.Point[]"
+          },
+          "t_struct(Point)8350_storage": {
+            "label": "struct xALPACA.Point",
+            "members": [
+              {
+                "label": "bias",
+                "type": "t_int128"
+              },
+              {
+                "label": "slope",
+                "type": "t_int128"
+              },
+              {
+                "label": "timestamp",
+                "type": "t_uint256"
+              },
+              {
+                "label": "blockNumber",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_mapping(t_address,t_array(t_struct(Point)8350_storage)dyn_storage)": {
+            "label": "mapping(address => struct xALPACA.Point[])"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_mapping(t_uint256,t_int128)": {
+            "label": "mapping(uint256 => int128)"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          },
+          "t_uint64": {
+            "label": "uint64"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          }
+        }
+      }
     }
   }
 }
