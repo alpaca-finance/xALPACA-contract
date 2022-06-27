@@ -107,7 +107,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   string public symbol;
   uint8 public decimals;
 
-  // --- Early Withdrawal Configs --- 
+  // --- Early Withdrawal Configs ---
   uint64 public earlyWithdrawBpsPerWeek;
   uint64 public redistributeBps;
   uint256 public accumRedistribute;
@@ -119,7 +119,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   mapping(address => bool) public whitelistedRedistributors;
 
   modifier onlyRedistributors() {
-    require(whitelistedRedistributors[msg.sender],"not redistributors");
+    require(whitelistedRedistributors[msg.sender], "not redistributors");
     _;
   }
 
@@ -146,7 +146,6 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     name = "xALPACA";
     symbol = "xALPACA";
   }
-
 
   /// @notice Return the balance of xALPACA at a given "_blockNumber"
   /// @param _user The address to get a balance of xALPACA
@@ -641,11 +640,11 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     emit LogWithdraw(msg.sender, _amount, block.timestamp);
   }
 
-  /// @notice Withdraw all ALPACA when lock has expired.
+  /// @notice Early withdraw ALPACA with penalty.
   function earlyWithdraw(uint256 _amount) external nonReentrant {
     LockedBalance memory _lock = locks[msg.sender];
 
-    require(_amount> 0, "!>0");
+    require(_amount > 0, "!>0");
     require(block.timestamp < _lock.end, "!early");
     require(breaker == 0, "breaker");
 
@@ -656,13 +655,13 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     // ceil the week by adding 1 week first
     uint256 remainingWeeks = (_prevLockEnd + WEEK - block.timestamp) / WEEK;
 
-    // caculate penalty
-    uint256 _penalty =  (earlyWithdrawBpsPerWeek * remainingWeeks * _amount) / 10000 ;
+    // calculate penalty
+    uint256 _penalty = (earlyWithdrawBpsPerWeek * remainingWeeks * _amount) / 10000;
 
     // split penalty into two parts
     uint256 _redistribute = (_penalty * redistributeBps) / 10000;
     // accumulate alpaca for redistribution
-    accumRedistribute = accumRedistribute + _redistribute;
+    accumRedistribute += _redistribute;
 
     // transfer one part of the penalty to treasury
     token.safeTransfer(treasuryAddr, _penalty - _redistribute);
@@ -751,5 +750,4 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
       emit LogSetWhitelistedRedistributors(_msgSender(), callers[idx], ok);
     }
   }
-
 }
