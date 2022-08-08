@@ -205,6 +205,11 @@
       "name": "GYMNET",
       "address": "0x1c44E11e102a011C847CFFC184EC204f9ED33002",
       "rewardToken": "0x3a0d9d7764FAE860A659eb96A500F1323b411e68"
+    },
+    {
+      "name": "PSR",
+      "address": "0x95bf836F6225c50cA551DB33256Edc9CEA5D79B3",
+      "rewardToken": "0xB72bA371c900aa68bb9Fa473e93CfbE212030fCb"
     }
   ],
   "GrassHouseGateway": "0x50309398E3AbCBD3357b0DD54A624C1251026ee5"
