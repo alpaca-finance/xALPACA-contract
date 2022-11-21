@@ -210,6 +210,11 @@
       "name": "PSR",
       "address": "0x95bf836F6225c50cA551DB33256Edc9CEA5D79B3",
       "rewardToken": "0xB72bA371c900aa68bb9Fa473e93CfbE212030fCb"
+    },
+    {
+      "name": "pSTAKE",
+      "address": "0x7e9A24ef69747667Ef247714879D1eBC18706550",
+      "rewardToken": "0x4C882ec256823eE773B25b414d36F92ef58a7c0C"
     }
   ],
   "GrassHouseGateway": "0x50309398E3AbCBD3357b0DD54A624C1251026ee5"

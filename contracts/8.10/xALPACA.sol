@@ -158,11 +158,13 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     if (_userEpoch == 0) {
       return 0;
     }
-
     Point memory _userPoint = userPointHistory[_user][_userEpoch];
+
+    // Get most recent global point to block
     uint256 _maxEpoch = epoch;
     uint256 _epoch = _findBlockEpoch(_blockNumber, _maxEpoch);
     Point memory _point0 = pointHistory[_epoch];
+
     uint256 _blockDelta = 0;
     uint256 _timeDelta = 0;
     if (_epoch < _maxEpoch) {
@@ -178,7 +180,8 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
       _blockTime += (_timeDelta * (_blockNumber - _point0.blockNumber)) / _blockDelta;
     }
 
-    _userPoint.bias -= _userPoint.slope * SafeCastUpgradeable.toInt128(int256(_blockTime - _userPoint.timestamp));
+    _userPoint.bias -= (_userPoint.slope * SafeCastUpgradeable.toInt128(int256(_blockTime - _userPoint.timestamp)));
+
     if (_userPoint.bias < 0) {
       return 0;
     }
