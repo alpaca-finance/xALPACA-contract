@@ -24,8 +24,6 @@ import "./interfaces/IBEP20.sol";
 
 import "./SafeToken.sol";
 
-import "hardhat/console.sol";
-
 /// @title xALPACA - The goverance token of Alpaca Finance
 // solhint-disable not-rely-on-time
 // solhint-disable-next-line contract-name-camelcase
@@ -183,20 +181,6 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     }
 
     _userPoint.bias -= (_userPoint.slope * SafeCastUpgradeable.toInt128(int256(_blockTime - _userPoint.timestamp)));
-
-    console.log("userEpoch", _userEpoch);
-    console.log("upoint.bias");
-    console.logInt(_userPoint.bias);
-    console.log("upoint.slope");
-    console.logInt(_userPoint.slope);
-    console.log("maxEpoch", _maxEpoch);
-    console.log("epoch", _epoch);
-    console.log("point0.bias");
-    console.logInt(_point0.bias);
-    console.log("point0.slope");
-    console.logInt(_point0.slope);
-    console.log("dBlock", _blockDelta);
-    console.log("dTime", _timeDelta);
 
     if (_userPoint.bias < 0) {
       return 0;

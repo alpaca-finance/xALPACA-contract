@@ -1338,7 +1338,6 @@ describe("xALPACA", () => {
 
         t0 = stages["bobDeposit2"][1];
         for (let i = 0; i < stages["aliceBobIn2"].length; i++) {
-          console.log("------- check aliceBobIn2");
           const ele = stages["aliceBobIn2"][i];
 
           aliceBalance = await xALPACA.balanceOfAt(aliceAddress, ele[0]);
