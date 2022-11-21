@@ -24,6 +24,8 @@ import "./interfaces/IBEP20.sol";
 
 import "./SafeToken.sol";
 
+import "hardhat/console.sol";
+
 /// @title xALPACA - The goverance token of Alpaca Finance
 // solhint-disable not-rely-on-time
 // solhint-disable-next-line contract-name-camelcase
@@ -158,11 +160,13 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
     if (_userEpoch == 0) {
       return 0;
     }
-
     Point memory _userPoint = userPointHistory[_user][_userEpoch];
+
+    // Get most recent global point to block
     uint256 _maxEpoch = epoch;
     uint256 _epoch = _findBlockEpoch(_blockNumber, _maxEpoch);
     Point memory _point0 = pointHistory[_epoch];
+
     uint256 _blockDelta = 0;
     uint256 _timeDelta = 0;
     if (_epoch < _maxEpoch) {
@@ -178,7 +182,22 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
       _blockTime += (_timeDelta * (_blockNumber - _point0.blockNumber)) / _blockDelta;
     }
 
-    _userPoint.bias -= _userPoint.slope * SafeCastUpgradeable.toInt128(int256(_blockTime - _userPoint.timestamp));
+    _userPoint.bias -= (_userPoint.slope * SafeCastUpgradeable.toInt128(int256(_blockTime - _userPoint.timestamp)));
+
+    console.log("userEpoch", _userEpoch);
+    console.log("upoint.bias");
+    console.logInt(_userPoint.bias);
+    console.log("upoint.slope");
+    console.logInt(_userPoint.slope);
+    console.log("maxEpoch", _maxEpoch);
+    console.log("epoch", _epoch);
+    console.log("point0.bias");
+    console.logInt(_point0.bias);
+    console.log("point0.slope");
+    console.logInt(_point0.slope);
+    console.log("dBlock", _blockDelta);
+    console.log("dTime", _timeDelta);
+
     if (_userPoint.bias < 0) {
       return 0;
     }
