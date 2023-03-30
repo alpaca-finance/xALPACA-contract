@@ -1,6 +1,7 @@
 export interface Config {
   ProxyAdmin: string;
   Timelock: string;
+  OpMultiSig: string;
   FairLaunch?: FairLaunch;
   MiniFL?: MiniFL;
   Scientix?: Scientix;

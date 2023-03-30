@@ -458,7 +458,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
   /// @param _amount The amount of rewardToken to be distributed
   function injectReward(uint256 _timestamp, uint256 _amount) external onlyOwner {
     rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
-    lastTokenBalance = lastTokenBalance + _amount;
+    lastTokenBalance += _amount;
     tokensPerWeek[_timestampToFloorWeek(_timestamp)] = _amount;
   }
 

@@ -21,3 +21,18 @@ export function getConfig(): Config {
 
   throw new Error("not found config");
 }
+
+export function getConfigByChainId(chainId: number): Config {
+  switch (chainId) {
+    case 56:
+      return MainnetConfig;
+    case 250:
+      return FantomMainnetConfig;
+    case 97:
+      return TestnetConfig;
+    case 4002:
+      return FantomTestnetConfig;
+    default:
+      throw new Error("not found config");
+  }
+}

@@ -138,7 +138,14 @@
     "node": ">=14"
   },
   "dependencies": {
-    "@openzeppelin/test-helpers": "^0.5.15"
+    "@openzeppelin/test-helpers": "^0.5.15",
+    "@safe-global/safe-core-sdk": "^3.3.2",
+    "@safe-global/safe-ethers-lib": "^1.9.2",
+    "@safe-global/safe-service-client": "^2.0.0",
+    "follow-redirects": "^1.14.7",
+    "node-fetch": "^2.6.7",
+    "underscore": "^1.12.1",
+    "web3": "^1.7.0"
   },
   "resolutions": {
     "shelljs": "^0.8.5",

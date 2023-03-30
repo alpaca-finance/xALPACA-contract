@@ -1,15 +1,14 @@
-import {
-  Timelock,
-  Timelock__factory,
-} from "@alpaca-finance/alpaca-contract/typechain"
-import { BigNumber, BigNumberish, ethers, Overrides } from "ethers"
-import { TimelockEntity } from "../../../entities"
+import { Timelock, Timelock__factory } from "@alpaca-finance/alpaca-contract/typechain";
+import { BigNumber, BigNumberish, ethers, Overrides } from "ethers";
+import { TimelockEntity } from "../../../entities";
 
 export class CompLike {
-  private timelock: Timelock
+  private signer: ethers.Signer;
+  private timelock: Timelock;
 
   constructor(_timelockAddress: string, _signer: ethers.Signer) {
-    this.timelock = Timelock__factory.connect(_timelockAddress, _signer)
+    this.signer = _signer;
+    this.timelock = Timelock__factory.connect(_timelockAddress, _signer);
   }
 
   async queueTransaction(
@@ -20,40 +19,42 @@ export class CompLike {
     paramTypes: Array<string>,
     params: Array<any>,
     eta: BigNumberish,
-    overrides?: Overrides,
+    overrides?: Overrides
   ): Promise<TimelockEntity.Transaction> {
-    console.log(`> Queue tx for: ${info}`)
-    const etaBN = BigNumber.from(eta)
+    console.log(`> Queue tx for: ${info}`);
+    const etaBN = BigNumber.from(eta);
+    const chainId = await this.signer.getChainId();
     const queueTx = await this.timelock.queueTransaction(
       target,
       value,
       signature,
       ethers.utils.defaultAbiCoder.encode(paramTypes, params),
       eta,
-      overrides,
-    )
-    await queueTx.wait()
-    const paramTypesStr = paramTypes.map((p) => `'${p}'`)
+      overrides
+    );
+    await queueTx.wait();
+    const paramTypesStr = paramTypes.map((p) => `'${p}'`);
     const paramsStr = params.map((p) => {
       if (Array.isArray(p)) {
         const vauleWithQuote = p.map((p) => {
-          if (typeof p === "string") return `'${p}'`
-          return JSON.stringify(p)
-        })
-        return `[${vauleWithQuote}]`
+          if (typeof p === "string") return `'${p}'`;
+          return JSON.stringify(p);
+        });
+        return `[${vauleWithQuote}]`;
       }
 
       if (typeof p === "string") {
-        return `'${p}'`
+        return `'${p}'`;
       }
 
-      return p
-    })
+      return p;
+    });
 
-    const executionTx = `await timelock.executeTransaction('${target}', '${value}', '${signature}', ethers.utils.defaultAbiCoder.encode([${paramTypesStr}], [${paramsStr}]), '${eta}')`
-    console.log(`> ⛓ Queued at: ${queueTx.hash}`)
+    const executionTx = `await timelock.executeTransaction('${target}', '${value}', '${signature}', ethers.utils.defaultAbiCoder.encode([${paramTypesStr}], [${paramsStr}]), '${eta}')`;
+    console.log(`> ⛓ Queued at: ${queueTx.hash}`);
     return {
       info: info,
+      chainId: chainId,
       queuedAt: queueTx.hash,
       executedAt: "",
       executionTransaction: executionTx,
@@ -63,7 +64,7 @@ export class CompLike {
       paramTypes,
       params,
       eta: etaBN.toString(),
-    }
+    };
   }
 
   async executeTransaction(
@@ -76,24 +77,26 @@ export class CompLike {
     paramTypes: Array<string>,
     params: Array<any>,
     eta: BigNumberish,
-    overrides?: Overrides,
+    overrides?: Overrides
   ): Promise<TimelockEntity.Transaction> {
-    console.log(`> Execute tx for: ${info}`)
-    const etaBN = BigNumber.from(eta)
-    const timelock = this.timelock
+    console.log(`> Execute tx for: ${info}`);
+    const etaBN = BigNumber.from(eta);
+    const chainId = await this.signer.getChainId();
+    const timelock = this.timelock;
     const executeTx = await timelock.executeTransaction(
       target,
       value,
       signature,
       ethers.utils.defaultAbiCoder.encode(paramTypes, params),
       etaBN,
-      overrides,
-    )
-    console.log("> ⛓ Executed at:", executeTx.hash)
-    console.log(`> Done.`)
+      overrides
+    );
+    console.log("> ⛓ Executed at:", executeTx.hash);
+    console.log(`> Done.`);
 
     return {
       info: info,
+      chainId: chainId,
       queuedAt: queuedAt,
       executedAt: executeTx.hash,
       executionTransaction: executionTx,
@@ -103,6 +106,6 @@ export class CompLike {
       paramTypes,
       params,
       eta: etaBN.toString(),
-    }
+    };
   }
 }
