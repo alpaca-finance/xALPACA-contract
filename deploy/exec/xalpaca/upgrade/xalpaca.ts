@@ -21,16 +21,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   Check all variables below before execute the deployment script
   */
   const TITLE = "upgrade_xalpaca";
-  const xALPACA_VERSION = "xALPACA";
-  const EXACT_ETA = "1653368400";
+  const xALPACA_VERSION = "xALPACA_Deprecated";
+  const EXACT_ETA = "1685779200";
 
   const config = getConfig();
   const TARGET_XALPACA_ADDRESS = config.xALPACA;
 
   const deployer = await getDeployer();
-  console.log("> XALPACA ", TARGET_XALPACA_ADDRESS);
-  console.log("> DEPLOYER ", deployer.address);
-  console.log("> PROXY ADMIN ", config.ProxyAdmin);
 
   const timelockTransactions: Array<TimelockEntity.Transaction> = [];
 
@@ -64,8 +61,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log("> Executing without Timelock");
     console.log(`> Implementation address: ${preparedNewXALPACA}`);
     const proxyAdmin = ProxyAdmin__factory.connect(config.ProxyAdmin, deployer);
-    await (await proxyAdmin.upgrade(TARGET_XALPACA_ADDRESS, preparedNewXALPACA, ops)).wait(3);
-
+    await (await proxyAdmin.upgrade(TARGET_XALPACA_ADDRESS, preparedNewXALPACA as string, ops)).wait(3);
     console.log("✅ Done");
   }
 
