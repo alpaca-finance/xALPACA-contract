@@ -16,3 +16,4 @@
 /coverage/*
 coverage.json
 forge_cache/
+out/
