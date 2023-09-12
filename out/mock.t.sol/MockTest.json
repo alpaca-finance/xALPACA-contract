@@ -1,0 +1,208 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "test_ShouldWork",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x6080604052348015600f57600080fd5b50606580601d6000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c80632e4f6ad214602d575b600080fd5b00fea2646970667358221220e2d0323d9061df7ce2c5c9e6c3335896d362d61f12f1170218c9c8454098cffe64736f6c63430008130033",
+    "sourceMap": "57:82:0:-:0;;;79:16;;;;;;;;;;57:82;;;;;;",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x6080604052348015600f57600080fd5b506004361060285760003560e01c80632e4f6ad214602d575b600080fd5b00fea2646970667358221220e2d0323d9061df7ce2c5c9e6c3335896d362d61f12f1170218c9c8454098cffe64736f6c63430008130033",
+    "sourceMap": "57:82:0:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;99:38;",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "test_ShouldWork()": "2e4f6ad2"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.19+commit.7dd6d404\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"test_ShouldWork\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"tests/forge/mock.t.sol\":\"MockTest\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@alpaca-finance/=node_modules/@alpaca-finance/\",\":@ensdomains/=node_modules/@ensdomains/\",\":@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/\",\":hardhat-deploy/=node_modules/hardhat-deploy/\",\":hardhat/=node_modules/hardhat/\",\":synthetix/=node_modules/synthetix/\"]},\"sources\":{\"tests/forge/mock.t.sol\":{\"keccak256\":\"0xbb76031bf178966a01bd7e87782c1e4b16f36e5ab9c166feb2030a92d7b61e9d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://01a91f3dc9d3b642a015465e996b72c1b124163cb7c3d8859d00a68b162923b9\",\"dweb:/ipfs/QmRT4UKx2pYJ5p5BFhCMSypoA3HbUK4gRkKX6SETPJPSLJ\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.19+commit.7dd6d404"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "test_ShouldWork"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        "@alpaca-finance/=node_modules/@alpaca-finance/",
+        "@ensdomains/=node_modules/@ensdomains/",
+        "@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/",
+        "hardhat-deploy/=node_modules/hardhat-deploy/",
+        "hardhat/=node_modules/hardhat/",
+        "synthetix/=node_modules/synthetix/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "tests/forge/mock.t.sol": "MockTest"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "tests/forge/mock.t.sol": {
+        "keccak256": "0xbb76031bf178966a01bd7e87782c1e4b16f36e5ab9c166feb2030a92d7b61e9d",
+        "urls": [
+          "bzz-raw://01a91f3dc9d3b642a015465e996b72c1b124163cb7c3d8859d00a68b162923b9",
+          "dweb:/ipfs/QmRT4UKx2pYJ5p5BFhCMSypoA3HbUK4gRkKX6SETPJPSLJ"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "tests/forge/mock.t.sol",
+    "id": 11,
+    "exportedSymbols": {
+      "MockTest": [
+        10
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:108:0",
+    "nodes": [
+      {
+        "id": 1,
+        "nodeType": "PragmaDirective",
+        "src": "32:23:0",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "0.8",
+          ".19"
+        ]
+      },
+      {
+        "id": 10,
+        "nodeType": "ContractDefinition",
+        "src": "57:82:0",
+        "nodes": [
+          {
+            "id": 5,
+            "nodeType": "FunctionDefinition",
+            "src": "79:16:0",
+            "nodes": [],
+            "body": {
+              "id": 4,
+              "nodeType": "Block",
+              "src": "93:2:0",
+              "nodes": [],
+              "statements": []
+            },
+            "implemented": true,
+            "kind": "constructor",
+            "modifiers": [],
+            "name": "",
+            "nameLocation": "-1:-1:-1",
+            "parameters": {
+              "id": 2,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "90:2:0"
+            },
+            "returnParameters": {
+              "id": 3,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "93:0:0"
+            },
+            "scope": 10,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "public"
+          },
+          {
+            "id": 9,
+            "nodeType": "FunctionDefinition",
+            "src": "99:38:0",
+            "nodes": [],
+            "body": {
+              "id": 8,
+              "nodeType": "Block",
+              "src": "135:2:0",
+              "nodes": [],
+              "statements": []
+            },
+            "functionSelector": "2e4f6ad2",
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "test_ShouldWork",
+            "nameLocation": "108:15:0",
+            "parameters": {
+              "id": 6,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "123:2:0"
+            },
+            "returnParameters": {
+              "id": 7,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "135:0:0"
+            },
+            "scope": 10,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "MockTest",
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          10
+        ],
+        "name": "MockTest",
+        "nameLocation": "66:8:0",
+        "scope": 11,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 0
+}

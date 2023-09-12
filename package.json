@@ -4,7 +4,9 @@
   "scripts": {
     "build": "yarn run build:cjs",
     "build:cjs": "tsc -p tsconfig.cjs.json",
-    "compile": "hardhat typechain --config hardhat.config.ts && yarn build",
+    "compile8.10": "hardhat typechain --config hardhat.config.ts",
+    "compile8.19": "hardhat typechain --config hardhat.config.8.19.ts",
+    "compile": "yarn compile8.10 && yarn build && yarn compile8.19",
     "mainnet": "hardhat console --no-compile --network mainnet",
     "fantom_mainnet": "hardhat console --no-compile --network fantom_mainnet",
     "badges": "istanbul-badges-readme --coverageDir=./",
