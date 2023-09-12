@@ -15,3 +15,5 @@
 /deploy/results/*
 /coverage/*
 coverage.json
+forge_cache/
+out/
