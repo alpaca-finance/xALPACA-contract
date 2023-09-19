@@ -128,11 +128,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @param _pid The index of the pool. See `poolInfo`.
   /// @param _newAllocPoint New AP of the pool.
   /// @param _withUpdate If true, do mass update pools
-  function setPool(
-    uint256 _pid,
-    uint256 _newAllocPoint,
-    bool _withUpdate
-  ) external onlyOwner {
+  function setPool(uint256 _pid, uint256 _newAllocPoint, bool _withUpdate) external onlyOwner {
     // prevent setting allocPoint of dummy pool
     if (_pid == 0) revert MiniFL_InvalidArguments();
     if (_withUpdate) massUpdatePools();
@@ -249,11 +245,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @param _for The beneficary address of the deposit.
   /// @param _pid The index of the pool. See `poolInfo`.
   /// @param _amountToDeposit amount to deposit.
-  function deposit(
-    address _for,
-    uint256 _pid,
-    uint256 _amountToDeposit
-  ) external onlyWhitelisted nonReentrant {
+  function deposit(address _for, uint256 _pid, uint256 _amountToDeposit) external onlyWhitelisted nonReentrant {
     UserInfo storage user = userInfo[_pid][_for];
 
     // call _updatePool in order to update poolInfo.accAlpacaPerShare
@@ -300,11 +292,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @param _from Withdraw from who?
   /// @param _pid The index of the pool. See `poolInfo`.
   /// @param _amountToWithdraw Staking token amount to withdraw.
-  function withdraw(
-    address _from,
-    uint256 _pid,
-    uint256 _amountToWithdraw
-  ) external onlyWhitelisted nonReentrant {
+  function withdraw(address _from, uint256 _pid, uint256 _amountToWithdraw) external onlyWhitelisted nonReentrant {
     UserInfo storage user = userInfo[_pid][_from];
 
     // call _updatePool in order to update poolInfo.accAlpacaPerShare
@@ -472,11 +460,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @param _token The address of token to transfer
   /// @param _amount The amount to transfer
   /// @return _receivedAmount The actual amount received after transfer
-  function _unsafePullToken(
-    address _from,
-    address _token,
-    uint256 _amount
-  ) internal returns (uint256 _receivedAmount) {
+  function _unsafePullToken(address _from, address _token, uint256 _amount) internal returns (uint256 _receivedAmount) {
     uint256 _currentTokenBalance = IERC20Upgradeable(_token).balanceOf(address(this));
     IERC20Upgradeable(_token).safeTransferFrom(_from, address(this), _amount);
     _receivedAmount = IERC20Upgradeable(_token).balanceOf(address(this)) - _currentTokenBalance;

@@ -11,17 +11,9 @@ interface IRewarder {
 
   function miniFL() external view returns (address);
 
-  function onDeposit(
-    uint256 pid,
-    address user,
-    uint256 newStakeTokenAmount
-  ) external;
+  function onDeposit(uint256 pid, address user, uint256 newStakeTokenAmount) external;
 
-  function onWithdraw(
-    uint256 pid,
-    address user,
-    uint256 newStakeTokenAmount
-  ) external;
+  function onWithdraw(uint256 pid, address user, uint256 newStakeTokenAmount) external;
 
   function onHarvest(uint256 pid, address user) external;
 
@@ -29,17 +21,9 @@ interface IRewarder {
 
   function lastRewardTime(uint256 _pid) external view returns (uint256);
 
-  function addPool(
-    uint256 _pid,
-    uint256 _allocPoint,
-    bool _withUpdate
-  ) external;
+  function addPool(uint256 _pid, uint256 _allocPoint, bool _withUpdate) external;
 
-  function setPool(
-    uint256 _pid,
-    uint256 _newAllocPoint,
-    bool _withUpdate
-  ) external;
+  function setPool(uint256 _pid, uint256 _newAllocPoint, bool _withUpdate) external;
 
   function setRewardPerSecond(uint256 _newRewardPerSecond, bool _withUpdate) external;
 

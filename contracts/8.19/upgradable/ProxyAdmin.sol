@@ -253,11 +253,7 @@ library Address {
    *
    * _Available since v3.1._
    */
-  function functionCall(
-    address target,
-    bytes memory data,
-    string memory errorMessage
-  ) internal returns (bytes memory) {
+  function functionCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
     return functionCallWithValue(target, data, 0, errorMessage);
   }
 
@@ -272,11 +268,7 @@ library Address {
    *
    * _Available since v3.1._
    */
-  function functionCallWithValue(
-    address target,
-    bytes memory data,
-    uint256 value
-  ) internal returns (bytes memory) {
+  function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) {
     return functionCallWithValue(target, data, value, "Address: low-level call with value failed");
   }
 
@@ -442,11 +434,7 @@ contract AdminUpgradeabilityProxy is UpgradeabilityProxy {
    * https://solidity.readthedocs.io/en/v0.4.24/abi-spec.html#function-selector-and-argument-encoding.
    * This parameter is optional, if no data is given the initialization call to proxied contract will be skipped.
    */
-  constructor(
-    address _logic,
-    address __admin,
-    bytes memory _data
-  ) UpgradeabilityProxy(_logic, _data) {
+  constructor(address _logic, address __admin, bytes memory _data) UpgradeabilityProxy(_logic, _data) {
     assert(ADMIN_SLOT == bytes32(uint256(keccak256("eip1967.proxy.admin")) - 1));
     _setAdmin(__admin);
   }

@@ -86,11 +86,7 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @param _pid The index of the pool. See `poolInfo`.
   /// @param _user The beneficary address of the deposit.
   /// @param _newAmount new staking amount from MiniFL.
-  function onDeposit(
-    uint256 _pid,
-    address _user,
-    uint256 _newAmount
-  ) external override onlyMiniFL {
+  function onDeposit(uint256 _pid, address _user, uint256 _newAmount) external override onlyMiniFL {
     PoolInfo memory pool = _updatePool(_pid);
     UserInfo storage user = userInfo[_pid][_user];
 
@@ -118,11 +114,7 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @param _pid The index of the pool. See `poolInfo`.
   /// @param _user Withdraw from who?
   /// @param _newAmount new staking amount from MiniFL.
-  function onWithdraw(
-    uint256 _pid,
-    address _user,
-    uint256 _newAmount
-  ) external override onlyMiniFL {
+  function onWithdraw(uint256 _pid, address _user, uint256 _newAmount) external override onlyMiniFL {
     PoolInfo memory pool = _updatePool(_pid);
     UserInfo storage user = userInfo[_pid][_user];
 
@@ -200,11 +192,7 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @param _pid The Pool ID on MiniFL
   /// @param _allocPoint The new allocation point
   /// @param _withUpdate If true, do mass update pools
-  function addPool(
-    uint256 _pid,
-    uint256 _allocPoint,
-    bool _withUpdate
-  ) external onlyOwner {
+  function addPool(uint256 _pid, uint256 _allocPoint, bool _withUpdate) external onlyOwner {
     if (poolInfo[_pid].lastRewardTime != 0) revert Rewarder1_PoolExisted();
 
     if (_withUpdate) _massUpdatePools();
@@ -225,11 +213,7 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @param _pid The index of the pool. See `poolInfo`.
   /// @param _newAllocPoint The allocation point of the pool.
   /// @param _withUpdate If true, do mass update pools
-  function setPool(
-    uint256 _pid,
-    uint256 _newAllocPoint,
-    bool _withUpdate
-  ) external onlyOwner {
+  function setPool(uint256 _pid, uint256 _newAllocPoint, bool _withUpdate) external onlyOwner {
     if (poolInfo[_pid].lastRewardTime == 0) revert Rewarder1_PoolNotExisted();
     if (_withUpdate) _massUpdatePools();
     totalAllocPoint = totalAllocPoint - poolInfo[_pid].allocPoint + _newAllocPoint;

@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: MIT
 /**
-  ∩~~~~∩ 
-  ξ ･×･ ξ 
-  ξ　~　ξ 
-  ξ　　 ξ 
-  ξ　　 “~～~～〇 
-  ξ　　　　　　 ξ 
-  ξ ξ ξ~～~ξ ξ ξ 
-　 ξ_ξξ_ξ　ξ_ξξ_ξ
-Alpaca Fin Corporation
-Ported to Solidity from: https://github.com/curvefi/curve-dao-contracts/blob/master/contracts/VotingEscrow.vy
-**/
+ * ∩~~~~∩
+ *   ξ ･×･ ξ
+ *   ξ　~　ξ
+ *   ξ　　 ξ
+ *   ξ　　 “~～~～〇
+ *   ξ　　　　　　 ξ
+ *   ξ ξ ξ~～~ξ ξ ξ
+ * 　 ξ_ξξ_ξ　ξ_ξξ_ξ
+ * Alpaca Fin Corporation
+ * Ported to Solidity from: https://github.com/curvefi/curve-dao-contracts/blob/master/contracts/VotingEscrow.vy
+ *
+ */
 
 pragma solidity 0.8.10;
 
@@ -78,7 +79,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   uint256 public constant WEEK = 7 days;
   // MAX_LOCK 53 weeks - 1 seconds
   uint256 public constant MAX_LOCK = (53 * WEEK) - 1;
-  uint256 public constant MULTIPLIER = 10**18;
+  uint256 public constant MULTIPLIER = 10 ** 18;
 
   // Token to be locked (ALPACA)
   address public token;
@@ -210,11 +211,7 @@ contract xALPACA is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeabl
   /// @param _address User's wallet address. Only global if 0x0
   /// @param _prevLocked User's previous locked balance and end lock time
   /// @param _newLocked User's new locked balance and end lock time
-  function _checkpoint(
-    address _address,
-    LockedBalance memory _prevLocked,
-    LockedBalance memory _newLocked
-  ) internal {
+  function _checkpoint(address _address, LockedBalance memory _prevLocked, LockedBalance memory _newLocked) internal {
     Point memory _userPrevPoint = Point({ slope: 0, bias: 0, timestamp: 0, blockNumber: 0 });
     Point memory _userNewPoint = Point({ slope: 0, bias: 0, timestamp: 0, blockNumber: 0 });
 
