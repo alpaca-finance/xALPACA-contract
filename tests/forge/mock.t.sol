@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-contract MockTest {
-  constructor() {}
+import {BaseTest} from "./base/BaseTest.sol";
 
-  function test_ShouldWork() external {}
+contract MockTest is BaseTest {
+    function test_ShouldWork() external {
+        assertEq(uint(1), uint(1));
+    }
 }
