@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 /**
-  ∩~~~~∩ 
-  ξ ･×･ ξ 
-  ξ　~　ξ 
-  ξ　　 ξ 
-  ξ　　 “~～~～〇 
-  ξ　　　　　　 ξ 
-  ξ ξ ξ~～~ξ ξ ξ 
-　 ξ_ξξ_ξ　ξ_ξξ_ξ
-Alpaca Fin Corporation
-*/
+ * ∩~~~~∩
+ *   ξ ･×･ ξ
+ *   ξ　~　ξ
+ *   ξ　　 ξ
+ *   ξ　　 “~～~～〇
+ *   ξ　　　　　　 ξ
+ *   ξ ξ ξ~～~ξ ξ ξ
+ * 　 ξ_ξξ_ξ　ξ_ξξ_ξ
+ * Alpaca Fin Corporation
+ */
 
 pragma solidity 0.8.10;
 
@@ -36,11 +36,7 @@ contract ProxyToken is IProxyToken, ERC20Upgradeable, OwnableUpgradeable {
     _;
   }
 
-  function initialize(
-    string calldata _name,
-    string calldata _symbol,
-    address _timelock
-  ) external initializer {
+  function initialize(string calldata _name, string calldata _symbol, address _timelock) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ERC20Upgradeable.__ERC20_init(_name, _symbol);
     timelock = _timelock;
@@ -70,11 +66,7 @@ contract ProxyToken is IProxyToken, ERC20Upgradeable, OwnableUpgradeable {
     return true;
   }
 
-  function transferFrom(
-    address from,
-    address to,
-    uint256 amount
-  ) public override returns (bool) {
+  function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
     require(okHolders[from], "proxyToken::transferFrom:: unapproved holder in from");
     require(okHolders[to], "proxyToken::transferFrom:: unapproved holder in to");
     _transfer(from, to, amount);

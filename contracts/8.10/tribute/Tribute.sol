@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 /**
-  ∩~~~~∩ 
-  ξ ･×･ ξ 
-  ξ　~　ξ 
-  ξ　　 ξ 
-  ξ　　 “~～~～〇 
-  ξ　　　　　　 ξ 
-  ξ ξ ξ~～~ξ ξ ξ 
-　 ξ_ξξ_ξ　ξ_ξξ_ξ
-Alpaca Fin Corporation
-*/
+ * ∩~~~~∩
+ *   ξ ･×･ ξ
+ *   ξ　~　ξ
+ *   ξ　　 ξ
+ *   ξ　　 “~～~～〇
+ *   ξ　　　　　　 ξ
+ *   ξ ξ ξ~～~ξ ξ ξ
+ * 　 ξ_ξξ_ξ　ξ_ξξ_ξ
+ * Alpaca Fin Corporation
+ */
 
 pragma solidity 0.8.10;
 
@@ -85,8 +85,9 @@ contract Tribute is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeabl
     if (isClaimed(_timestamp, _index)) revert Tribute_Claimed();
     // Verify the merkle proof
     bytes32 _node = keccak256(abi.encodePacked(_index, _user, _amount));
-    if (!MerkleProofUpgradeable.verify(_merkleProof, rootStorage.weeklyMerkleRoot(_timestamp), _node))
+    if (!MerkleProofUpgradeable.verify(_merkleProof, rootStorage.weeklyMerkleRoot(_timestamp), _node)) {
       revert Tribute_InvalidMerkleProof();
+    }
 
     // Effect
     // Send the rewards

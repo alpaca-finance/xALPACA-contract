@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 /**
-  ∩~~~~∩ 
-  ξ ･×･ ξ 
-  ξ　~　ξ 
-  ξ　　 ξ 
-  ξ　　 “~～~～〇 
-  ξ　　　　　　 ξ 
-  ξ ξ ξ~～~ξ ξ ξ 
-　 ξ_ξξ_ξ　ξ_ξξ_ξ
-Alpaca Fin Corporation
-*/
+ * ∩~~~~∩
+ *   ξ ･×･ ξ
+ *   ξ　~　ξ
+ *   ξ　　 ξ
+ *   ξ　　 “~～~～〇
+ *   ξ　　　　　　 ξ
+ *   ξ ξ ξ~～~ξ ξ ξ
+ * 　 ξ_ξξ_ξ　ξ_ξξ_ξ
+ * Alpaca Fin Corporation
+ */
 
 pragma solidity 0.8.10;
 
@@ -35,11 +35,7 @@ contract MockMiniFL is IMiniFL {
   }
 
   // Deposit Staking tokens to FairLaunchToken for ALPACA allocation.
-  function deposit(
-    address _for,
-    uint256 _pid,
-    uint256 _amount
-  ) external override {
+  function deposit(address _for, uint256 _pid, uint256 _amount) external override {
     _pid = 0; // silence warning
 
     SafeToken.safeApprove(proxyToken, _for, _amount);
@@ -47,11 +43,7 @@ contract MockMiniFL is IMiniFL {
     SafeToken.safeApprove(proxyToken, _for, 0);
   }
 
-  function withdraw(
-    address _for,
-    uint256 _pid,
-    uint256 _amount
-  ) external override {
+  function withdraw(address _for, uint256 _pid, uint256 _amount) external override {
     _pid = 0; // silence warning
     _amount = 0; // silence warning
 

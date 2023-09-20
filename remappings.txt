@@ -1,1 +1,1 @@
-@openzeppelin/contracts-upgradeable=node_modules/@openzeppelin/contracts-upgradeable
+@openzeppelin/=node_modules/@openzeppelin

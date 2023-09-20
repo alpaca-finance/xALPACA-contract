@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: MIT
 /**
-  ∩~~~~∩ 
-  ξ ･×･ ξ 
-  ξ　~　ξ 
-  ξ　　 ξ 
-  ξ　　 “~～~～〇 
-  ξ　　　　　　 ξ 
-  ξ ξ ξ~～~ξ ξ ξ 
-　 ξ_ξξ_ξ　ξ_ξξ_ξ
-Alpaca Fin Corporation
-**/
+ * ∩~~~~∩
+ *   ξ ･×･ ξ
+ *   ξ　~　ξ
+ *   ξ　　 ξ
+ *   ξ　　 “~～~～〇
+ *   ξ　　　　　　 ξ
+ *   ξ ξ ξ~～~ξ ξ ξ
+ * 　 ξ_ξξ_ξ　ξ_ξξ_ξ
+ * Alpaca Fin Corporation
+ *
+ */
 
 pragma solidity 0.8.10;
 
@@ -22,6 +23,7 @@ import "../SafeToken.sol";
 // solhint-disable-next-line contract-name-camelcase
 contract MockGrassHouse is IGrassHouse {
   using SafeToken for address;
+
   address public override rewardToken;
   uint256 public rewardPerClaim;
 
