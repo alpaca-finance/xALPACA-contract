@@ -4,12 +4,16 @@ pragma solidity 0.8.19;
 import { DSTest } from "./DSTest.sol";
 
 import "../utils/Components.sol";
-import { ProxyAdminLike } from "../interfaces/ProxyAdminLike.sol";
-import { MockERC20 } from "../mocks/MockERC20.sol";
-import { MiniFL } from "../../../contracts/8.19/miniFL/MiniFL.sol";
-import { Rewarder } from "../../../contracts/8.19/miniFL/Rewarder.sol";
 
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+
+import { ProxyAdminLike } from "../interfaces/ProxyAdminLike.sol";
+
+import { MockERC20 } from "../mocks/MockERC20.sol";
+
+import { MiniFL } from "@xalpacav2/miniFL/MiniFL.sol";
+import { Rewarder } from "@xalpacav2/miniFL/Rewarder.sol";
+import { xALPACAv2 } from "@xalpacav2/xALPACAv2.sol";
 
 contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
   address internal constant DEPLOYER = address(0x01);
@@ -30,6 +34,7 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
   ProxyAdminLike internal proxyAdmin;
 
   MiniFL internal miniFL;
+  xALPACAv2 internal xALPACA;
   uint256 constant maxAlpacaPerSecond = 1000 ether;
 
   constructor() {
@@ -72,6 +77,7 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
     usdc.mint(BOB, normalizeEther(1000 ether, usdcDecimal));
 
     miniFL = deployMiniFL(address(alpaca), maxAlpacaPerSecond);
+    xALPACA = deployxALPACAv2(address(alpaca));
   }
 
   function deployMockErc20(
@@ -81,6 +87,13 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
   ) internal returns (MockERC20 mockERC20) {
     mockERC20 = new MockERC20(name, symbol, decimals);
     vm.label(address(mockERC20), symbol);
+  }
+
+  function deployxALPACAv2(address _token) internal returns (xALPACAv2) {
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/xALPACAv2.sol/xALPACAv2.json"));
+    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(address)")), _token);
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer);
+    return xALPACAv2(_proxy);
   }
 
   function deployMiniFL(address _rewardToken, uint256 _rewardPerSec) internal returns (MiniFL) {
@@ -145,6 +158,6 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
   }
 
   function normalizeEther(uint256 _ether, uint256 _decimal) internal pure returns (uint256 _normalizedEther) {
-    _normalizedEther = _ether / 10 ** (18 - _decimal);
+    _normalizedEther = _ether / 10**(18 - _decimal);
   }
 }
