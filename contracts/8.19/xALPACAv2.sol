@@ -71,7 +71,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   }
 
   /// @dev Initiate withdrawal process via delayed unlocking
-  function unlock(uint256 _amount) external returns (uint256 _unlockId) {
+  function unlock(uint256 _amount) external returns (uint256 _unlockRequestId) {
     // check
     uint256 _userLockedAmount = userLockAmounts[msg.sender];
     if (_userLockedAmount < _amount || _amount == 0) {
