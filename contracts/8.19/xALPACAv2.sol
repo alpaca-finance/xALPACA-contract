@@ -24,6 +24,8 @@ import { SafeToken } from "./SafeToken.sol";
 // solhint-disable not-rely-on-time
 // solhint-disable-next-line contract-name-camelcase
 contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
+  error xALPACAv2_InvalidAmount();
+
   using SafeToken for address;
 
   // Token to be locked (ALPACA)
@@ -32,15 +34,27 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   // Delay period for withdrawal (in seconds)
   uint256 public delayUnlockTime;
 
+  // Total amount of token locked
   uint256 public totalLocked;
 
   mapping(address => uint256) public userLockAmounts;
+
+  struct UnlockRequest {
+    uint256 amount;
+    uint64 unlockTimestamp;
+    uint8 status; // 0 = unclaimed, 1 = claimed, 2 = canceled
+  }
+
+  mapping(address => UnlockRequest[]) public userUnlockRequests;
 
   constructor() {
     _disableInitializers();
   }
 
   function initialize(address _token) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     // sanity check
     IBEP20(_token).decimals();
 
@@ -49,8 +63,6 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
   /// @dev lock ALPACA to receive voting power
   function lock(uint256 _amount) external {
-    // check
-
     // effect
     userLockAmounts[msg.sender] += _amount;
     totalLocked += _amount;
@@ -59,17 +71,49 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   }
 
   /// @dev Initiate withdrawal process via delayed unlocking
-  function unlock(uint256 _amount) external returns (uint256 _unlockId) {}
+  function unlock(uint256 _amount) external returns (uint256 _unlockId) {
+    // check
+    uint256 _userLockedAmount = userLockAmounts[msg.sender];
+    if (_userLockedAmount < _amount || _amount == 0) {
+      revert xALPACAv2_InvalidAmount();
+    }
+
+    // effect
+    unchecked {
+      userLockAmounts[msg.sender] -= _amount;
+      totalLocked -= _amount;
+    }
+
+    UnlockRequest memory _request = UnlockRequest({
+      amount: _amount,
+      unlockTimestamp: uint64(block.timestamp + delayUnlockTime),
+      status: 0
+    });
+
+    UnlockRequest[] storage _userRequests = userUnlockRequests[msg.sender];
+
+    uint256 _requestId = _userRequests.length;
+
+    _userRequests.push(_request);
+
+    return _requestId;
+  }
 
   /// @dev Claim the unlocked ALPACA
-  function withdraw(uint256 _unlockId) external {}
+  function withdraw(uint256 _unlockRequestId) external {}
 
   /// @dev Withdraw without delayed unlocking
   function emergencyWithdraw(uint256 _amount) external {}
 
   /// @dev Reverse the withdrawal unlocking process
-  function cancelUnlock(uint256 _unlockId) external {}
+  function cancelUnlock(uint256 _unlockRequestId) external {}
 
   /// @dev Owner set the delayed unlock time
-  function setUnlockPeriod(uint256 _newUnlockSecond) external onlyOwner {}
+  function setDelayUnlockTime(uint256 _newDelayUnlockTime) external onlyOwner {
+    delayUnlockTime = _newDelayUnlockTime;
+  }
+
+  function userUnlockRequestsLastId(address _user) external view returns (uint256) {
+    return userUnlockRequests[_user].length;
+  }
 }
