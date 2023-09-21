@@ -40,6 +40,7 @@ contract xALPACAv2_UnlockTest is BaseTest {
 
     xALPACA.unlock(4 ether);
     assertEq(xALPACA.totalLocked(), 6 ether);
+    assertEq(xALPACA.userLockAmounts(ALICE), 6 ether);
     uint256 _firstUnlockTimestamp = block.timestamp + DELAY_UNLOCK_TIME;
 
     // 1000 seconds pass
@@ -47,6 +48,7 @@ contract xALPACAv2_UnlockTest is BaseTest {
 
     xALPACA.unlock(6 ether);
     assertEq(xALPACA.totalLocked(), 0 ether);
+    assertEq(xALPACA.userLockAmounts(ALICE), 0 ether);
 
     uint256 _secondUnlockTimestamp = block.timestamp + DELAY_UNLOCK_TIME;
 
