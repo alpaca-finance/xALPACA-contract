@@ -25,6 +25,7 @@ import { SafeToken } from "./SafeToken.sol";
 // solhint-disable-next-line contract-name-camelcase
 contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   error xALPACAv2_InvalidAmount();
+  error xALPACAv2_InvalidStatus();
 
   using SafeToken for address;
 
@@ -110,7 +111,24 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   function emergencyWithdraw(uint256 _amount) external {}
 
   /// @dev Reverse the withdrawal unlocking process
-  function cancelUnlock(uint256 _unlockRequestId) external {}
+  function cancelUnlock(uint256 _unlockRequestId) external {
+    UnlockRequest storage request = userUnlockRequests[msg.sender][_unlockRequestId];
+
+    // check
+    // revert if it's already claimed or canceled
+    if (request.status != 0) {
+      revert xALPACAv2_InvalidStatus();
+    }
+
+    // effect
+    totalLocked += request.amount;
+    userLockAmounts[msg.sender] += request.amount;
+    // todo: change to enum
+    request.status = 2;
+
+    // interaction
+    // todo: deposit back to miniFL
+  }
 
   /// @dev Owner set the delayed unlock time
   function setDelayUnlockTime(uint256 _newDelayUnlockTime) external onlyOwner {
