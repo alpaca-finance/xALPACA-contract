@@ -68,6 +68,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     totalLocked += _amount;
     // interaction
     token.safeTransferFrom(msg.sender, address(this), _amount);
+    // todo: deposit to miniFL on behalf of user
   }
 
   /// @dev Initiate withdrawal process via delayed unlocking
@@ -95,6 +96,9 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     uint256 _requestId = _userRequests.length;
 
     _userRequests.push(_request);
+
+    // interaction
+    // todo: withdraw from miniFL
 
     return _requestId;
   }

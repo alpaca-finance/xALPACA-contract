@@ -40,20 +40,26 @@ contract xALPACAv2_UnlockTest is BaseTest {
 
     xALPACA.unlock(4 ether);
     assertEq(xALPACA.totalLocked(), 6 ether);
+    uint256 _firstUnlockTimestamp = block.timestamp + DELAY_UNLOCK_TIME;
+
+    // 1000 seconds pass
+    skip(1000);
 
     xALPACA.unlock(6 ether);
     assertEq(xALPACA.totalLocked(), 0 ether);
+
+    uint256 _secondUnlockTimestamp = block.timestamp + DELAY_UNLOCK_TIME;
 
     assertEq(xALPACA.userUnlockRequestsLastId(ALICE), 2);
 
     (uint256 _amount, uint64 _unlockTimestamp, uint8 _status) = xALPACA.userUnlockRequests(ALICE, 0);
     assertEq(_amount, 4 ether);
-    assertEq(_unlockTimestamp, block.timestamp + DELAY_UNLOCK_TIME);
+    assertEq(_unlockTimestamp, _firstUnlockTimestamp);
     assertEq(_status, 0);
 
     (_amount, _unlockTimestamp, _status) = xALPACA.userUnlockRequests(ALICE, 1);
     assertEq(_amount, 6 ether);
-    assertEq(_unlockTimestamp, block.timestamp + DELAY_UNLOCK_TIME);
+    assertEq(_unlockTimestamp, _secondUnlockTimestamp);
     assertEq(_status, 0);
     vm.stopPrank();
   }
