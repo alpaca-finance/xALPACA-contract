@@ -161,7 +161,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     }
     // effect
     uint256 _earlyWithdrawalFee = (request.amount * 50) / 10000; // todo: change this to formula
-    uint256 _amountToUser = request.amount - feeReserve;
+    uint256 _amountToUser = request.amount - _earlyWithdrawalFee;
 
     request.status = 1; // withdrawn
     feeReserve += _earlyWithdrawalFee;

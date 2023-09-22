@@ -29,22 +29,6 @@ contract xALPACAv2_WithdrawTest is BaseTest {
     vm.stopPrank();
   }
 
-  function testCorrectness_WhenUserWithdrawAfterUnlockTimePassed_ShouldWork() external {
-    vm.startPrank(ALICE);
-
-    alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(10 ether);
-
-    uint256 _unlockId = xALPACA.unlock(4 ether);
-
-    skip(DELAY_UNLOCK_TIME);
-
-    xALPACA.withdraw(_unlockId);
-
-    assertEq(alpaca.balanceOf(ALICE), 94 ether); // start at 100, lock 10, unlock 4, result in 94
-    vm.stopPrank();
-  }
-
   function testRevert_WhenUserTryToWithdrawAgain_ShouldRevert() external {
     vm.startPrank(ALICE);
 
@@ -78,6 +62,48 @@ contract xALPACAv2_WithdrawTest is BaseTest {
     vm.expectRevert(abi.encodeWithSelector(xALPACAv2.xALPACAv2_InvalidStatus.selector));
     xALPACA.withdraw(_unlockId);
 
+    vm.stopPrank();
+  }
+
+  function testCorrectness_WhenUserWithdrawAfterUnlockTimePassed_ShouldWork() external {
+    uint256 _lockAmount = 10 ether;
+    uint256 _unlockAmount = 4 ether;
+
+    uint256 _startingBalance = alpaca.balanceOf(ALICE);
+    vm.startPrank(ALICE);
+
+    alpaca.approve(address(xALPACA), type(uint256).max);
+    xALPACA.lock(_lockAmount);
+
+    uint256 _unlockId = xALPACA.unlock(_unlockAmount);
+
+    skip(DELAY_UNLOCK_TIME);
+
+    xALPACA.withdraw(_unlockId);
+
+    assertEq(alpaca.balanceOf(ALICE), _startingBalance - _lockAmount + _unlockAmount); // start at 100, lock 10, unlock 4, result in 94
+    vm.stopPrank();
+  }
+
+  function testCorrectness_WhenUserEarlyWithdraw_UserShouldPayFee() external {
+    uint256 _lockAmount = 10 ether;
+    uint256 _unlockAmount = 4 ether;
+
+    uint256 _startingBalance = alpaca.balanceOf(ALICE);
+    vm.startPrank(ALICE);
+
+    alpaca.approve(address(xALPACA), type(uint256).max);
+    xALPACA.lock(_lockAmount);
+
+    uint256 _unlockId = xALPACA.unlock(_unlockAmount);
+
+    skip(1000);
+
+    xALPACA.earlyWithdraw(_unlockId);
+
+    uint256 _fee = (_unlockAmount * 50) / 10000; //todo: get actual calculation
+
+    assertEq(alpaca.balanceOf(ALICE), _startingBalance - _lockAmount + _unlockAmount - _fee); // start at 100, lock 10, unlock 4, result in 94
     vm.stopPrank();
   }
 }
