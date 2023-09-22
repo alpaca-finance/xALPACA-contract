@@ -65,4 +65,20 @@ contract xALPACAv2_UnlockTest is BaseTest {
     assertEq(_status, 0);
     vm.stopPrank();
   }
+
+  function testCorrectness_WhenBreakerIsOn_UserShouldGetToken() external {
+    vm.startPrank(ALICE);
+
+    alpaca.approve(address(xALPACA), type(uint256).max);
+    xALPACA.lock(10 ether);
+    vm.stopPrank();
+
+    xALPACA.setBreaker(1);
+
+    vm.startPrank(ALICE);
+    xALPACA.unlock(4 ether);
+
+    assertEq(alpaca.balanceOf(ALICE), 94 ether); // start at 100, lock 10, unlock 4, result in 94
+    vm.stopPrank();
+  }
 }
