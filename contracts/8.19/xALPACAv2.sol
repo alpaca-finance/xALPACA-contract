@@ -26,6 +26,7 @@ import { SafeToken } from "./SafeToken.sol";
 contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   error xALPACAv2_InvalidAmount();
   error xALPACAv2_InvalidStatus();
+  error xALPACAv2_UnlockTimeUnreached();
 
   using SafeToken for address;
 
@@ -105,7 +106,26 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   }
 
   /// @dev Claim the unlocked ALPACA
-  function withdraw(uint256 _unlockRequestId) external {}
+  function withdraw(uint256 _unlockRequestId) external {
+    UnlockRequest storage request = userUnlockRequests[msg.sender][_unlockRequestId];
+
+    // check
+    // revert if it's already claimed or canceled
+    if (request.status != 0) {
+      revert xALPACAv2_InvalidStatus();
+    }
+
+    // revert if it's not unlock time yet
+    if (request.unlockTimestamp > block.timestamp) {
+      revert xALPACAv2_UnlockTimeUnreached();
+    }
+
+    // effect
+    request.status = 1; // withdrawn
+
+    // interaction
+    token.safeTransfer(msg.sender, request.amount);
+  }
 
   /// @dev Withdraw without delayed unlocking
   function emergencyWithdraw(uint256 _amount) external {}
@@ -123,8 +143,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     // effect
     totalLocked += request.amount;
     userLockAmounts[msg.sender] += request.amount;
-    // todo: change to enum
-    request.status = 2;
+    request.status = 2; // canceled
 
     // interaction
     // todo: deposit back to miniFL

@@ -7,7 +7,7 @@ import "../utils/Components.sol";
 
 import { xALPACAv2 } from "@xalpacav2/xALPACAv2.sol";
 
-contract xALPACAv2_CancelUnlockTest is BaseTest {
+contract xALPACAv2_WithdrawTest is BaseTest {
   uint256 public constant DELAY_UNLOCK_TIME = 21 days;
 
   function setUp() public {
@@ -17,7 +17,53 @@ contract xALPACAv2_CancelUnlockTest is BaseTest {
     xALPACA.setDelayUnlockTime(DELAY_UNLOCK_TIME);
   }
 
-  function testRevert_WhenUserWantToCancelClaimedUnlock_ShouldRevert() external {
+  function testRevert_WhenUserWantToWithdrawBeforeUnlockCompleted_ShouldRevert() external {
+    vm.startPrank(ALICE);
+
+    alpaca.approve(address(xALPACA), type(uint256).max);
+    xALPACA.lock(10 ether);
+    uint256 _unlockId = xALPACA.unlock(4 ether);
+
+    vm.expectRevert(abi.encodeWithSelector(xALPACAv2.xALPACAv2_UnlockTimeUnreached.selector));
+    xALPACA.withdraw(_unlockId);
+    vm.stopPrank();
+  }
+
+  function testCorrectness_WhenUserWithdrawAfterUnlockTimePassed_ShouldWork() external {
+    vm.startPrank(ALICE);
+
+    alpaca.approve(address(xALPACA), type(uint256).max);
+    xALPACA.lock(10 ether);
+
+    uint256 _unlockId = xALPACA.unlock(4 ether);
+
+    skip(DELAY_UNLOCK_TIME);
+
+    xALPACA.withdraw(_unlockId);
+
+    assertEq(alpaca.balanceOf(ALICE), 94 ether); // start at 100, lock 10, unlock 4, result in 94
+    vm.stopPrank();
+  }
+
+  function testRevert_WhenUserTryToWithdrawAgain_ShouldRevert() external {
+    vm.startPrank(ALICE);
+
+    alpaca.approve(address(xALPACA), type(uint256).max);
+    xALPACA.lock(10 ether);
+
+    uint256 _unlockId = xALPACA.unlock(4 ether);
+
+    skip(DELAY_UNLOCK_TIME);
+
+    xALPACA.withdraw(_unlockId);
+
+    vm.expectRevert(abi.encodeWithSelector(xALPACAv2.xALPACAv2_InvalidStatus.selector));
+    xALPACA.withdraw(_unlockId);
+
+    vm.stopPrank();
+  }
+
+  function testRevert_WhenUserHasCanceledButTryToWithdraw_ShouldRevert() external {
     vm.startPrank(ALICE);
 
     alpaca.approve(address(xALPACA), type(uint256).max);
@@ -31,42 +77,6 @@ contract xALPACAv2_CancelUnlockTest is BaseTest {
 
     vm.expectRevert(abi.encodeWithSelector(xALPACAv2.xALPACAv2_InvalidStatus.selector));
     xALPACA.withdraw(_unlockId);
-
-    vm.stopPrank();
-  }
-
-  function testRevert_WhenUserWantToDoulbeCancel_ShouldRevert() external {
-    vm.startPrank(ALICE);
-
-    alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(10 ether);
-
-    uint256 _unlockId = xALPACA.unlock(4 ether);
-
-    skip(DELAY_UNLOCK_TIME);
-
-    xALPACA.cancelUnlock(_unlockId);
-
-    vm.expectRevert(abi.encodeWithSelector(xALPACAv2.xALPACAv2_InvalidStatus.selector));
-    xALPACA.cancelUnlock(_unlockId);
-
-    vm.stopPrank();
-  }
-
-  function testCorrectness_WhenUserCancel_UnclaimedUnlock_ShouldWork() external {
-    vm.startPrank(ALICE);
-
-    alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(10 ether);
-
-    uint256 _unlockId = xALPACA.unlock(4 ether);
-
-    xALPACA.cancelUnlock(_unlockId);
-    (, , uint8 _status) = xALPACA.userUnlockRequests(ALICE, _unlockId);
-
-    assertEq(_status, 2);
-    assertEq(xALPACA.totalLocked(), 10 ether);
-    assertEq(xALPACA.userLockAmounts(ALICE), 10 ether);
 
     vm.stopPrank();
   }
