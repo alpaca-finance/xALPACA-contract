@@ -33,6 +33,11 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
   //--------- Events ------------//
   event LogSetBreaker(uint256 _previousBreaker, uint256 _breaker);
+  event LogSetDelayUnlockTime(uint256 _previousDelay, uint256 _newDelay);
+  event LogLock(address indexed _user, uint256 _amount);
+  event LogUnlock(address indexed _user, uint256 _unlockRequestId);
+  event LogCancelUnlock(address indexed _user, uint256 _unlockRequestId);
+  event LogWithdraw(address indexed _user, uint256 _amount, uint256 _withdrawalFee);
 
   //--------- States ------------//
   // Token to be locked (ALPACA)
@@ -46,6 +51,9 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
   // Flag to allow emergency withdraw
   uint256 public breaker;
+
+  // Protocol Early Withdrawal Fee
+  uint256 public feeReserve;
 
   mapping(address => uint256) public userLockAmounts;
 
@@ -79,6 +87,8 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     // interaction
     token.safeTransferFrom(msg.sender, address(this), _amount);
     // todo: deposit to miniFL on behalf of user
+
+    emit LogLock(msg.sender, _amount);
   }
 
   /// @dev Initiate withdrawal process via delayed unlocking
@@ -109,7 +119,10 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
       _userRequests.push(_request);
       // interaction
       // todo: withdraw from miniFL
+
+      emit LogUnlock(msg.sender, _unlockRequestId);
     } else {
+      // todo: withdraw from miniFL
       token.safeTransfer(msg.sender, _amount);
     }
   }
@@ -134,6 +147,28 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     // interaction
     token.safeTransfer(msg.sender, request.amount);
+
+    emit LogWithdraw(msg.sender, request.amount, 0);
+  }
+
+  function earlyWithdraw(uint256 _unlockRequestId) external {
+    UnlockRequest storage request = userUnlockRequests[msg.sender][_unlockRequestId];
+
+    // check
+    // revert if it's already claimed or canceled
+    if (request.status != 0) {
+      revert xALPACAv2_InvalidStatus();
+    }
+    // effect
+    uint256 _earlyWithdrawalFee = (request.amount * 50) / 10000; // todo: change this to formula
+    uint256 _amountToUser = request.amount - feeReserve;
+
+    request.status = 1; // withdrawn
+    feeReserve += _earlyWithdrawalFee;
+
+    // interaction
+    token.safeTransfer(msg.sender, _amountToUser);
+    emit LogWithdraw(msg.sender, _amountToUser, feeReserve);
   }
 
   /// @dev Reverse the withdrawal unlocking process
@@ -153,12 +188,15 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     // interaction
     // todo: deposit back to miniFL
+
+    emit LogUnlock(msg.sender, _unlockRequestId);
   }
 
   // -------- Privilege Functions -----//
 
   /// @dev Owner set the delayed unlock time
   function setDelayUnlockTime(uint256 _newDelayUnlockTime) external onlyOwner {
+    emit LogSetDelayUnlockTime(delayUnlockTime, _newDelayUnlockTime);
     delayUnlockTime = _newDelayUnlockTime;
   }
 
