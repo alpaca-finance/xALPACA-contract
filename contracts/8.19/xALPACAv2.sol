@@ -44,6 +44,14 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   event LogSetEarlyWithdrawFeeBpsPerDay(uint256 _previousFee, uint256 _newFee);
   event LogWithdrawReserve(address indexed _to, uint256 _amount);
 
+  //--------- Struct ------------//
+
+  struct UnlockRequest {
+    uint256 amount;
+    uint64 unlockTimestamp;
+    uint8 status; // 0 = unclaimed, 1 = claimed, 2 = canceled
+  }
+
   //--------- States ------------//
   // Token to be locked (ALPACA)
   address public token;
@@ -63,14 +71,10 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   // penalty per sec
   uint256 public earlyWithdrawFeeBpsPerDay;
 
+  // lock amount of each user
   mapping(address => uint256) public userLockAmounts;
 
-  struct UnlockRequest {
-    uint256 amount;
-    uint64 unlockTimestamp;
-    uint8 status; // 0 = unclaimed, 1 = claimed, 2 = canceled
-  }
-
+  // unlock request of each user
   mapping(address => UnlockRequest[]) public userUnlockRequests;
 
   constructor() {
