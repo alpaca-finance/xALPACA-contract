@@ -32,6 +32,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   error xALPACAv2_UnlockTimeUnreached();
   error xALPACAv2_UnlockTimeReached();
   error xALPACAv2_InvalidBreakerValue();
+  error xALPACAv2_InvalidAddress();
 
   //--------- Events ------------//
   event LogSetBreaker(uint256 _previousBreaker, uint256 _breaker);
@@ -41,6 +42,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   event LogCancelUnlock(address indexed _user, uint256 _unlockRequestId);
   event LogWithdraw(address indexed _user, uint256 _amount, uint256 _withdrawalFee);
   event LogSetEarlyWithdrawFeeBpsPerDay(uint256 _previousFee, uint256 _newFee);
+  event LogWithdrawReserve(address indexed _to, uint256 _amount);
 
   //--------- States ------------//
   // Token to be locked (ALPACA)
@@ -218,6 +220,30 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   function setDelayUnlockTime(uint256 _newDelayUnlockTime) external onlyOwner {
     emit LogSetDelayUnlockTime(delayUnlockTime, _newDelayUnlockTime);
     delayUnlockTime = _newDelayUnlockTime;
+  }
+
+  /// @notice Owner withdraw early withdrawal fee
+  /// @param _to Destination address
+  /// @param _amount Amount to withdraw
+  function withdrawReserve(address _to, uint256 _amount) external onlyOwner {
+    // check
+    if (_to == address(0) || _to == address(this)) {
+      revert xALPACAv2_InvalidAddress();
+    }
+
+    if (feeReserve < _amount) {
+      revert xALPACAv2_InvalidAmount();
+    }
+
+    // effect
+    unchecked {
+      feeReserve -= _amount;
+    }
+
+    // interaction
+    token.safeTransfer(_to, _amount);
+
+    emit LogWithdrawReserve(_to, _amount);
   }
 
   /// @notice Owner set early withdraw fee bps per sec
