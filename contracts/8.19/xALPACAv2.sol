@@ -85,7 +85,8 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     token = _token;
   }
 
-  /// @dev lock ALPACA to receive voting power
+  /// @notice Lock token to receive voting power
+  /// @param _amount The amount of token to be locked
   function lock(uint256 _amount) external {
     // effect
     userLockAmounts[msg.sender] += _amount;
@@ -97,7 +98,8 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     emit LogLock(msg.sender, _amount);
   }
 
-  /// @dev Initiate withdrawal process via delayed unlocking
+  /// @notice Initiate withdrawal process via delayed unlocking
+  /// @param _amount The amount to unlock
   function unlock(uint256 _amount) external returns (uint256 _unlockRequestId) {
     // check
     uint256 _userLockedAmount = userLockAmounts[msg.sender];
@@ -133,7 +135,8 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     }
   }
 
-  /// @dev Claim the unlocked ALPACA
+  /// @notice Claim the unlocked ALPACA
+  /// @param _unlockRequestId The id of request to withdraw from
   function withdraw(uint256 _unlockRequestId) external {
     UnlockRequest storage request = userUnlockRequests[msg.sender][_unlockRequestId];
 
@@ -157,6 +160,8 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     emit LogWithdraw(msg.sender, request.amount, 0);
   }
 
+  /// @notice Premature withdrawal before unlock completed
+  /// @param _unlockRequestId The id of request to withdraw from
   function earlyWithdraw(uint256 _unlockRequestId) external {
     UnlockRequest storage request = userUnlockRequests[msg.sender][_unlockRequestId];
 
@@ -184,7 +189,8 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     emit LogWithdraw(msg.sender, _amountToUser, feeReserve);
   }
 
-  /// @dev Reverse the withdrawal unlocking process
+  /// @notice Reverse the withdrawal unlocking process
+  /// @param _unlockRequestId The id of request to cancel
   function cancelUnlock(uint256 _unlockRequestId) external {
     UnlockRequest storage request = userUnlockRequests[msg.sender][_unlockRequestId];
 
@@ -207,16 +213,18 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
   // -------- Privilege Functions -----//
 
-  /// @dev Owner set the delayed unlock time
+  /// @notice Owner set the delayed unlock time
+  /// @param _newDelayUnlockTime Time delay in seconds needed for withdrawal
   function setDelayUnlockTime(uint256 _newDelayUnlockTime) external onlyOwner {
     emit LogSetDelayUnlockTime(delayUnlockTime, _newDelayUnlockTime);
     delayUnlockTime = _newDelayUnlockTime;
   }
 
-  /// @dev Owner set early withdraw fee bps per sec
-  function setEarlyWithdrawFeeBpsPerDay(uint256 _newFeePerSec) external onlyOwner {
-    emit LogSetEarlyWithdrawFeeBpsPerDay(earlyWithdrawFeeBpsPerDay, _newFeePerSec);
-    earlyWithdrawFeeBpsPerDay = _newFeePerSec;
+  /// @notice Owner set early withdraw fee bps per sec
+  /// @param _newFeePerPerDay The new early withdrawal bps per day
+  function setEarlyWithdrawFeeBpsPerDay(uint256 _newFeePerPerDay) external onlyOwner {
+    emit LogSetEarlyWithdrawFeeBpsPerDay(earlyWithdrawFeeBpsPerDay, _newFeePerPerDay);
+    earlyWithdrawFeeBpsPerDay = _newFeePerPerDay;
   }
 
   /// @dev Owner enable emergency withdraw
