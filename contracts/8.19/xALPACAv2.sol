@@ -30,6 +30,8 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   error xALPACAv2_InvalidAmount();
   error xALPACAv2_InvalidStatus();
   error xALPACAv2_UnlockTimeUnreached();
+  error xALPACAv2_UnlockTimeReached();
+  error xALPACAv2_InvalidBreakerValue();
 
   //--------- Events ------------//
   event LogSetBreaker(uint256 _previousBreaker, uint256 _breaker);
@@ -38,6 +40,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   event LogUnlock(address indexed _user, uint256 _unlockRequestId);
   event LogCancelUnlock(address indexed _user, uint256 _unlockRequestId);
   event LogWithdraw(address indexed _user, uint256 _amount, uint256 _withdrawalFee);
+  event LogSetEarlyWithdrawFeeBpsPerDay(uint256 _previousFee, uint256 _newFee);
 
   //--------- States ------------//
   // Token to be locked (ALPACA)
@@ -54,6 +57,9 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
   // Protocol Early Withdrawal Fee
   uint256 public feeReserve;
+
+  // penalty per sec
+  uint256 public earlyWithdrawFeeBpsPerDay;
 
   mapping(address => uint256) public userLockAmounts;
 
@@ -159,8 +165,15 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     if (request.status != 0) {
       revert xALPACAv2_InvalidStatus();
     }
+
+    if (block.timestamp >= request.unlockTimestamp) {
+      revert xALPACAv2_UnlockTimeReached();
+    }
     // effect
-    uint256 _earlyWithdrawalFee = (request.amount * 50) / 10000; // todo: change this to formula
+    // fee = (amount * fee per day * second until unlock) / second in day
+    uint256 _earlyWithdrawalFee = (
+      (request.amount * earlyWithdrawFeeBpsPerDay * (request.unlockTimestamp - block.timestamp))
+    ) / (10000 * 1 days);
     uint256 _amountToUser = request.amount - _earlyWithdrawalFee;
 
     request.status = 1; // withdrawn
@@ -200,10 +213,18 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     delayUnlockTime = _newDelayUnlockTime;
   }
 
+  /// @dev Owner set early withdraw fee bps per sec
+  function setEarlyWithdrawFeeBpsPerDay(uint256 _newFeePerSec) external onlyOwner {
+    emit LogSetEarlyWithdrawFeeBpsPerDay(earlyWithdrawFeeBpsPerDay, _newFeePerSec);
+    earlyWithdrawFeeBpsPerDay = _newFeePerSec;
+  }
+
   /// @dev Owner enable emergency withdraw
   /// @param _breaker The new value of breaker 0 if off, 1 if on
   function setBreaker(uint256 _breaker) external onlyOwner {
-    require(_breaker == 0 || _breaker == 1, "only 0 or 1");
+    if (_breaker > 1) {
+      revert xALPACAv2_InvalidBreakerValue();
+    }
     uint256 _previousBreaker = breaker;
     breaker = _breaker;
     emit LogSetBreaker(_previousBreaker, breaker);

@@ -88,6 +88,9 @@ contract xALPACAv2_WithdrawTest is BaseTest {
   function testCorrectness_WhenUserEarlyWithdraw_UserShouldPayFee() external {
     uint256 _lockAmount = 10 ether;
     uint256 _unlockAmount = 4 ether;
+    uint256 _earlyWithdrawFeeBpsPerDay = 50;
+    // 50 bps per day
+    xALPACA.setEarlyWithdrawFeeBpsPerDay(50);
 
     uint256 _startingBalance = alpaca.balanceOf(ALICE);
     vm.startPrank(ALICE);
@@ -97,11 +100,11 @@ contract xALPACAv2_WithdrawTest is BaseTest {
 
     uint256 _unlockId = xALPACA.unlock(_unlockAmount);
 
-    skip(1000);
+    skip(20.5 days);
 
     xALPACA.earlyWithdraw(_unlockId);
 
-    uint256 _fee = (_unlockAmount * 50) / 10000; //todo: get actual calculation
+    uint256 _fee = (_unlockAmount * (_earlyWithdrawFeeBpsPerDay / 2)) / 10000;
 
     assertEq(alpaca.balanceOf(ALICE), _startingBalance - _lockAmount + _unlockAmount - _fee); // start at 100, lock 10, unlock 4, result in 94
     vm.stopPrank();
