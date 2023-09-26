@@ -33,6 +33,8 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   error xALPACAv2_UnlockTimeReached();
   error xALPACAv2_InvalidBreakerValue();
   error xALPACAv2_InvalidAddress();
+  error xALPACAv2_TooMuchDelay();
+  error xALPACAv2_TooMuchFee();
 
   //--------- Events ------------//
   event LogSetBreaker(uint256 _previousBreaker, uint256 _breaker);
@@ -223,6 +225,12 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   /// @param _newDelayUnlockTime Time delay in seconds needed for withdrawal
   function setDelayUnlockTime(uint256 _newDelayUnlockTime) external onlyOwner {
     emit LogSetDelayUnlockTime(delayUnlockTime, _newDelayUnlockTime);
+
+    // check
+    if (_newDelayUnlockTime > 365 days) {
+      revert xALPACAv2_TooMuchDelay();
+    }
+
     delayUnlockTime = _newDelayUnlockTime;
   }
 
@@ -250,10 +258,16 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     emit LogWithdrawReserve(_to, _amount);
   }
 
-  /// @notice Owner set early withdraw fee bps per sec
+  /// @notice Owner set early withdraw fee bps per day
   /// @param _newFeePerPerDay The new early withdrawal bps per day
   function setEarlyWithdrawFeeBpsPerDay(uint256 _newFeePerPerDay) external onlyOwner {
     emit LogSetEarlyWithdrawFeeBpsPerDay(earlyWithdrawFeeBpsPerDay, _newFeePerPerDay);
+
+    // check
+    // fee should not cost more than 100%
+    if (((_newFeePerPerDay * delayUnlockTime) / 1 days) > 10000) {
+      revert xALPACAv2_TooMuchFee();
+    }
     earlyWithdrawFeeBpsPerDay = _newFeePerPerDay;
   }
 
