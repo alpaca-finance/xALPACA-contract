@@ -107,6 +107,7 @@ contract xALPACAv2_WithdrawTest is BaseTest {
     uint256 _fee = (_unlockAmount * (_earlyWithdrawFeeBpsPerDay / 2)) / 10000;
 
     assertEq(alpaca.balanceOf(ALICE), _startingBalance - _lockAmount + _unlockAmount - _fee); // start at 100, lock 10, unlock 4, result in 94
+    assertEq(alpaca.balanceOf(treasury), _fee);
     vm.stopPrank();
   }
 }

@@ -37,15 +37,15 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   error xALPACAv2_TooMuchFee();
 
   //--------- Events ------------//
-  event LogSetBreaker(uint256 _previousBreaker, uint256 _breaker);
-  event LogSetDelayUnlockTime(uint256 _previousDelay, uint256 _newDelay);
   event LogLock(address indexed _user, uint256 _amount);
   event LogUnlock(address indexed _user, uint256 _unlockRequestId);
   event LogCancelUnlock(address indexed _user, uint256 _unlockRequestId);
   event LogWithdraw(address indexed _user, uint256 _amount, uint256 _withdrawalFee);
-  event LogSetEarlyWithdrawFeeBpsPerDay(uint256 _previousFee, uint256 _newFee);
   event LogWithdrawReserve(address indexed _to, uint256 _amount);
-
+  event LogSetBreaker(uint256 _previousBreaker, uint256 _breaker);
+  event LogSetDelayUnlockTime(uint256 _previousDelay, uint256 _newDelay);
+  event LogSetFeeTreasury(address _previousFeeTreasury, address _newFeeTreasury);
+  event LogSetEarlyWithdrawFeeBpsPerDay(uint256 _previousFee, uint256 _newFee);
   //--------- Enum --------------//
 
   enum UnlockStatus {
@@ -74,8 +74,8 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   // Flag to allow emergency withdraw
   uint256 public breaker;
 
-  // Protocol Early Withdrawal Fee
-  uint256 public feeReserve;
+  // Protocol Early Withdrawal Fee treasury
+  address public feeTreasury;
 
   // penalty per sec
   uint256 public earlyWithdrawFeeBpsPerDay;
@@ -90,13 +90,35 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     _disableInitializers();
   }
 
-  function initialize(address _token) external initializer {
+  function initialize(
+    address _token,
+    uint256 _delayUnlockTime,
+    address _feeTreasury,
+    uint256 _earlyWithdrawFeeBpsPerDay
+  ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
     // sanity check
     IBEP20(_token).decimals();
 
+    // max lock time = 365 day
+    if (_delayUnlockTime > 365 days) {
+      revert xALPACAv2_TooMuchDelay();
+    }
+
+    if (_feeTreasury == address(0) || _feeTreasury == address(this)) {
+      revert xALPACAv2_InvalidAddress();
+    }
+
+    // fee should not cost more than 100%
+    if (((_earlyWithdrawFeeBpsPerDay * _delayUnlockTime) / 1 days) > 10000) {
+      revert xALPACAv2_TooMuchFee();
+    }
+
+    feeTreasury = _feeTreasury;
+    earlyWithdrawFeeBpsPerDay = _earlyWithdrawFeeBpsPerDay;
+    delayUnlockTime = _delayUnlockTime;
     token = _token;
   }
 
@@ -199,11 +221,12 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     uint256 _amountToUser = request.amount - _earlyWithdrawalFee;
 
     request.status = UnlockStatus.CLAIMED;
-    feeReserve += _earlyWithdrawalFee;
 
     // interaction
     token.safeTransfer(msg.sender, _amountToUser);
-    emit LogWithdraw(msg.sender, _amountToUser, feeReserve);
+    token.safeTransfer(feeTreasury, _earlyWithdrawalFee);
+
+    emit LogWithdraw(msg.sender, _amountToUser, _earlyWithdrawalFee);
   }
 
   /// @notice Reverse the withdrawal unlocking process
@@ -243,30 +266,6 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     delayUnlockTime = _newDelayUnlockTime;
   }
 
-  /// @notice Owner withdraw early withdrawal fee
-  /// @param _to Destination address
-  /// @param _amount Amount to withdraw
-  function withdrawReserve(address _to, uint256 _amount) external onlyOwner {
-    // check
-    if (_to == address(0) || _to == address(this)) {
-      revert xALPACAv2_InvalidAddress();
-    }
-
-    if (feeReserve < _amount) {
-      revert xALPACAv2_InvalidAmount();
-    }
-
-    // effect
-    unchecked {
-      feeReserve -= _amount;
-    }
-
-    // interaction
-    token.safeTransfer(_to, _amount);
-
-    emit LogWithdrawReserve(_to, _amount);
-  }
-
   /// @notice Owner set early withdraw fee bps per day
   /// @param _newFeePerPerDay The new early withdrawal bps per day
   function setEarlyWithdrawFeeBpsPerDay(uint256 _newFeePerPerDay) external onlyOwner {
@@ -278,6 +277,16 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
       revert xALPACAv2_TooMuchFee();
     }
     earlyWithdrawFeeBpsPerDay = _newFeePerPerDay;
+  }
+
+  /// @notice Owner set new treasury address
+  /// @param _newFeeTreasury The new address that will receive early withdrawal fee
+  function setFeeTreasury(address _newFeeTreasury) external onlyOwner {
+    if (_newFeeTreasury == address(0) || _newFeeTreasury == address(this)) {
+      revert xALPACAv2_InvalidAddress();
+    }
+    emit LogSetFeeTreasury(feeTreasury, _newFeeTreasury);
+    feeTreasury = _newFeeTreasury;
   }
 
   /// @dev Owner enable emergency withdraw
