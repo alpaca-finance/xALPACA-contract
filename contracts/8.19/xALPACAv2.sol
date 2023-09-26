@@ -46,15 +46,15 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   event LogSetDelayUnlockTime(uint256 _previousDelay, uint256 _newDelay);
   event LogSetFeeTreasury(address _previousFeeTreasury, address _newFeeTreasury);
   event LogSetEarlyWithdrawFeeBpsPerDay(uint256 _previousFee, uint256 _newFee);
-  //--------- Enum --------------//
 
+  //--------- Enum --------------//
   enum UnlockStatus {
     INITIATED,
     CLAIMED,
     CANCELED
   }
-  //--------- Struct ------------//
 
+  //--------- Struct ------------//
   struct UnlockRequest {
     uint256 amount;
     uint64 unlockTimestamp;
