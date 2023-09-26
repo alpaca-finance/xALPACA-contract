@@ -20,7 +20,7 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 import { IBEP20 } from "./interfaces/IBEP20.sol";
 import { SafeToken } from "./SafeToken.sol";
 
-/// @title xALPACAv2 - The goverance token (v2) of Alpaca Finance
+/// @title xALPACAv2 - The governance locking contract of Alpaca Finance (v2)
 // solhint-disable not-rely-on-time
 // solhint-disable-next-line contract-name-camelcase
 contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
