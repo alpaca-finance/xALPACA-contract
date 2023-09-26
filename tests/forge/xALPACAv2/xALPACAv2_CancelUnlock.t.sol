@@ -62,9 +62,9 @@ contract xALPACAv2_CancelUnlockTest is BaseTest {
     uint256 _unlockId = xALPACA.unlock(4 ether);
 
     xALPACA.cancelUnlock(_unlockId);
-    (, , uint8 _status) = xALPACA.userUnlockRequests(ALICE, _unlockId);
+    (, , xALPACAv2.UnlockStatus _status) = xALPACA.userUnlockRequests(ALICE, _unlockId);
 
-    assertEq(_status, 2);
+    assertEq(uint8(_status), 2);
     assertEq(xALPACA.totalLocked(), 10 ether);
     assertEq(xALPACA.userLockAmounts(ALICE), 10 ether);
 

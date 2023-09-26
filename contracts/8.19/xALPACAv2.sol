@@ -46,12 +46,19 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   event LogSetEarlyWithdrawFeeBpsPerDay(uint256 _previousFee, uint256 _newFee);
   event LogWithdrawReserve(address indexed _to, uint256 _amount);
 
+  //--------- Enum --------------//
+
+  enum UnlockStatus {
+    INITIATED,
+    CLAIMED,
+    CANCELED
+  }
   //--------- Struct ------------//
 
   struct UnlockRequest {
     uint256 amount;
     uint64 unlockTimestamp;
-    uint8 status; // 0 = unclaimed, 1 = claimed, 2 = canceled
+    UnlockStatus status; // 0 = unclaimed, 1 = claimed, 2 = canceled
   }
 
   //--------- States ------------//
@@ -124,7 +131,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     UnlockRequest memory _request = UnlockRequest({
       amount: _amount,
       unlockTimestamp: uint64(block.timestamp + delayUnlockTime),
-      status: 0
+      status: UnlockStatus.INITIATED
     });
 
     if (breaker == 0) {
@@ -150,7 +157,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     // check
     // revert if it's already claimed or canceled
-    if (request.status != 0) {
+    if (request.status != UnlockStatus.INITIATED) {
       revert xALPACAv2_InvalidStatus();
     }
 
@@ -160,7 +167,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     }
 
     // effect
-    request.status = 1; // withdrawn
+    request.status = UnlockStatus.CLAIMED;
 
     // interaction
     token.safeTransfer(msg.sender, request.amount);
@@ -175,7 +182,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     // check
     // revert if it's already claimed or canceled
-    if (request.status != 0) {
+    if (request.status != UnlockStatus.INITIATED) {
       revert xALPACAv2_InvalidStatus();
     }
 
@@ -189,7 +196,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     ) / (10000 * 1 days);
     uint256 _amountToUser = request.amount - _earlyWithdrawalFee;
 
-    request.status = 1; // withdrawn
+    request.status = UnlockStatus.CLAIMED;
     feeReserve += _earlyWithdrawalFee;
 
     // interaction
@@ -204,14 +211,14 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     // check
     // revert if it's already claimed or canceled
-    if (request.status != 0) {
+    if (request.status != UnlockStatus.INITIATED) {
       revert xALPACAv2_InvalidStatus();
     }
 
     // effect
     totalLocked += request.amount;
     userLockAmounts[msg.sender] += request.amount;
-    request.status = 2; // canceled
+    request.status = UnlockStatus.CANCELED;
 
     // interaction
     // todo: deposit back to miniFL
