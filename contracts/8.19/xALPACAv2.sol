@@ -256,12 +256,12 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   /// @notice Owner set the delayed unlock time
   /// @param _newDelayUnlockTime Time delay in seconds needed for withdrawal
   function setDelayUnlockTime(uint256 _newDelayUnlockTime) external onlyOwner {
-    emit LogSetDelayUnlockTime(delayUnlockTime, _newDelayUnlockTime);
-
     // check
     if (_newDelayUnlockTime > 365 days) {
       revert xALPACAv2_TooMuchDelay();
     }
+
+    emit LogSetDelayUnlockTime(delayUnlockTime, _newDelayUnlockTime);
 
     delayUnlockTime = _newDelayUnlockTime;
   }
@@ -269,13 +269,13 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   /// @notice Owner set early withdraw fee bps per day
   /// @param _newFeePerPerDay The new early withdrawal bps per day
   function setEarlyWithdrawFeeBpsPerDay(uint256 _newFeePerPerDay) external onlyOwner {
-    emit LogSetEarlyWithdrawFeeBpsPerDay(earlyWithdrawFeeBpsPerDay, _newFeePerPerDay);
-
     // check
     // fee should not cost more than 100%
     if (((_newFeePerPerDay * delayUnlockTime) / 1 days) > 10000) {
       revert xALPACAv2_TooMuchFee();
     }
+
+    emit LogSetEarlyWithdrawFeeBpsPerDay(earlyWithdrawFeeBpsPerDay, _newFeePerPerDay);
     earlyWithdrawFeeBpsPerDay = _newFeePerPerDay;
   }
 
@@ -295,9 +295,12 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     if (_breaker > 1) {
       revert xALPACAv2_InvalidBreakerValue();
     }
-    uint256 _previousBreaker = breaker;
+    emit LogSetBreaker(breaker, _breaker);
     breaker = _breaker;
-    emit LogSetBreaker(_previousBreaker, breaker);
+
+    // waive early withdraw fee
+    emit LogSetEarlyWithdrawFeeBpsPerDay(earlyWithdrawFeeBpsPerDay, 0);
+    earlyWithdrawFeeBpsPerDay = 0;
   }
 
   // -------- View Functions --------//
