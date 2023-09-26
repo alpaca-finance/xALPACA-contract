@@ -77,7 +77,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   // Protocol Early Withdrawal Fee treasury
   address public feeTreasury;
 
-  // penalty per sec
+  // penalty per day
   uint256 public earlyWithdrawFeeBpsPerDay;
 
   // lock amount of each user
