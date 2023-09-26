@@ -194,6 +194,8 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     uint256 _earlyWithdrawalFee = (
       (request.amount * earlyWithdrawFeeBpsPerDay * (request.unlockTimestamp - block.timestamp))
     ) / (10000 * 1 days);
+
+    // if early withdraw fee is greater than amount, should revert here
     uint256 _amountToUser = request.amount - _earlyWithdrawalFee;
 
     request.status = UnlockStatus.CLAIMED;
