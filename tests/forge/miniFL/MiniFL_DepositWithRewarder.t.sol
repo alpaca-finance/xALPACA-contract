@@ -13,7 +13,6 @@ import { IMiniFL } from "../../../contracts/8.19/miniFL/interfaces/IMiniFL.sol";
 contract MiniFL_DepositWithRewarderTest is MiniFL_BaseTest {
   function setUp() public override {
     super.setUp();
-
     setupRewarder();
   }
 
