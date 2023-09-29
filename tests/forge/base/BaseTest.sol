@@ -4,12 +4,16 @@ pragma solidity 0.8.19;
 import { DSTest } from "./DSTest.sol";
 
 import "../utils/Components.sol";
-import { ProxyAdminLike } from "../interfaces/ProxyAdminLike.sol";
-import { MockERC20 } from "../mocks/MockERC20.sol";
-import { MiniFL } from "../../../contracts/8.19/miniFL/MiniFL.sol";
-import { Rewarder } from "../../../contracts/8.19/miniFL/Rewarder.sol";
 
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+
+import { ProxyAdminLike } from "../interfaces/ProxyAdminLike.sol";
+
+import { MockERC20 } from "../mocks/MockERC20.sol";
+
+import { MiniFL } from "@xalpacav2/miniFL/MiniFL.sol";
+import { Rewarder } from "@xalpacav2/miniFL/Rewarder.sol";
+import { xALPACAv2 } from "@xalpacav2/xALPACAv2.sol";
 
 contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
   address internal constant DEPLOYER = address(0x01);
@@ -30,6 +34,9 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
   ProxyAdminLike internal proxyAdmin;
 
   MiniFL internal miniFL;
+  xALPACAv2 internal xALPACA;
+
+  address internal treasury;
   uint256 constant maxAlpacaPerSecond = 1000 ether;
 
   constructor() {
@@ -71,7 +78,11 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
 
     usdc.mint(BOB, normalizeEther(1000 ether, usdcDecimal));
 
+
     miniFL = deployMiniFL(address(alpaca));
+
+    treasury = address(9999999);
+    xALPACA = deployxALPACAv2(address(alpaca), 0, treasury, 0);
   }
 
   function deployMockErc20(
@@ -83,6 +94,23 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
     vm.label(address(mockERC20), symbol);
   }
 
+  function deployxALPACAv2(
+    address _token,
+    uint256 _delayUnlockTime,
+    address _feeTreasury,
+    uint256 _earlyWithdrawFeeBpsPerDay
+  ) internal returns (xALPACAv2) {
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/xALPACAv2.sol/xALPACAv2.json"));
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,uint256,address,uint256)")),
+      _token,
+      _delayUnlockTime,
+      _feeTreasury,
+      _earlyWithdrawFeeBpsPerDay
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer);
+    return xALPACAv2(_proxy);
+  }
   function deployMiniFL(address _rewardToken) internal returns (MiniFL) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/MiniFL.sol/MiniFL.json"));
     bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(address)")), _rewardToken);
