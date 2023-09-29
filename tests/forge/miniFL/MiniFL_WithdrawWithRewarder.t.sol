@@ -18,7 +18,7 @@ contract MiniFL_WithdrawWithRewarderTest is MiniFL_BaseTest {
   function testCorrectness_WhenWithdraw_RewarderUserInfoShouldBeCorrect() external {
     // alice deposited
     vm.startPrank(ALICE);
-    weth.approve(address(miniFL), 10 ether);
+    alpaca.approve(address(miniFL), 10 ether);
     miniFL.deposit(ALICE, 10 ether);
     vm.stopPrank();
 

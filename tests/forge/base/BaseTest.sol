@@ -67,17 +67,16 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
     uint256 usdcDecimal = usdc.decimals();
 
     weth.mint(ALICE, normalizeEther(1000 ether, wethDecimal));
-
+    alpaca.mint(ALICE, normalizeEther(1000 ether, wethDecimal));
     usdc.mint(ALICE, normalizeEther(1000 ether, usdcDecimal));
 
     weth.mint(EVE, normalizeEther(1000 ether, wethDecimal));
-
+    alpaca.mint(EVE, normalizeEther(1000 ether, wethDecimal));
     usdc.mint(EVE, normalizeEther(1000 ether, usdcDecimal));
 
     weth.mint(BOB, normalizeEther(1000 ether, wethDecimal));
-
+    alpaca.mint(BOB, normalizeEther(1000 ether, wethDecimal));
     usdc.mint(BOB, normalizeEther(1000 ether, usdcDecimal));
-
 
     miniFL = deployMiniFL(address(alpaca));
 
@@ -111,6 +110,7 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer);
     return xALPACAv2(_proxy);
   }
+
   function deployMiniFL(address _rewardToken) internal returns (MiniFL) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/MiniFL.sol/MiniFL.json"));
     bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(address)")), _rewardToken);

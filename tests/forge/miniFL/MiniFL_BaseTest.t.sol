@@ -18,10 +18,6 @@ contract MiniFL_BaseTest is BaseTest {
   Rewarder internal rewarder1;
   Rewarder internal rewarder2;
 
-  uint256 wethPoolID;
-  uint256 mockToken1PoolID;
-  uint256 notExistsPoolID = 999;
-
   function setUp() public virtual {
     alpaca.mint(address(this), 10000000000 ether);
     alpaca.approve(address(miniFL), 10000000000 ether);
@@ -36,13 +32,13 @@ contract MiniFL_BaseTest is BaseTest {
     rewardToken1.mint(address(rewarder1), 10000 ether);
     rewardToken2.mint(address(rewarder2), 15000 ether);
 
-    weth.mint(funder1, 100 ether);
-    weth.mint(funder2, 100 ether);
+    alpaca.mint(funder1, 100 ether);
+    alpaca.mint(funder2, 100 ether);
 
     vm.prank(funder1);
-    weth.approve(address(miniFL), 100 ether);
+    alpaca.approve(address(miniFL), 100 ether);
     vm.prank(funder2);
-    weth.approve(address(miniFL), 100 ether);
+    alpaca.approve(address(miniFL), 100 ether);
 
     whitelistedCallers[0] = address(this);
     whitelistedCallers[1] = ALICE;
@@ -52,13 +48,6 @@ contract MiniFL_BaseTest is BaseTest {
     miniFL.setWhitelistedCallers(whitelistedCallers, true);
   }
 
-  // Rewarder1 Info
-  // | Pool   | AllocPoint |
-  // | WETH   |         90 |
-  // | DToken |         10 |
-  // Rewarder2 Info
-  // | Pool   | AllocPoint |
-  // | DToken |        100 |
   function setupRewarder() internal {
     address[] memory rewarders = new address[](2);
     rewarders[0] = address(rewarder1);
@@ -68,24 +57,13 @@ contract MiniFL_BaseTest is BaseTest {
 
   function prepareForHarvest() internal {
     vm.startPrank(ALICE);
-    weth.approve(address(miniFL), 10 ether);
-    console.log("WETH POOOL", wethPoolID);
+    alpaca.approve(address(miniFL), 10 ether);
     miniFL.deposit(ALICE, 10 ether);
     vm.stopPrank();
 
     vm.startPrank(BOB);
-    weth.approve(address(miniFL), 6 ether);
+    alpaca.approve(address(miniFL), 6 ether);
     miniFL.deposit(BOB, 6 ether);
-    vm.stopPrank();
-
-    vm.startPrank(BOB);
-    mockToken1.approve(address(miniFL), 90 ether);
-    miniFL.deposit(BOB, 90 ether);
-    vm.stopPrank();
-
-    vm.startPrank(BOB);
-    mockToken1.approve(address(miniFL), 10 ether);
-    miniFL.deposit(ALICE, 10 ether);
     vm.stopPrank();
 
     vm.prank(funder1);

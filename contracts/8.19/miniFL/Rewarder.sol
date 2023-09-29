@@ -207,8 +207,6 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   function _updatePool() internal returns (PoolInfo memory) {
     PoolInfo memory _poolInfo = poolInfo;
 
-    if (_poolInfo.lastRewardTime == 0) revert Rewarder1_PoolNotExisted();
-
     if (block.timestamp > _poolInfo.lastRewardTime) {
       uint256 _stakedBalance = IMiniFL(miniFL).stakingReserve();
       if (_stakedBalance > 0) {

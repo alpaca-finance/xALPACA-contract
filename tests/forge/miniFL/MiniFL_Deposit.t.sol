@@ -14,23 +14,16 @@ contract MiniFL_DepositTest is MiniFL_BaseTest {
     super.setUp();
   }
 
-  function testRevert_WhenDepositMiniFLButPoolIsNotExists() external {
-    vm.startPrank(ALICE);
-    vm.expectRevert();
-    miniFL.deposit(ALICE, 10 ether);
-    vm.stopPrank();
-  }
-
   // #deposit ibToken (not debt token)
   function testCorrectness_WhenDepositMiniFLShouldWork() external {
-    uint256 _aliceWethBalanceBefore = weth.balanceOf(ALICE);
+    uint256 _aliceAlpacaBalanceBefore = alpaca.balanceOf(ALICE);
     vm.startPrank(ALICE);
-    weth.approve(address(miniFL), 10 ether);
+    alpaca.approve(address(miniFL), 10 ether);
     miniFL.deposit(ALICE, 10 ether);
     vm.stopPrank();
 
     // transfer correctly
-    assertEq(_aliceWethBalanceBefore - weth.balanceOf(ALICE), 10 ether);
+    assertEq(_aliceAlpacaBalanceBefore - alpaca.balanceOf(ALICE), 10 ether);
     // check staking amount for ALICE as funder
     assertFunderAmount(ALICE, ALICE, 10 ether);
     // check total staking amount
@@ -41,15 +34,15 @@ contract MiniFL_DepositTest is MiniFL_BaseTest {
   }
 
   function testCorrectness_WhenOneFunderDepositMiniFLForAlice() external {
-    uint256 _aliceWethBalanceBefore = weth.balanceOf(ALICE);
-    uint256 _funder1WethBalanceBefore = weth.balanceOf(funder1);
+    uint256 _aliceAlpacaBalanceBefore = alpaca.balanceOf(ALICE);
+    uint256 _funder1AlpacaBalanceBefore = alpaca.balanceOf(funder1);
     // funder1 deposit for ALICE
     vm.prank(funder1);
     miniFL.deposit(ALICE, 10 ether);
 
     // ALICE balance should not changed
-    assertEq(_aliceWethBalanceBefore - weth.balanceOf(ALICE), 0);
-    assertEq(_funder1WethBalanceBefore - weth.balanceOf(funder1), 10 ether);
+    assertEq(_aliceAlpacaBalanceBefore - alpaca.balanceOf(ALICE), 0);
+    assertEq(_funder1AlpacaBalanceBefore - alpaca.balanceOf(funder1), 10 ether);
 
     // check staking amount per funder
     assertFunderAmount(ALICE, ALICE, 0 ether);
@@ -63,9 +56,9 @@ contract MiniFL_DepositTest is MiniFL_BaseTest {
   }
 
   function testCorrectness_WhenManyFunderDepositMiniFLForAliceAndBob() external {
-    uint256 _aliceWethBalanceBefore = weth.balanceOf(ALICE);
-    uint256 _funder1WethBalanceBefore = weth.balanceOf(funder1);
-    uint256 _funder2WethBalanceBefore = weth.balanceOf(funder2);
+    uint256 _aliceAlpacaBalanceBefore = alpaca.balanceOf(ALICE);
+    uint256 _funder1AlpacaBalanceBefore = alpaca.balanceOf(funder1);
+    uint256 _funder2AlpacaBalanceBefore = alpaca.balanceOf(funder2);
 
     // funder1 deposit for ALICE
     vm.prank(funder1);
@@ -79,9 +72,9 @@ contract MiniFL_DepositTest is MiniFL_BaseTest {
     miniFL.deposit(BOB, 12 ether);
 
     // ALICE balance should not changed
-    assertEq(_aliceWethBalanceBefore - weth.balanceOf(ALICE), 0);
-    assertEq(_funder1WethBalanceBefore - weth.balanceOf(funder1), 10 ether);
-    assertEq(_funder2WethBalanceBefore - weth.balanceOf(funder2), 23 ether); // 11 for alice, 12 for bob
+    assertEq(_aliceAlpacaBalanceBefore - alpaca.balanceOf(ALICE), 0);
+    assertEq(_funder1AlpacaBalanceBefore - alpaca.balanceOf(funder1), 10 ether);
+    assertEq(_funder2AlpacaBalanceBefore - alpaca.balanceOf(funder2), 23 ether); // 11 for alice, 12 for bob
 
     // check staking amount per funder
     assertFunderAmount(ALICE, ALICE, 0 ether);
@@ -97,52 +90,11 @@ contract MiniFL_DepositTest is MiniFL_BaseTest {
     assertStakingReserve(33 ether);
   }
 
-  // #deposit debtToken
-  function testCorrectness_WhenDepositMiniFLDebtToken() external {
-    uint256 _bobDebtTokenBalanceBefore = mockToken1.balanceOf(BOB);
-
-    vm.startPrank(BOB);
-    mockToken1.approve(address(miniFL), 10 ether);
-    miniFL.deposit(BOB, 10 ether);
-    vm.stopPrank();
-
-    assertEq(_bobDebtTokenBalanceBefore - mockToken1.balanceOf(BOB), 10 ether);
-    // check staking amount for BOB as funder
-    assertFunderAmount(BOB, BOB, 10 ether);
-    // check total staking amount
-    assertTotalUserStakingAmount(BOB, 10 ether);
-
-    // check reserve amount
-    assertStakingReserve(10 ether);
-  }
-
-  // note: now debt token can deposit for another
-  function testCorrectness_WhenDepositMiniFLWithDebtTokenForAnother() external {
-    uint256 _bobDebtTokenBalanceBefore = mockToken1.balanceOf(BOB);
-    // BOB deposit for ALICE
-    vm.startPrank(BOB);
-    mockToken1.approve(address(miniFL), 10 ether);
-    miniFL.deposit(ALICE, 10 ether);
-    vm.stopPrank();
-
-    assertEq(_bobDebtTokenBalanceBefore - mockToken1.balanceOf(BOB), 10 ether);
-
-    // check staking amount for BOB as funder of ALICE
-    assertFunderAmount(BOB, ALICE, 10 ether);
-
-    // check total staking amount
-    assertTotalUserStakingAmount(BOB, 0);
-    assertTotalUserStakingAmount(ALICE, 10 ether);
-
-    // check reserve amount
-    assertStakingReserve(10 ether);
-  }
-
   function testRevert_WhenNonWhitelistedCallersDepositMiniFLW() external {
     // random address which not whitelisted callers
     address randomCaller = makeAddr("randomCaller");
     vm.startPrank(randomCaller);
-    weth.approve(address(miniFL), 10 ether);
+    alpaca.approve(address(miniFL), 10 ether);
     vm.expectRevert(abi.encodeWithSelector(IMiniFL.MiniFL_Unauthorized.selector));
     miniFL.deposit(randomCaller, 10 ether);
     vm.stopPrank();
