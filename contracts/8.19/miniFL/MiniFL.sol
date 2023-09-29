@@ -219,11 +219,8 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     PoolInfo memory _poolInfo = _updatePool();
 
     // Effects
-    unchecked {
-      // total amount & staking reserves always >= user.fundedAmounts[msg.sender]
-      user.totalAmount -= _amountToWithdraw;
-      stakingReserve -= _amountToWithdraw;
-    }
+    user.totalAmount -= _amountToWithdraw;
+    stakingReserve -= _amountToWithdraw;
 
     // update reward debt
     // example:

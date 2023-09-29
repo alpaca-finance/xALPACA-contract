@@ -7,7 +7,6 @@ interface IMiniFL {
   error MiniFL_DuplicatePool();
   error MiniFL_InvalidArguments();
   error MiniFL_BadRewarder();
-  error MiniFL_InsufficientFundedAmount();
   error MiniFL_Unauthorized();
 
   function deposit(address _for, uint256 _amountToDeposit) external;
