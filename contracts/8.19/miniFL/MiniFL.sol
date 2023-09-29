@@ -146,17 +146,17 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @param _rewardAmount The amount of ALPACA to be distributed
   /// @param _seconds The amount of time to distribute
   function feed(uint256 _rewardAmount, uint256 _seconds) external onlyOwner {
+    IERC20Upgradeable(ALPACA).safeTransferFrom(msg.sender, address(this), _rewardAmount);
     massUpdatePools();
-
     // roll over outstanding reward
     if (rewardEndTimestamp > block.timestamp) {
       _rewardAmount += (rewardEndTimestamp - block.timestamp) * alpacaPerSecond;
     }
-    uint256 _newAlpacaPerSecond = _rewardAmount / _seconds;
 
-    alpacaPerSecond = _newAlpacaPerSecond;
+    alpacaPerSecond = _rewardAmount / _seconds;
     rewardEndTimestamp = block.timestamp + _seconds;
-    emit LogAlpacaPerSecond(_newAlpacaPerSecond);
+
+    emit LogAlpacaPerSecond(alpacaPerSecond);
   }
 
   /// @notice View function to see pending ALPACA on frontend.

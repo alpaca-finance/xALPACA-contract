@@ -23,9 +23,9 @@ contract MiniFL_BaseTest is BaseTest {
   uint256 notExistsPoolID = 999;
 
   function setUp() public virtual {
+    alpaca.mint(address(this), 10000000000 ether);
+    alpaca.approve(address(miniFL), 10000000000 ether);
     miniFL.feed(1000 ether * 100, 100);
-
-    alpaca.mint(address(miniFL), 10000000 ether);
 
     rewarder1 = deployRewarder("REWARDER01", address(miniFL), address(rewardToken1), maxAlpacaPerSecond);
     rewarder2 = deployRewarder("REWARDER02", address(miniFL), address(rewardToken2), maxAlpacaPerSecond);
