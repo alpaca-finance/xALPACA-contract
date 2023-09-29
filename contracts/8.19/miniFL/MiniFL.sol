@@ -215,12 +215,19 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   function withdraw(address _from, uint256 _amountToWithdraw) external onlyWhitelisted nonReentrant {
     UserInfo storage user = userInfo[_from];
 
+    if (user.totalAmount < _amountToWithdraw) {
+      revert MiniFL_InsufficientAmount();
+    }
+
+    // Effects
+
     // call _updatePool in order to update poolInfo.accAlpacaPerShare
     PoolInfo memory _poolInfo = _updatePool();
 
-    // Effects
-    user.totalAmount -= _amountToWithdraw;
-    stakingReserve -= _amountToWithdraw;
+    unchecked {
+      user.totalAmount -= _amountToWithdraw;
+      stakingReserve -= _amountToWithdraw;
+    }
 
     // update reward debt
     // example:

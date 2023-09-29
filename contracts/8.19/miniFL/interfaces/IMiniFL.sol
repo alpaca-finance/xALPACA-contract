@@ -8,6 +8,7 @@ interface IMiniFL {
   error MiniFL_InvalidArguments();
   error MiniFL_BadRewarder();
   error MiniFL_Unauthorized();
+  error MiniFL_InsufficientAmount();
 
   function deposit(address _for, uint256 _amountToDeposit) external;
 
