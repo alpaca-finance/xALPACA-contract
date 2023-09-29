@@ -35,10 +35,10 @@ contract MiniFL_SetPoolRewardersTest is MiniFL_BaseTest {
       maxAlpacaPerSecond
     );
 
-    address[] memory _poolDebtTokenRewarders = new address[](2);
-    _poolDebtTokenRewarders[0] = address(_newRewarder);
-    _poolDebtTokenRewarders[1] = address(rewarder1);
+    address[] memory _poolRewarders = new address[](2);
+    _poolRewarders[0] = address(_newRewarder);
+    _poolRewarders[1] = address(rewarder1);
     vm.expectRevert(abi.encodeWithSelector(IMiniFL.MiniFL_BadRewarder.selector));
-    miniFL.setPoolRewarders(_poolDebtTokenRewarders);
+    miniFL.setPoolRewarders(_poolRewarders);
   }
 }
