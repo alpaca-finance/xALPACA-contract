@@ -58,27 +58,6 @@ contract MiniFL_BaseTest is BaseTest {
     miniFL.setPoolRewarders(rewarders);
   }
 
-  function prepareForHarvest() internal {
-    vm.startPrank(ALICE);
-    alpaca.approve(address(miniFL), 10 ether);
-    miniFL.deposit(ALICE, 10 ether);
-    vm.stopPrank();
-
-    vm.startPrank(BOB);
-    alpaca.approve(address(miniFL), 6 ether);
-    miniFL.deposit(BOB, 6 ether);
-    vm.stopPrank();
-
-    vm.prank(funder1);
-    miniFL.deposit(ALICE, 4 ether);
-
-    vm.prank(funder2);
-    miniFL.deposit(ALICE, 6 ether);
-
-    vm.prank(funder1);
-    miniFL.deposit(BOB, 4 ether);
-  }
-
   function assertTotalUserStakingAmountWithReward(
     address _user,
     uint256 _expectedAmount,

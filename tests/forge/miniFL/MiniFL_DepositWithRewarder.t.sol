@@ -18,44 +18,27 @@ contract MiniFL_DepositWithRewarderTest is MiniFL_BaseTest {
   }
 
   function testCorrectness_WhenDeposit_RewarderUserInfoShouldBeCorrect() external {
-    uint256 _aliceWethBalanceBefore = weth.balanceOf(ALICE);
+    uint256 _aliceAlpacaBalanceBefore = alpaca.balanceOf(ALICE);
     vm.startPrank(ALICE);
-    weth.approve(address(miniFL), 10 ether);
+    alpaca.approve(address(miniFL), 10 ether);
     miniFL.deposit(ALICE, 10 ether);
     vm.stopPrank();
 
     // assert alice balance
-    assertEq(_aliceWethBalanceBefore - weth.balanceOf(ALICE), 10 ether);
+    assertEq(_aliceAlpacaBalanceBefore - alpaca.balanceOf(ALICE), 10 ether);
 
     // assert reward user info, both user info should be same
     assertRewarderUserInfo(rewarder1, ALICE, 10 ether, 0);
     assertRewarderUserInfo(rewarder2, ALICE, 10 ether, 0);
   }
 
-  function testCorrectness_WhenDepositDebtToken_RewarderUserInfoShouldBeCorrect() external {
-    uint256 _bobDebtTokenBalanceBefore = mockToken1.balanceOf(BOB);
-
-    vm.startPrank(BOB);
-    mockToken1.approve(address(miniFL), 10 ether);
-    miniFL.deposit(BOB, 10 ether);
-    vm.stopPrank();
-
-    // assert bob balance
-    assertEq(_bobDebtTokenBalanceBefore - mockToken1.balanceOf(BOB), 10 ether);
-
-    // assert reward user info
-    assertRewarderUserInfo(rewarder1, BOB, 10 ether, 0);
-    // rewarder2 is not register in this pool then user amount should be 0
-    assertRewarderUserInfo(rewarder2, BOB, 0, 0);
-  }
-
   function testCorrectness_WhenFunderDeposit_RewarderUserInfoShouldBeCorrect() external {
-    uint256 _aliceWethBalanceBefore = weth.balanceOf(ALICE);
-    uint256 _funder1WethBalanceBefore = weth.balanceOf(funder1);
-    uint256 _funder2WethBalanceBefore = weth.balanceOf(funder2);
+    uint256 _aliceAlpacaBalanceBefore = alpaca.balanceOf(ALICE);
+    uint256 _funder1AlpacaBalanceBefore = alpaca.balanceOf(funder1);
+    uint256 _funder2AlpacaBalanceBefore = alpaca.balanceOf(funder2);
     // alice deposit for self
     vm.startPrank(ALICE);
-    weth.approve(address(miniFL), 10 ether);
+    alpaca.approve(address(miniFL), 10 ether);
     miniFL.deposit(ALICE, 10 ether);
     vm.stopPrank();
 
@@ -68,9 +51,9 @@ contract MiniFL_DepositWithRewarderTest is MiniFL_BaseTest {
     miniFL.deposit(ALICE, 12 ether);
 
     // assert alice balance
-    assertEq(_aliceWethBalanceBefore - weth.balanceOf(ALICE), 10 ether);
-    assertEq(_funder1WethBalanceBefore - weth.balanceOf(funder1), 11 ether);
-    assertEq(_funder2WethBalanceBefore - weth.balanceOf(funder2), 12 ether);
+    assertEq(_aliceAlpacaBalanceBefore - alpaca.balanceOf(ALICE), 10 ether);
+    assertEq(_funder1AlpacaBalanceBefore - alpaca.balanceOf(funder1), 11 ether);
+    assertEq(_funder2AlpacaBalanceBefore - alpaca.balanceOf(funder2), 12 ether);
 
     // check staking amount per funder
     assertFunderAmount(ALICE, ALICE, 10 ether);

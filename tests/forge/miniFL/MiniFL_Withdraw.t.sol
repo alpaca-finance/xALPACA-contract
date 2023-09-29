@@ -17,16 +17,16 @@ contract MiniFL_WithdrawTest is MiniFL_BaseTest {
   function testCorrectness_WhenWithdrawAmountThatCoveredByBalance() external {
     // alice deposited
     vm.startPrank(ALICE);
-    weth.approve(address(miniFL), 10 ether);
+    alpaca.approve(address(miniFL), 10 ether);
     miniFL.deposit(ALICE, 10 ether);
     vm.stopPrank();
 
-    uint256 _aliceWethBalanceBefore = weth.balanceOf(ALICE);
+    uint256 _aliceAlpacaBalanceBefore = alpaca.balanceOf(ALICE);
 
     vm.prank(ALICE);
     miniFL.withdraw(ALICE, 5 ether);
 
-    assertEq(weth.balanceOf(ALICE) - _aliceWethBalanceBefore, 5 ether);
+    assertEq(alpaca.balanceOf(ALICE) - _aliceAlpacaBalanceBefore, 5 ether);
 
     // check reserve amount
     assertStakingReserve(5 ether);
@@ -37,13 +37,13 @@ contract MiniFL_WithdrawTest is MiniFL_BaseTest {
 
     // alice deposited
     vm.startPrank(ALICE);
-    weth.approve(address(miniFL), _aliceDepoisitAmount);
+    alpaca.approve(address(miniFL), _aliceDepoisitAmount);
     miniFL.deposit(ALICE, _aliceDepoisitAmount);
     vm.stopPrank();
 
     // bob deposited
     vm.startPrank(BOB);
-    weth.approve(address(miniFL), 5 ether);
+    alpaca.approve(address(miniFL), 5 ether);
     miniFL.deposit(BOB, 5 ether);
     vm.stopPrank();
 
@@ -58,9 +58,9 @@ contract MiniFL_WithdrawTest is MiniFL_BaseTest {
     assertTotalUserStakingAmount(ALICE, 35 ether);
 
     // cache balance before withdraw
-    uint256 _aliceWethBalanceBefore = weth.balanceOf(ALICE);
-    uint256 _funder1WethBalanceBefore = weth.balanceOf(funder1);
-    uint256 _funder2WethBalanceBefore = weth.balanceOf(funder2);
+    uint256 _aliceAlpacaBalanceBefore = alpaca.balanceOf(ALICE);
+    uint256 _funder1AlpacaBalanceBefore = alpaca.balanceOf(funder1);
+    uint256 _funder2AlpacaBalanceBefore = alpaca.balanceOf(funder2);
 
     // funder1 withdraw some
     vm.prank(funder1);
@@ -72,9 +72,9 @@ contract MiniFL_WithdrawTest is MiniFL_BaseTest {
 
     // check balance after withdraw
     // ALICE balance should not changed
-    assertEq(weth.balanceOf(ALICE) - _aliceWethBalanceBefore, 0);
-    assertEq(weth.balanceOf(funder1) - _funder1WethBalanceBefore, 10 ether);
-    assertEq(weth.balanceOf(funder2) - _funder2WethBalanceBefore, 8 ether);
+    assertEq(alpaca.balanceOf(ALICE) - _aliceAlpacaBalanceBefore, 0);
+    assertEq(alpaca.balanceOf(funder1) - _funder1AlpacaBalanceBefore, 10 ether);
+    assertEq(alpaca.balanceOf(funder2) - _funder2AlpacaBalanceBefore, 8 ether);
 
     // check staking amount per funder
     // ALICE staking amount should not affected when funder withdraw
@@ -103,7 +103,7 @@ contract MiniFL_WithdrawTest is MiniFL_BaseTest {
   function testRevert_WhenCallerWithdrawWithExceedAmount() external {
     // alice deposited
     vm.startPrank(ALICE);
-    weth.approve(address(miniFL), 10 ether);
+    alpaca.approve(address(miniFL), 10 ether);
     miniFL.deposit(ALICE, 10 ether);
     vm.stopPrank();
 
@@ -128,40 +128,6 @@ contract MiniFL_WithdrawTest is MiniFL_BaseTest {
     vm.prank(funder2);
     vm.expectRevert(abi.encodeWithSelector(IMiniFL.MiniFL_InsufficientFundedAmount.selector));
     miniFL.withdraw(ALICE, 20.1 ether);
-  }
-
-  // #withdraw debtToken
-  function testCorrectness_WhenWithdrawDebtToken() external {
-    // bob deposit on debt token
-    vm.startPrank(BOB);
-    mockToken1.approve(address(miniFL), 10 ether);
-    miniFL.deposit(BOB, 10 ether);
-    vm.stopPrank();
-
-    uint256 _bobDTokenBalanceBefore = mockToken1.balanceOf(BOB);
-
-    vm.prank(BOB);
-    miniFL.withdraw(BOB, 5 ether);
-
-    assertEq(mockToken1.balanceOf(BOB) - _bobDTokenBalanceBefore, 5 ether);
-  }
-
-  // staker can withdraw for another
-  function testCorrectness_WhenWithdrawDebtTokenForAnother() external {
-    // bob deposit on debt token for ALICE
-    vm.startPrank(BOB);
-    mockToken1.approve(address(miniFL), 10 ether);
-    miniFL.deposit(ALICE, 10 ether);
-    vm.stopPrank();
-
-    uint256 _bobDTokenBalanceBefore = mockToken1.balanceOf(BOB);
-
-    // bob withdraw on debt token for ALICE
-    vm.prank(BOB);
-    miniFL.withdraw(ALICE, 5 ether);
-
-    assertEq(mockToken1.balanceOf(BOB) - _bobDTokenBalanceBefore, 5 ether);
-    // need to check pending alpaca ??????
   }
 
   function testRevert_WhenNonWhitelistedCallersWithDrawFromMiniFL() external {

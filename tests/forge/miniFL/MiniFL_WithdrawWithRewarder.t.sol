@@ -22,13 +22,13 @@ contract MiniFL_WithdrawWithRewarderTest is MiniFL_BaseTest {
     miniFL.deposit(ALICE, 10 ether);
     vm.stopPrank();
 
-    uint256 _aliceWethBalanceBefore = weth.balanceOf(ALICE);
+    uint256 _aliceAlpacaBalanceBefore = alpaca.balanceOf(ALICE);
 
     vm.prank(ALICE);
     miniFL.withdraw(ALICE, 5 ether);
 
     // assert alice balance
-    assertEq(weth.balanceOf(ALICE) - _aliceWethBalanceBefore, 5 ether);
+    assertEq(alpaca.balanceOf(ALICE) - _aliceAlpacaBalanceBefore, 5 ether);
 
     // assert total staking amount
     assertTotalUserStakingAmount(ALICE, 5 ether);
@@ -41,7 +41,7 @@ contract MiniFL_WithdrawWithRewarderTest is MiniFL_BaseTest {
   function testCorrectness_WhenFunderWithdrawToken_RewarderUserInfoShouldBeCorrect() external {
     // alice deposited
     vm.startPrank(ALICE);
-    weth.approve(address(miniFL), 10 ether);
+    alpaca.approve(address(miniFL), 10 ether);
     miniFL.deposit(ALICE, 10 ether);
     vm.stopPrank();
 
@@ -56,9 +56,9 @@ contract MiniFL_WithdrawWithRewarderTest is MiniFL_BaseTest {
     assertTotalUserStakingAmount(ALICE, 45 ether);
 
     // balance before withdraw
-    uint256 _aliceWethBalanceBefore = weth.balanceOf(ALICE);
-    uint256 _funder1WethBalanceBefore = weth.balanceOf(funder1);
-    uint256 _funder2WethBalanceBefore = weth.balanceOf(funder2);
+    uint256 _aliceAlpacaBalanceBefore = alpaca.balanceOf(ALICE);
+    uint256 _funder1AlpacaBalanceBefore = alpaca.balanceOf(funder1);
+    uint256 _funder2AlpacaBalanceBefore = alpaca.balanceOf(funder2);
 
     // withdraw
     vm.prank(ALICE);
@@ -71,9 +71,9 @@ contract MiniFL_WithdrawWithRewarderTest is MiniFL_BaseTest {
     miniFL.withdraw(ALICE, 10 ether);
 
     // assert received amount
-    assertEq(weth.balanceOf(ALICE) - _aliceWethBalanceBefore, 5 ether, "alice balance after withdraw");
-    assertEq(weth.balanceOf(funder1) - _funder1WethBalanceBefore, 7 ether, "funder1 balance after withdraw");
-    assertEq(weth.balanceOf(funder2) - _funder2WethBalanceBefore, 10 ether, "funder2 balance after withdraw");
+    assertEq(alpaca.balanceOf(ALICE) - _aliceAlpacaBalanceBefore, 5 ether, "alice balance after withdraw");
+    assertEq(alpaca.balanceOf(funder1) - _funder1AlpacaBalanceBefore, 7 ether, "funder1 balance after withdraw");
+    assertEq(alpaca.balanceOf(funder2) - _funder2AlpacaBalanceBefore, 10 ether, "funder2 balance after withdraw");
 
     // assert total staking amount after withdraw
     // 45 - 22 = 23
@@ -87,29 +87,5 @@ contract MiniFL_WithdrawWithRewarderTest is MiniFL_BaseTest {
     // assert state at rewarders
     assertRewarderUserInfo(rewarder1, ALICE, 23 ether, 0);
     assertRewarderUserInfo(rewarder2, ALICE, 23 ether, 0);
-  }
-
-  function testCorrectness_WhenWithdrawDebToken_RewarderUserInfoShouldBeCorrect() external {
-    // bob deposit on debt token
-    vm.startPrank(BOB);
-    mockToken1.approve(address(miniFL), 10 ether);
-    miniFL.deposit(BOB, 10 ether);
-    vm.stopPrank();
-
-    uint256 _bobDTokenBalanceBefore = mockToken1.balanceOf(BOB);
-
-    vm.prank(BOB);
-    miniFL.withdraw(BOB, 5 ether);
-
-    // assert bob balance
-    assertEq(mockToken1.balanceOf(BOB) - _bobDTokenBalanceBefore, 5 ether);
-
-    // assert total staking amount
-    assertTotalUserStakingAmount(BOB, 5 ether);
-
-    // assert reward user info
-    assertRewarderUserInfo(rewarder1, BOB, 5 ether, 0);
-    // rewarder2 is not register in this pool then user amount should be 0
-    assertRewarderUserInfo(rewarder2, BOB, 0 ether, 0);
   }
 }
