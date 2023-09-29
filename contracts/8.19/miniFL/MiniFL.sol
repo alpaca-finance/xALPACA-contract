@@ -27,7 +27,6 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   event LogSetWhitelistedCaller(address indexed _caller, bool _allow);
 
   struct UserInfo {
-    mapping(address => uint256) fundedAmounts; // funders address => amount
     uint256 totalAmount;
     int256 rewardDebt;
   }
@@ -180,7 +179,6 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     // Effects
     // can do unchecked since staked token totalSuply < max(uint256)
     unchecked {
-      user.fundedAmounts[msg.sender] += _receivedAmount;
       user.totalAmount = user.totalAmount + _receivedAmount;
       stakingReserve += _receivedAmount;
     }
@@ -220,15 +218,8 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     // call _updatePool in order to update poolInfo.accAlpacaPerShare
     PoolInfo memory _poolInfo = _updatePool();
 
-    // caller couldn't withdraw more than their funded
-    if (_amountToWithdraw > user.fundedAmounts[msg.sender]) {
-      revert MiniFL_InsufficientFundedAmount();
-    }
-
     // Effects
     unchecked {
-      user.fundedAmounts[msg.sender] -= _amountToWithdraw;
-
       // total amount & staking reserves always >= user.fundedAmounts[msg.sender]
       user.totalAmount -= _amountToWithdraw;
       stakingReserve -= _amountToWithdraw;
@@ -327,13 +318,6 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     }
 
     rewarders = _newRewarders;
-  }
-
-  /// @notice Get amount of staking token funded for a user at pid
-  /// @param _funder funder address
-  /// @param _for user address
-  function getUserAmountFundedBy(address _funder, address _for) external view returns (uint256 _stakingAmount) {
-    _stakingAmount = userInfo[_for].fundedAmounts[_funder];
   }
 
   /// @dev A routine for tranfering token in. Prevent wrong accounting when token has fee on tranfer

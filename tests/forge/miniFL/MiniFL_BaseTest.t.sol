@@ -10,9 +10,6 @@ import { MiniFL } from "../../../contracts/8.19/miniFL/MiniFL.sol";
 import { Rewarder } from "../../../contracts/8.19/miniFL/Rewarder.sol";
 
 contract MiniFL_BaseTest is BaseTest {
-  address internal funder1 = makeAddr("funder1");
-  address internal funder2 = makeAddr("funder2");
-
   address[] internal whitelistedCallers = new address[](5);
 
   Rewarder internal rewarder1;
@@ -32,22 +29,13 @@ contract MiniFL_BaseTest is BaseTest {
     rewardToken1.mint(address(rewarder1), 10000 ether);
     rewardToken2.mint(address(rewarder2), 15000 ether);
 
-    alpaca.mint(funder1, 100 ether);
-    alpaca.mint(funder2, 100 ether);
     alpaca.mint(ALICE, 100 ether);
     alpaca.mint(EVE, 100 ether);
     alpaca.mint(BOB, 100 ether);
 
-    vm.prank(funder1);
-    alpaca.approve(address(miniFL), 100 ether);
-    vm.prank(funder2);
-    alpaca.approve(address(miniFL), 100 ether);
-
     whitelistedCallers[0] = address(this);
     whitelistedCallers[1] = ALICE;
     whitelistedCallers[2] = BOB;
-    whitelistedCallers[3] = funder1;
-    whitelistedCallers[4] = funder2;
     miniFL.setWhitelistedCallers(whitelistedCallers, true);
   }
 
@@ -71,15 +59,6 @@ contract MiniFL_BaseTest is BaseTest {
   function assertTotalUserStakingAmount(address _user, uint256 _expectedAmount) internal {
     (uint256 _totalAmount, ) = miniFL.userInfo(_user);
     assertEq(_totalAmount, _expectedAmount);
-  }
-
-  function assertFunderAmount(
-    address _funder,
-    address _for,
-    uint256 _expectedAmount
-  ) internal {
-    uint256 _amount = miniFL.getUserAmountFundedBy(_funder, _for);
-    assertEq(_amount, _expectedAmount);
   }
 
   function assertRewarderUserInfo(
