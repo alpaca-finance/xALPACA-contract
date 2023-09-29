@@ -46,21 +46,6 @@ contract MiniFL_BaseTest is BaseTest {
     miniFL.setPoolRewarders(rewarders);
   }
 
-  function assertTotalUserStakingAmountWithReward(
-    address _user,
-    uint256 _expectedAmount,
-    int256 _expectedRewardDebt
-  ) internal {
-    (uint256 _totalAmount, int256 _rewardDebt) = miniFL.userInfo(_user);
-    assertEq(_totalAmount, _expectedAmount);
-    assertEq(_rewardDebt, _expectedRewardDebt);
-  }
-
-  function assertTotalUserStakingAmount(address _user, uint256 _expectedAmount) internal {
-    (uint256 _totalAmount, ) = miniFL.userInfo(_user);
-    assertEq(_totalAmount, _expectedAmount);
-  }
-
   function assertRewarderUserInfo(
     Rewarder _rewarder,
     address _user,

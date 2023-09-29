@@ -31,7 +31,8 @@ contract MiniFL_WithdrawWithRewarderTest is MiniFL_BaseTest {
     assertEq(alpaca.balanceOf(ALICE) - _aliceAlpacaBalanceBefore, 5 ether);
 
     // assert total staking amount
-    assertTotalUserStakingAmount(ALICE, 5 ether);
+    (uint256 _totalAmount, ) = miniFL.userInfo(ALICE);
+    assertEq(_totalAmount, 5 ether);
 
     // assert reward user info, both user info should be same
     assertRewarderUserInfo(rewarder1, ALICE, 5 ether, 0);

@@ -25,7 +25,8 @@ contract MiniFL_DepositTest is MiniFL_BaseTest {
     // transfer correctly
     assertEq(_aliceAlpacaBalanceBefore - alpaca.balanceOf(ALICE), 10 ether);
     // check total staking amount
-    assertTotalUserStakingAmount(ALICE, 10 ether);
+    (uint256 _totalAmount, ) = miniFL.userInfo(ALICE);
+    assertEq(_totalAmount, 10 ether);
 
     // check reserve amount
     assertStakingReserve(10 ether);
