@@ -73,6 +73,77 @@ contract MiniFL_HarvestTest is MiniFL_BaseTest {
     assertEq(alpaca.balanceOf(BOB) - _bobAlpacaBefore, 56000 ether);
   }
 
+  function testCorrectness_WhenFeedRewardBeforeRewardEnd_AndHarvest_ShouldGetRewardCorrectly() external {
+    // ----------------------------------------------------------
+    // | Time  | Reward Per sec | Pending Reward | Total Reward |
+    // |-------|----------------|----------------|--------------|
+    // |      0|            1000|               0|             0|
+    // |     50|            1000|           20000|             0|
+    // |     50|            2000|               0|         20000|
+    // |    100|            2000|           40000|         60000|
+    // |-------|----------------|----------------|--------------|
+
+    skip(50);
+    uint256 _aliceAlpacaBefore = alpaca.balanceOf(ALICE);
+
+    // alice pending alpaca on WETHPool = 20000
+    assertEq(miniFL.pendingAlpaca(wethPoolID, ALICE), 20000 ether);
+    vm.prank(ALICE);
+    miniFL.harvest(wethPoolID);
+    assertTotalUserStakingAmountWithReward(ALICE, wethPoolID, _aliceTotalWethDeposited, 20000 ether);
+    assertEq(miniFL.pendingAlpaca(wethPoolID, ALICE), 0);
+
+    // Feed more reward 1000 ether per sec for 50 secs
+    miniFL.feed(1000 ether * 50, 50);
+
+    skip(50);
+
+    // alice pending alpaca on WETHPool = 40000
+    assertEq(miniFL.pendingAlpaca(wethPoolID, ALICE), 40000 ether);
+    vm.prank(ALICE);
+    miniFL.harvest(wethPoolID);
+    assertTotalUserStakingAmountWithReward(ALICE, wethPoolID, _aliceTotalWethDeposited, 60000 ether);
+    assertEq(miniFL.pendingAlpaca(wethPoolID, ALICE), 0);
+
+    // assert all alpaca received
+    assertEq(alpaca.balanceOf(ALICE) - _aliceAlpacaBefore, 60000 ether);
+  }
+
+  function testCorrectness_WhenFeedRewardAfterRewardEnd_AndHarvest_ShouldGetRewardCorrectly() external {
+    // ----------------------------------------------------------
+    // | Time  | Reward Per sec | Pending Reward | Total Reward |
+    // |-------|----------------|----------------|--------------|
+    // |      0|            1000|               0|             0|
+    // |    100|            1000|           40000|             0|
+    // |    120|               0|               0|         40000|
+    // |    120|             500|               0|         40000|
+    // |    150|             500|            6000|         46000|
+    // |-------|----------------|----------------|--------------|
+
+    skip(100);
+
+    // alice pending alpaca on WETHPool = 20000
+    assertEq(miniFL.pendingAlpaca(wethPoolID, ALICE), 40000 ether);
+    vm.prank(ALICE);
+    miniFL.harvest(wethPoolID);
+    assertTotalUserStakingAmountWithReward(ALICE, wethPoolID, _aliceTotalWethDeposited, 40000 ether);
+    assertEq(miniFL.pendingAlpaca(wethPoolID, ALICE), 0);
+
+    skip(20);
+
+    // Feed more reward 1000 ether per sec for 50 secs
+    miniFL.feed(500 ether * 50, 50);
+
+    skip(30);
+
+    // alice pending alpaca on WETHPool = 40000
+    assertEq(miniFL.pendingAlpaca(wethPoolID, ALICE), 6000 ether);
+    vm.prank(ALICE);
+    miniFL.harvest(wethPoolID);
+    assertTotalUserStakingAmountWithReward(ALICE, wethPoolID, _aliceTotalWethDeposited, 46000 ether);
+    assertEq(miniFL.pendingAlpaca(wethPoolID, ALICE), 0);
+  }
+
   function testCorrectness_WhenTimepast_AndHarvestMany() external {
     // timpast for 100 second
     skip(100);
