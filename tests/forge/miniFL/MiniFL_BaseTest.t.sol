@@ -34,6 +34,9 @@ contract MiniFL_BaseTest is BaseTest {
 
     alpaca.mint(funder1, 100 ether);
     alpaca.mint(funder2, 100 ether);
+    alpaca.mint(ALICE, 100 ether);
+    alpaca.mint(EVE, 100 ether);
+    alpaca.mint(BOB, 100 ether);
 
     vm.prank(funder1);
     alpaca.approve(address(miniFL), 100 ether);

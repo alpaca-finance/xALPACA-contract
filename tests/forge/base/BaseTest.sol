@@ -67,15 +67,15 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
     uint256 usdcDecimal = usdc.decimals();
 
     weth.mint(ALICE, normalizeEther(1000 ether, wethDecimal));
-    alpaca.mint(ALICE, normalizeEther(1000 ether, wethDecimal));
+
     usdc.mint(ALICE, normalizeEther(1000 ether, usdcDecimal));
 
     weth.mint(EVE, normalizeEther(1000 ether, wethDecimal));
-    alpaca.mint(EVE, normalizeEther(1000 ether, wethDecimal));
+
     usdc.mint(EVE, normalizeEther(1000 ether, usdcDecimal));
 
     weth.mint(BOB, normalizeEther(1000 ether, wethDecimal));
-    alpaca.mint(BOB, normalizeEther(1000 ether, wethDecimal));
+
     usdc.mint(BOB, normalizeEther(1000 ether, usdcDecimal));
 
     miniFL = deployMiniFL(address(alpaca));
