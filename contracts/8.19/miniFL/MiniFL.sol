@@ -20,8 +20,6 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   event LogWithdraw(address indexed _caller, address indexed _user, uint256 _amount);
   event LogEmergencyWithdraw(address indexed _user, uint256 _amount);
   event LogHarvest(address indexed _user, uint256 _amount);
-  event LogAddPool(uint256 _allocPoint, address indexed _stakingToken);
-  event LogSetPool(uint256 _newAllocPoint);
   event LogUpdatePool(uint64 _lastRewardTime, uint256 _stakedBalance, uint256 _accAlpacaPerShare);
   event LogAlpacaPerSecond(uint256 _newAlpacaPerSecond);
   event LogApproveStakeDebtToken(address indexed _staker, bool _allow);
@@ -37,7 +35,6 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   struct PoolInfo {
     uint128 accAlpacaPerShare;
     uint64 lastRewardTime;
-    uint64 allocPoint;
   }
 
   address public ALPACA;
@@ -50,7 +47,6 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   mapping(address => UserInfo) public userInfo;
   mapping(address => bool) public whitelistedCallers;
 
-  uint256 public totalAllocPoint;
   uint256 public alpacaPerSecond;
   uint256 private constant ACC_ALPACA_PRECISION = 1e12;
 
@@ -75,7 +71,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     ALPACA = _alpaca;
 
-    poolInfo = PoolInfo({ allocPoint: 0, lastRewardTime: block.timestamp.toUint64(), accAlpacaPerShare: 0 });
+    poolInfo = PoolInfo({ lastRewardTime: block.timestamp.toUint64(), accAlpacaPerShare: 0 });
   }
 
   /// @notice Sets the ALPACA per second to be distributed. Can only be called by the owner.
@@ -116,10 +112,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
       {
         // if the reward has ended, overwrite alpaca per sec to 0
         uint256 _alpacaPerSecond = _poolInfo.lastRewardTime < rewardEndTimestamp ? alpacaPerSecond : 0;
-
-        _alpacaReward = totalAllocPoint != 0
-          ? (_timePast * _alpacaPerSecond * _poolInfo.allocPoint) / totalAllocPoint
-          : 0;
+        _alpacaReward = _timePast * _alpacaPerSecond;
       }
 
       accAlpacaPerShare = accAlpacaPerShare + ((_alpacaReward * ACC_ALPACA_PRECISION) / stakedBalance);
@@ -146,9 +139,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
           // if the reward has ended, overwrite alpaca per sec to 0
           uint256 _alpacaPerSecond = _poolInfo.lastRewardTime < rewardEndTimestamp ? alpacaPerSecond : 0;
 
-          _alpacaReward = totalAllocPoint != 0
-            ? (_timePast * _alpacaPerSecond * _poolInfo.allocPoint) / totalAllocPoint
-            : 0;
+          _alpacaReward = _timePast * _alpacaPerSecond;
         }
 
         // increase accAlpacaPerShare with `_alpacaReward/stakedBalance` amount

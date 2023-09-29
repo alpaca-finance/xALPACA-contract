@@ -27,14 +27,12 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   struct PoolInfo {
     uint128 accRewardPerShare;
     uint64 lastRewardTime;
-    uint64 allocPoint;
   }
 
   PoolInfo public poolInfo;
   uint256[] public poolIds;
 
   mapping(address => UserInfo) public userInfo;
-  uint256 public totalAllocPoint;
   uint256 public rewardPerSecond;
   uint256 private constant ACC_REWARD_PRECISION = 1e12;
 
@@ -46,8 +44,6 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   event LogOnDeposit(address indexed _user, uint256 _amount);
   event LogOnWithdraw(address indexed _user, uint256 _amount);
   event LogHarvest(address indexed _user, uint256 _amount);
-  event LogAddPool(uint256 _allocPoint);
-  event LogSetPool(uint256 _newAllocPoint);
   event LogUpdatePool(uint64 _lastRewardTime, uint256 _stakedBalance, uint256 _accRewardPerShare);
   event LogRewardPerSecond(uint256 _newRewardPerSecond);
   event LogSetName(string _name);
@@ -199,9 +195,8 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
       unchecked {
         _timePast = block.timestamp - _poolInfo.lastRewardTime;
       }
-      uint256 _rewards = totalAllocPoint != 0
-        ? (_timePast * rewardPerSecond * _poolInfo.allocPoint) / totalAllocPoint
-        : 0;
+      uint256 _rewards = _timePast * rewardPerSecond;
+
       _accRewardPerShare = _accRewardPerShare + ((_rewards * ACC_REWARD_PRECISION) / _stakedBalance);
     }
     return
@@ -221,7 +216,7 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
         unchecked {
           _timePast = block.timestamp - _poolInfo.lastRewardTime;
         }
-        uint256 _rewards = (_timePast * rewardPerSecond * _poolInfo.allocPoint) / totalAllocPoint;
+        uint256 _rewards = _timePast * rewardPerSecond;
 
         // increase accRewardPerShare with `_rewards/stakedBalance` amount
         // example:
@@ -241,7 +236,7 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     return _poolInfo;
   }
 
-  /// @notice Update reward variables of the given pool.
+  /// @notice Update reward variables of the pool.
   /// @return pool Returns the pool that was updated.
   function updatePool() external returns (PoolInfo memory) {
     return _updatePool();
