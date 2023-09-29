@@ -42,7 +42,7 @@ contract MiniFL_HarvestTest is MiniFL_BaseTest {
   // note: ref pending reward from MiniFL_PendingReward.sol:testCorrectness_WhenTimpast_PendingAlpacaShouldBeCorrectly
   function testCorrectness_WhenTimepast_AndHarvest1() external {
     // timpast for 100 second
-    vm.warp(block.timestamp + 100);
+    skip(100);
     uint256 _aliceAlpacaBefore = alpaca.balanceOf(ALICE);
     uint256 _bobAlpacaBefore = alpaca.balanceOf(BOB);
 
@@ -75,7 +75,7 @@ contract MiniFL_HarvestTest is MiniFL_BaseTest {
 
   function testCorrectness_WhenTimepast_AndHarvestMany() external {
     // timpast for 100 second
-    vm.warp(block.timestamp + 100);
+    skip(100);
     uint256[] memory _pids = new uint256[](2);
     _pids[0] = wethPoolID;
     _pids[1] = mockToken1PoolID;
@@ -96,14 +96,5 @@ contract MiniFL_HarvestTest is MiniFL_BaseTest {
     // assert all alpaca received
     uint256 _balanceAfter = alpaca.balanceOf(ALICE);
     assertEq(_balanceAfter - _balanceBefore, 44000 ether);
-  }
-
-  function testRevert_AlpacaIsNotEnoughForHarvest() external {
-    // timepast too far, made alpaca distributed 1000000 * 1000 = 1000,000,000 but alpaca in miniFL has only 10,000,000
-    vm.warp(block.timestamp + 1000000);
-
-    vm.expectRevert();
-    vm.prank(ALICE);
-    miniFL.harvest(wethPoolID);
   }
 }

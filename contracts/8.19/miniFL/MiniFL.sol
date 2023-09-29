@@ -25,7 +25,6 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   event LogUpdatePool(uint256 indexed _pid, uint64 _lastRewardTime, uint256 _stakedBalance, uint256 _accAlpacaPerShare);
   event LogAlpacaPerSecond(uint256 _newAlpacaPerSecond);
   event LogApproveStakeDebtToken(uint256 indexed _pid, address indexed _staker, bool _allow);
-  event LogSetMaxAlpacaPerSecond(uint256 _maxAlpacaPerSecond);
   event LogSetPoolRewarder(uint256 indexed _pid, address _rewarder);
   event LogSetWhitelistedCaller(address indexed _caller, bool _allow);
 
@@ -55,7 +54,6 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   uint256 public totalAllocPoint;
   uint256 public alpacaPerSecond;
   uint256 private constant ACC_ALPACA_PRECISION = 1e12;
-  uint256 public maxAlpacaPerSecond;
 
   uint256 public rewardEndTimestamp;
 
@@ -72,12 +70,11 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   }
 
   /// @param _alpaca The ALPACA token contract address.
-  function initialize(address _alpaca, uint256 _maxAlpacaPerSecond) external initializer {
+  function initialize(address _alpaca) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
     ALPACA = _alpaca;
-    maxAlpacaPerSecond = _maxAlpacaPerSecond;
 
     // The first pool is going to be a dummy pool where nobody uses.
     // This is to prevent confusion whether PID 0 is a valid pool or not
@@ -146,20 +143,19 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   }
 
   /// @notice Sets the ALPACA per second to be distributed. Can only be called by the owner.
-  /// @param _newAlpacaPerSecond The amount of ALPACA to be distributed per second.
-  /// @param _withUpdate If true, do mass update pools
-  function setAlpacaPerSecond(
-    uint256 _newAlpacaPerSecond,
-    uint256 _rewardEndTimestamp,
-    bool _withUpdate
-  ) external onlyOwner {
-    if (_newAlpacaPerSecond > maxAlpacaPerSecond || _rewardEndTimestamp <= block.timestamp) {
-      revert MiniFL_InvalidArguments();
+  /// @param _rewardAmount The amount of ALPACA to be distributed
+  /// @param _seconds The amount of time to distribute
+  function feed(uint256 _rewardAmount, uint256 _seconds) external onlyOwner {
+    massUpdatePools();
+
+    // roll over outstanding reward
+    if (rewardEndTimestamp > block.timestamp) {
+      _rewardAmount += (rewardEndTimestamp - block.timestamp) * alpacaPerSecond;
     }
-    if (_withUpdate) massUpdatePools();
-    // todo: handle rolling over
+    uint256 _newAlpacaPerSecond = _rewardAmount / _seconds;
+
     alpacaPerSecond = _newAlpacaPerSecond;
-    rewardEndTimestamp = _rewardEndTimestamp;
+    rewardEndTimestamp = block.timestamp + _seconds;
     emit LogAlpacaPerSecond(_newAlpacaPerSecond);
   }
 
@@ -437,16 +433,6 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     }
 
     emit LogHarvest(msg.sender, _pid, _pendingAlpaca);
-  }
-
-  /// @notice Set max reward per second
-  /// @param _newMaxAlpacaPerSecond The max reward per second
-  function setMaxAlpacaPerSecond(uint256 _newMaxAlpacaPerSecond) external onlyOwner {
-    if (_newMaxAlpacaPerSecond < alpacaPerSecond) {
-      revert MiniFL_InvalidArguments();
-    }
-    maxAlpacaPerSecond = _newMaxAlpacaPerSecond;
-    emit LogSetMaxAlpacaPerSecond(_newMaxAlpacaPerSecond);
   }
 
   /// @notice Set rewarders in Pool

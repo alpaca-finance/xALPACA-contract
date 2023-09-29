@@ -36,11 +36,7 @@ interface IMiniFL {
     bool _withUpdate
   ) external;
 
-  function setAlpacaPerSecond(
-    uint256 _newAlpacaPerSecond,
-    uint256 _rewardEndTimestamp,
-    bool _withUpdate
-  ) external;
+  function feed(uint256 _rewardAmount, uint256 _rewardEndTimestamp) external;
 
   function harvest(uint256 _pid) external;
 

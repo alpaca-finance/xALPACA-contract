@@ -23,7 +23,7 @@ contract MiniFL_BaseTest is BaseTest {
   uint256 notExistsPoolID = 999;
 
   function setUp() public virtual {
-    miniFL.setAlpacaPerSecond(maxAlpacaPerSecond, type(uint256).max, false);
+    miniFL.feed(1000 ether * 100, 100);
 
     alpaca.mint(address(miniFL), 10000000 ether);
 

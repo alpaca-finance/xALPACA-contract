@@ -19,7 +19,7 @@ contract MiniFL_PendingRewardWithRewarderTest is MiniFL_BaseTest {
 
   function testCorrectness_WhenTimpast_RewarderPendingTokenShouldBeCorrectly() external {
     // timpast for 100 second
-    vm.warp(block.timestamp + 100);
+    skip(100);
 
     // Mini FL, alpaca per second = 1000 ether then distributed reward = 1000 * 100 = 100000 ether
     // ----------------------------------------------------------------------------------------------------
@@ -93,7 +93,7 @@ contract MiniFL_PendingRewardWithRewarderTest is MiniFL_BaseTest {
     external
   {
     // timpast for 100 second
-    vm.warp(block.timestamp + 100);
+    skip(100);
 
     // increase balance in MiniFL
     weth.mint(address(miniFL), 10 ether);

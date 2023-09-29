@@ -71,7 +71,7 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
 
     usdc.mint(BOB, normalizeEther(1000 ether, usdcDecimal));
 
-    miniFL = deployMiniFL(address(alpaca), maxAlpacaPerSecond);
+    miniFL = deployMiniFL(address(alpaca));
   }
 
   function deployMockErc20(
@@ -83,13 +83,9 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
     vm.label(address(mockERC20), symbol);
   }
 
-  function deployMiniFL(address _rewardToken, uint256 _rewardPerSec) internal returns (MiniFL) {
+  function deployMiniFL(address _rewardToken) internal returns (MiniFL) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/MiniFL.sol/MiniFL.json"));
-    bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,uint256)")),
-      _rewardToken,
-      _rewardPerSec
-    );
+    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(address)")), _rewardToken);
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer);
     return MiniFL(_proxy);
   }
@@ -145,6 +141,6 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
   }
 
   function normalizeEther(uint256 _ether, uint256 _decimal) internal pure returns (uint256 _normalizedEther) {
-    _normalizedEther = _ether / 10 ** (18 - _decimal);
+    _normalizedEther = _ether / 10**(18 - _decimal);
   }
 }

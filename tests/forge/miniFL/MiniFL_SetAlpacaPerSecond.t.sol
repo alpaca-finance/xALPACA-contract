@@ -14,16 +14,25 @@ contract MiniFL_SetAlpacaPerSecondTest is MiniFL_BaseTest {
     super.setUp();
   }
 
-  function testCorrectness_WhenSetAlpacaPerSecond() external {
+  function testCorrectness_WhenRewardEndedAndSetAlpacaPerSecond_ShouldNotRollOver() external {
     // set from base test as max
     assertEq(miniFL.alpacaPerSecond(), maxAlpacaPerSecond);
-
-    miniFL.setAlpacaPerSecond(500 ether, type(uint256).max, false);
+    skip(100);
+    // 500 per second ether for 100 second
+    miniFL.feed(500 ether * 100, 100);
     assertEq(miniFL.alpacaPerSecond(), 500 ether);
   }
 
-  function testRevert_WhenSetAlpacaPerSecondMoreThanMaximum() external {
-    vm.expectRevert(abi.encodeWithSelector(IMiniFL.MiniFL_InvalidArguments.selector));
-    miniFL.setAlpacaPerSecond(maxAlpacaPerSecond + 1, type(uint256).max, false);
+  function testCorrectness_WhenPreviousRewardHasNotEnd_ShouldRollover() external {
+    // there's 50 second until reward end
+    // with 1000 ether per sec, there's 50000 left
+    // trying to feed 10000 ether more for the next 100 seconds
+    // should result in 50000 + 10000 / 150 = 400 ether per sec
+
+    skip(50);
+
+    miniFL.feed(10000 ether, 100);
+
+    assertEq(miniFL.alpacaPerSecond(), 600 ether);
   }
 }

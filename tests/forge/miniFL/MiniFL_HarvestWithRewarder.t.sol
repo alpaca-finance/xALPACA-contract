@@ -36,7 +36,7 @@ contract MiniFL_HarvestWithRewarderTest is MiniFL_BaseTest {
 
   function testCorrectness_WhenTimepast_AndHarvest_GotAllReward() external {
     // timpast for 100 second
-    vm.warp(block.timestamp + 100);
+    skip(100);
 
     // assets before
     uint256 _aliceAlpacaBefore = alpaca.balanceOf(ALICE);
@@ -98,7 +98,7 @@ contract MiniFL_HarvestWithRewarderTest is MiniFL_BaseTest {
   }
 
   function testRevert_Rewarder1IsNotEnoughForHarvest() external {
-    vm.warp(block.timestamp + 100);
+    skip(100);
     // burned all token in rewarder1
     address _reward = address(rewarder1);
     rewardToken1.burn(_reward, rewardToken1.balanceOf(_reward));
