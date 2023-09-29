@@ -17,7 +17,7 @@ contract MiniFL_HarvestWithRewarderTest is MiniFL_BaseTest {
 
   function setUp() public override {
     super.setUp();
-    setupMiniFLPool();
+
     setupRewarder();
     prepareForHarvest();
 
@@ -57,16 +57,16 @@ contract MiniFL_HarvestWithRewarderTest is MiniFL_BaseTest {
     // |   Total |          44000 |           6100 |          10000 |
     // --------------------------------------------------------------
     vm.prank(ALICE);
-    miniFL.harvest(wethPoolID);
-    assertTotalUserStakingAmountWithReward(ALICE, wethPoolID, _aliceTotalWethDeposited, 40000 ether);
-    assertRewarderUserInfo(rewarder1, ALICE, wethPoolID, _aliceTotalWethDeposited, 6000 ether);
-    assertRewarderUserInfo(rewarder2, ALICE, wethPoolID, _aliceTotalWethDeposited, 10000 ether);
+    miniFL.harvest();
+    assertTotalUserStakingAmountWithReward(ALICE, _aliceTotalWethDeposited, 40000 ether);
+    assertRewarderUserInfo(rewarder1, ALICE, _aliceTotalWethDeposited, 6000 ether);
+    assertRewarderUserInfo(rewarder2, ALICE, _aliceTotalWethDeposited, 10000 ether);
 
     vm.prank(ALICE);
-    miniFL.harvest(mockToken1PoolID);
-    assertTotalUserStakingAmountWithReward(ALICE, mockToken1PoolID, _aliceDTokenDeposited, 4000 ether);
-    assertRewarderUserInfo(rewarder1, ALICE, mockToken1PoolID, _aliceDTokenDeposited, 100 ether);
-    assertRewarderUserInfo(rewarder2, ALICE, mockToken1PoolID, 0, 0);
+    miniFL.harvest();
+    assertTotalUserStakingAmountWithReward(ALICE, _aliceDTokenDeposited, 4000 ether);
+    assertRewarderUserInfo(rewarder1, ALICE, _aliceDTokenDeposited, 100 ether);
+    assertRewarderUserInfo(rewarder2, ALICE, 0, 0);
 
     assertEq(alpaca.balanceOf(ALICE) - _aliceAlpacaBefore, 44000 ether);
     assertEq(rewardToken1.balanceOf(ALICE) - _aliceReward1Before, 6100 ether);
@@ -81,16 +81,16 @@ contract MiniFL_HarvestWithRewarderTest is MiniFL_BaseTest {
     // |   Total |          56000 |           3900 |           5000 |
     // --------------------------------------------------------------
     vm.prank(BOB);
-    miniFL.harvest(wethPoolID);
-    assertTotalUserStakingAmountWithReward(BOB, wethPoolID, _bobTotalWethDeposited, 20000 ether);
-    assertRewarderUserInfo(rewarder1, BOB, wethPoolID, _bobTotalWethDeposited, 3000 ether);
-    assertRewarderUserInfo(rewarder2, BOB, wethPoolID, _bobTotalWethDeposited, 5000 ether);
+    miniFL.harvest();
+    assertTotalUserStakingAmountWithReward(BOB, _bobTotalWethDeposited, 20000 ether);
+    assertRewarderUserInfo(rewarder1, BOB, _bobTotalWethDeposited, 3000 ether);
+    assertRewarderUserInfo(rewarder2, BOB, _bobTotalWethDeposited, 5000 ether);
 
     vm.prank(BOB);
-    miniFL.harvest(mockToken1PoolID);
-    assertTotalUserStakingAmountWithReward(BOB, mockToken1PoolID, _bobDTokenDeposited, 36000 ether);
-    assertRewarderUserInfo(rewarder1, BOB, mockToken1PoolID, _bobDTokenDeposited, 900 ether);
-    assertRewarderUserInfo(rewarder2, BOB, mockToken1PoolID, 0, 0);
+    miniFL.harvest();
+    assertTotalUserStakingAmountWithReward(BOB, _bobDTokenDeposited, 36000 ether);
+    assertRewarderUserInfo(rewarder1, BOB, _bobDTokenDeposited, 900 ether);
+    assertRewarderUserInfo(rewarder2, BOB, 0, 0);
 
     assertEq(alpaca.balanceOf(BOB) - _bobAlpacaBefore, 56000 ether);
     assertEq(rewardToken1.balanceOf(BOB) - _bobReward1Before, 3900 ether);
@@ -106,6 +106,6 @@ contract MiniFL_HarvestWithRewarderTest is MiniFL_BaseTest {
     // should revert when rewarder try transfer reward to ALICE
     vm.expectRevert();
     vm.prank(ALICE);
-    miniFL.harvest(wethPoolID);
+    miniFL.harvest();
   }
 }

@@ -13,27 +13,16 @@ import { IRewarder } from "../../../contracts/8.19/miniFL/interfaces/IRewarder.s
 contract MiniFL_SetPoolRewardersTest is MiniFL_BaseTest {
   function setUp() public override {
     super.setUp();
-    setupMiniFLPool();
   }
 
   function testCorrectness_WhenSetPoolRewarders() external {
-    rewarder1.addPool(wethPoolID, 90, false);
-    rewarder1.addPool(mockToken1PoolID, 10, false);
+    address[] memory _rewarders = new address[](2);
+    _rewarders[0] = address(rewarder1);
+    _rewarders[1] = address(rewarder2);
+    miniFL.setPoolRewarders(_rewarders);
 
-    rewarder2.addPool(wethPoolID, 100, false);
-
-    address[] memory _poolWethRewarders = new address[](2);
-    _poolWethRewarders[0] = address(rewarder1);
-    _poolWethRewarders[1] = address(rewarder2);
-    miniFL.setPoolRewarders(wethPoolID, _poolWethRewarders);
-
-    address[] memory _poolDebtTokenRewarders = new address[](1);
-    _poolDebtTokenRewarders[0] = address(rewarder1);
-    miniFL.setPoolRewarders(mockToken1PoolID, _poolDebtTokenRewarders);
-
-    assertEq(miniFL.rewarders(wethPoolID, 0), address(rewarder1));
-    assertEq(miniFL.rewarders(wethPoolID, 1), address(rewarder2));
-    assertEq(miniFL.rewarders(mockToken1PoolID, 0), address(rewarder1));
+    assertEq(miniFL.rewarders(0), address(rewarder1));
+    assertEq(miniFL.rewarders(1), address(rewarder2));
   }
 
   function testRevert_WhenSetRewarderWithWrongMiniFL() external {
@@ -50,11 +39,6 @@ contract MiniFL_SetPoolRewardersTest is MiniFL_BaseTest {
     _poolDebtTokenRewarders[0] = address(_newRewarder);
     _poolDebtTokenRewarders[1] = address(rewarder1);
     vm.expectRevert(abi.encodeWithSelector(IMiniFL.MiniFL_BadRewarder.selector));
-    miniFL.setPoolRewarders(mockToken1PoolID, _poolDebtTokenRewarders);
-  }
-
-  function testRevert_TryingToSetPoolThatHasNotBeenAdded_ShouldRevert() external {
-    vm.expectRevert(abi.encodeWithSelector(IRewarder.Rewarder1_PoolNotExisted.selector));
-    rewarder1.setPool(9999, 1000, false);
+    miniFL.setPoolRewarders(_poolDebtTokenRewarders);
   }
 }

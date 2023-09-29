@@ -12,13 +12,12 @@ import { IRewarder } from "../../../contracts/8.19/miniFL/interfaces/IRewarder.s
 contract MiniFL_DepositTest is MiniFL_BaseTest {
   function setUp() public override {
     super.setUp();
-    setupMiniFLPool();
   }
 
   function testRevert_WhenDepositMiniFLButPoolIsNotExists() external {
     vm.startPrank(ALICE);
     vm.expectRevert();
-    miniFL.deposit(ALICE, notExistsPoolID, 10 ether);
+    miniFL.deposit(ALICE, 10 ether);
     vm.stopPrank();
   }
 
@@ -27,18 +26,18 @@ contract MiniFL_DepositTest is MiniFL_BaseTest {
     uint256 _aliceWethBalanceBefore = weth.balanceOf(ALICE);
     vm.startPrank(ALICE);
     weth.approve(address(miniFL), 10 ether);
-    miniFL.deposit(ALICE, wethPoolID, 10 ether);
+    miniFL.deposit(ALICE, 10 ether);
     vm.stopPrank();
 
     // transfer correctly
     assertEq(_aliceWethBalanceBefore - weth.balanceOf(ALICE), 10 ether);
     // check staking amount for ALICE as funder
-    assertFunderAmount(ALICE, ALICE, wethPoolID, 10 ether);
+    assertFunderAmount(ALICE, ALICE, 10 ether);
     // check total staking amount
-    assertTotalUserStakingAmount(ALICE, wethPoolID, 10 ether);
+    assertTotalUserStakingAmount(ALICE, 10 ether);
 
     // check reserve amount
-    assertStakingReserve(wethPoolID, 10 ether);
+    assertStakingReserve(10 ether);
   }
 
   function testCorrectness_WhenOneFunderDepositMiniFLForAlice() external {
@@ -46,21 +45,21 @@ contract MiniFL_DepositTest is MiniFL_BaseTest {
     uint256 _funder1WethBalanceBefore = weth.balanceOf(funder1);
     // funder1 deposit for ALICE
     vm.prank(funder1);
-    miniFL.deposit(ALICE, wethPoolID, 10 ether);
+    miniFL.deposit(ALICE, 10 ether);
 
     // ALICE balance should not changed
     assertEq(_aliceWethBalanceBefore - weth.balanceOf(ALICE), 0);
     assertEq(_funder1WethBalanceBefore - weth.balanceOf(funder1), 10 ether);
 
     // check staking amount per funder
-    assertFunderAmount(ALICE, ALICE, wethPoolID, 0 ether);
-    assertFunderAmount(funder1, ALICE, wethPoolID, 10 ether);
+    assertFunderAmount(ALICE, ALICE, 0 ether);
+    assertFunderAmount(funder1, ALICE, 10 ether);
 
     // check total staking amount
-    assertTotalUserStakingAmount(ALICE, wethPoolID, 10 ether);
+    assertTotalUserStakingAmount(ALICE, 10 ether);
 
     // check reserve amount
-    assertStakingReserve(wethPoolID, 10 ether);
+    assertStakingReserve(10 ether);
   }
 
   function testCorrectness_WhenManyFunderDepositMiniFLForAliceAndBob() external {
@@ -70,14 +69,14 @@ contract MiniFL_DepositTest is MiniFL_BaseTest {
 
     // funder1 deposit for ALICE
     vm.prank(funder1);
-    miniFL.deposit(ALICE, wethPoolID, 10 ether);
+    miniFL.deposit(ALICE, 10 ether);
 
     // funder2 deposit for ALICE
     vm.prank(funder2);
-    miniFL.deposit(ALICE, wethPoolID, 11 ether);
+    miniFL.deposit(ALICE, 11 ether);
 
     vm.prank(funder2);
-    miniFL.deposit(BOB, wethPoolID, 12 ether);
+    miniFL.deposit(BOB, 12 ether);
 
     // ALICE balance should not changed
     assertEq(_aliceWethBalanceBefore - weth.balanceOf(ALICE), 0);
@@ -85,17 +84,17 @@ contract MiniFL_DepositTest is MiniFL_BaseTest {
     assertEq(_funder2WethBalanceBefore - weth.balanceOf(funder2), 23 ether); // 11 for alice, 12 for bob
 
     // check staking amount per funder
-    assertFunderAmount(ALICE, ALICE, wethPoolID, 0 ether);
-    assertFunderAmount(funder1, ALICE, wethPoolID, 10 ether);
-    assertFunderAmount(funder2, ALICE, wethPoolID, 11 ether);
-    assertFunderAmount(funder2, BOB, wethPoolID, 12 ether);
+    assertFunderAmount(ALICE, ALICE, 0 ether);
+    assertFunderAmount(funder1, ALICE, 10 ether);
+    assertFunderAmount(funder2, ALICE, 11 ether);
+    assertFunderAmount(funder2, BOB, 12 ether);
 
     // check total staking amount
-    assertTotalUserStakingAmount(ALICE, wethPoolID, 21 ether);
-    assertTotalUserStakingAmount(BOB, wethPoolID, 12 ether);
+    assertTotalUserStakingAmount(ALICE, 21 ether);
+    assertTotalUserStakingAmount(BOB, 12 ether);
 
     // check reserve amount
-    assertStakingReserve(wethPoolID, 33 ether);
+    assertStakingReserve(33 ether);
   }
 
   // #deposit debtToken
@@ -104,17 +103,17 @@ contract MiniFL_DepositTest is MiniFL_BaseTest {
 
     vm.startPrank(BOB);
     mockToken1.approve(address(miniFL), 10 ether);
-    miniFL.deposit(BOB, mockToken1PoolID, 10 ether);
+    miniFL.deposit(BOB, 10 ether);
     vm.stopPrank();
 
     assertEq(_bobDebtTokenBalanceBefore - mockToken1.balanceOf(BOB), 10 ether);
     // check staking amount for BOB as funder
-    assertFunderAmount(BOB, BOB, mockToken1PoolID, 10 ether);
+    assertFunderAmount(BOB, BOB, 10 ether);
     // check total staking amount
-    assertTotalUserStakingAmount(BOB, mockToken1PoolID, 10 ether);
+    assertTotalUserStakingAmount(BOB, 10 ether);
 
     // check reserve amount
-    assertStakingReserve(mockToken1PoolID, 10 ether);
+    assertStakingReserve(10 ether);
   }
 
   // note: now debt token can deposit for another
@@ -123,20 +122,20 @@ contract MiniFL_DepositTest is MiniFL_BaseTest {
     // BOB deposit for ALICE
     vm.startPrank(BOB);
     mockToken1.approve(address(miniFL), 10 ether);
-    miniFL.deposit(ALICE, mockToken1PoolID, 10 ether);
+    miniFL.deposit(ALICE, 10 ether);
     vm.stopPrank();
 
     assertEq(_bobDebtTokenBalanceBefore - mockToken1.balanceOf(BOB), 10 ether);
 
     // check staking amount for BOB as funder of ALICE
-    assertFunderAmount(BOB, ALICE, mockToken1PoolID, 10 ether);
+    assertFunderAmount(BOB, ALICE, 10 ether);
 
     // check total staking amount
-    assertTotalUserStakingAmount(BOB, mockToken1PoolID, 0);
-    assertTotalUserStakingAmount(ALICE, mockToken1PoolID, 10 ether);
+    assertTotalUserStakingAmount(BOB, 0);
+    assertTotalUserStakingAmount(ALICE, 10 ether);
 
     // check reserve amount
-    assertStakingReserve(mockToken1PoolID, 10 ether);
+    assertStakingReserve(10 ether);
   }
 
   function testRevert_WhenNonWhitelistedCallersDepositMiniFLW() external {
@@ -145,7 +144,7 @@ contract MiniFL_DepositTest is MiniFL_BaseTest {
     vm.startPrank(randomCaller);
     weth.approve(address(miniFL), 10 ether);
     vm.expectRevert(abi.encodeWithSelector(IMiniFL.MiniFL_Unauthorized.selector));
-    miniFL.deposit(randomCaller, wethPoolID, 10 ether);
+    miniFL.deposit(randomCaller, 10 ether);
     vm.stopPrank();
   }
 }
