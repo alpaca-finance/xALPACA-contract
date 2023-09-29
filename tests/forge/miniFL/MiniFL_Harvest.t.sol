@@ -40,7 +40,7 @@ contract MiniFL_HarvestTest is MiniFL_BaseTest {
   }
 
   // note: ref pending reward from MiniFL_PendingReward.sol:testCorrectness_WhenTimpast_PendingAlpacaShouldBeCorrectly
-  function testCorrectness_WhenTimepast_AndHarvest() external {
+  function testCorrectness_WhenTimepast_AndHarvest1() external {
     // timpast for 100 second
     vm.warp(block.timestamp + 100);
     uint256 _aliceAlpacaBefore = alpaca.balanceOf(ALICE);

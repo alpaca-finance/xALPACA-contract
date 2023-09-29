@@ -28,10 +28,10 @@ contract MiniFL_SetMaxAlpacaPerSecondTest is MiniFL_BaseTest {
 
     // ensure this new alpaca per sec should be reverted
     vm.expectRevert(abi.encodeWithSelector(IMiniFL.MiniFL_InvalidArguments.selector));
-    miniFL.setAlpacaPerSecond(_newAlpacaPerSec, false);
+    miniFL.setAlpacaPerSecond(_newAlpacaPerSec, type(uint256).max, false);
 
     miniFL.setMaxAlpacaPerSecond(maxAlpacaPerSecond * 2);
-    miniFL.setAlpacaPerSecond(_newAlpacaPerSec, false);
+    miniFL.setAlpacaPerSecond(_newAlpacaPerSec, type(uint256).max, false);
     assertEq(miniFL.alpacaPerSecond(), _newAlpacaPerSec);
   }
 

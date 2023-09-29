@@ -57,6 +57,8 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   uint256 private constant ACC_ALPACA_PRECISION = 1e12;
   uint256 public maxAlpacaPerSecond;
 
+  uint256 public rewardEndTimestamp;
+
   /// @dev allow only whitelised callers
   modifier onlyWhitelisted() {
     if (!whitelistedCallers[msg.sender]) {
@@ -128,7 +130,11 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @param _pid The index of the pool. See `poolInfo`.
   /// @param _newAllocPoint New AP of the pool.
   /// @param _withUpdate If true, do mass update pools
-  function setPool(uint256 _pid, uint256 _newAllocPoint, bool _withUpdate) external onlyOwner {
+  function setPool(
+    uint256 _pid,
+    uint256 _newAllocPoint,
+    bool _withUpdate
+  ) external onlyOwner {
     // prevent setting allocPoint of dummy pool
     if (_pid == 0) revert MiniFL_InvalidArguments();
     if (_withUpdate) massUpdatePools();
@@ -142,12 +148,18 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @notice Sets the ALPACA per second to be distributed. Can only be called by the owner.
   /// @param _newAlpacaPerSecond The amount of ALPACA to be distributed per second.
   /// @param _withUpdate If true, do mass update pools
-  function setAlpacaPerSecond(uint256 _newAlpacaPerSecond, bool _withUpdate) external onlyOwner {
-    if (_newAlpacaPerSecond > maxAlpacaPerSecond) {
+  function setAlpacaPerSecond(
+    uint256 _newAlpacaPerSecond,
+    uint256 _rewardEndTimestamp,
+    bool _withUpdate
+  ) external onlyOwner {
+    if (_newAlpacaPerSecond > maxAlpacaPerSecond || _rewardEndTimestamp <= block.timestamp) {
       revert MiniFL_InvalidArguments();
     }
     if (_withUpdate) massUpdatePools();
+    // todo: handle rolling over
     alpacaPerSecond = _newAlpacaPerSecond;
+    rewardEndTimestamp = _rewardEndTimestamp;
     emit LogAlpacaPerSecond(_newAlpacaPerSecond);
   }
 
@@ -162,15 +174,23 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     uint256 accAlpacaPerShare = _poolInfo.accAlpacaPerShare;
     uint256 stakedBalance = stakingReserves[stakingTokens[_pid]];
     if (block.timestamp > _poolInfo.lastRewardTime && stakedBalance != 0) {
-      uint256 timePast;
-      unchecked {
-        timePast = block.timestamp - _poolInfo.lastRewardTime;
+      // if reward has ended, accumulated only before reward end
+      // otherwise, accumulated up to now
+      uint256 _timePast = block.timestamp > rewardEndTimestamp
+        ? rewardEndTimestamp - _poolInfo.lastRewardTime
+        : block.timestamp - _poolInfo.lastRewardTime;
+
+      uint256 _alpacaReward;
+      {
+        // if the reward has ended, overwrite alpaca per sec to 0
+        uint256 _alpacaPerSecond = _poolInfo.lastRewardTime < rewardEndTimestamp ? alpacaPerSecond : 0;
+
+        _alpacaReward = totalAllocPoint != 0
+          ? (_timePast * _alpacaPerSecond * _poolInfo.allocPoint) / totalAllocPoint
+          : 0;
       }
 
-      uint256 alpacaReward = totalAllocPoint != 0
-        ? (timePast * alpacaPerSecond * _poolInfo.allocPoint) / totalAllocPoint
-        : 0;
-      accAlpacaPerShare = accAlpacaPerShare + ((alpacaReward * ACC_ALPACA_PRECISION) / stakedBalance);
+      accAlpacaPerShare = accAlpacaPerShare + ((_alpacaReward * ACC_ALPACA_PRECISION) / stakedBalance);
     }
 
     return (((user.totalAmount * accAlpacaPerShare) / ACC_ALPACA_PRECISION).toInt256() - user.rewardDebt).toUint256();
@@ -184,26 +204,33 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     if (block.timestamp > _poolInfo.lastRewardTime) {
       uint256 stakedBalance = stakingReserves[stakingTokens[_pid]];
       if (stakedBalance > 0) {
-        uint256 timePast;
-        // can do unchecked since always block.timestamp >= lastRewardTime
-        unchecked {
-          timePast = block.timestamp - _poolInfo.lastRewardTime;
-        }
-        // calculate total alpacaReward since lastRewardTime for this _pid
-        uint256 alpacaReward = totalAllocPoint != 0
-          ? (timePast * alpacaPerSecond * _poolInfo.allocPoint) / totalAllocPoint
-          : 0;
+        // if reward has ended, accumulated only before reward end
+        // otherwise, accumulated up to now
+        uint256 _timePast = block.timestamp > rewardEndTimestamp
+          ? rewardEndTimestamp - _poolInfo.lastRewardTime
+          : block.timestamp - _poolInfo.lastRewardTime;
 
-        // increase accAlpacaPerShare with `alpacaReward/stakedBalance` amount
+        // calculate total alpacaReward since lastRewardTime for this _pid
+        uint256 _alpacaReward;
+        {
+          // if the reward has ended, overwrite alpaca per sec to 0
+          uint256 _alpacaPerSecond = _poolInfo.lastRewardTime < rewardEndTimestamp ? alpacaPerSecond : 0;
+
+          _alpacaReward = totalAllocPoint != 0
+            ? (_timePast * _alpacaPerSecond * _poolInfo.allocPoint) / totalAllocPoint
+            : 0;
+        }
+
+        // increase accAlpacaPerShare with `_alpacaReward/stakedBalance` amount
         // example:
         //  - oldAccAlpacaPerShare = 0
-        //  - alpacaReward                = 2000
+        //  - _alpacaReward                = 2000
         //  - stakedBalance               = 10000
-        //  _poolInfo.accAlpacaPerShare = oldAccAlpacaPerShare + (alpacaReward/stakedBalance)
+        //  _poolInfo.accAlpacaPerShare = oldAccAlpacaPerShare + (_alpacaReward/stakedBalance)
         //  _poolInfo.accAlpacaPerShare = 0 + 2000/10000 = 0.2
         _poolInfo.accAlpacaPerShare =
           _poolInfo.accAlpacaPerShare +
-          ((alpacaReward * ACC_ALPACA_PRECISION) / stakedBalance).toUint128();
+          ((_alpacaReward * ACC_ALPACA_PRECISION) / stakedBalance).toUint128();
       }
       _poolInfo.lastRewardTime = block.timestamp.toUint64();
       // update memory poolInfo in state
@@ -245,7 +272,11 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @param _for The beneficary address of the deposit.
   /// @param _pid The index of the pool. See `poolInfo`.
   /// @param _amountToDeposit amount to deposit.
-  function deposit(address _for, uint256 _pid, uint256 _amountToDeposit) external onlyWhitelisted nonReentrant {
+  function deposit(
+    address _for,
+    uint256 _pid,
+    uint256 _amountToDeposit
+  ) external onlyWhitelisted nonReentrant {
     UserInfo storage user = userInfo[_pid][_for];
 
     // call _updatePool in order to update poolInfo.accAlpacaPerShare
@@ -292,7 +323,11 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @param _from Withdraw from who?
   /// @param _pid The index of the pool. See `poolInfo`.
   /// @param _amountToWithdraw Staking token amount to withdraw.
-  function withdraw(address _from, uint256 _pid, uint256 _amountToWithdraw) external onlyWhitelisted nonReentrant {
+  function withdraw(
+    address _from,
+    uint256 _pid,
+    uint256 _amountToWithdraw
+  ) external onlyWhitelisted nonReentrant {
     UserInfo storage user = userInfo[_pid][_from];
 
     // call _updatePool in order to update poolInfo.accAlpacaPerShare
@@ -460,7 +495,11 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @param _token The address of token to transfer
   /// @param _amount The amount to transfer
   /// @return _receivedAmount The actual amount received after transfer
-  function _unsafePullToken(address _from, address _token, uint256 _amount) internal returns (uint256 _receivedAmount) {
+  function _unsafePullToken(
+    address _from,
+    address _token,
+    uint256 _amount
+  ) internal returns (uint256 _receivedAmount) {
     uint256 _currentTokenBalance = IERC20Upgradeable(_token).balanceOf(address(this));
     IERC20Upgradeable(_token).safeTransferFrom(_from, address(this), _amount);
     _receivedAmount = IERC20Upgradeable(_token).balanceOf(address(this)) - _currentTokenBalance;

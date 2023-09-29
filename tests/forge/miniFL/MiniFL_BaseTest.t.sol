@@ -23,7 +23,8 @@ contract MiniFL_BaseTest is BaseTest {
   uint256 notExistsPoolID = 999;
 
   function setUp() public virtual {
-    miniFL.setAlpacaPerSecond(maxAlpacaPerSecond, false);
+    miniFL.setAlpacaPerSecond(maxAlpacaPerSecond, type(uint256).max, false);
+
     alpaca.mint(address(miniFL), 10000000 ether);
 
     rewarder1 = deployRewarder("REWARDER01", address(miniFL), address(rewardToken1), maxAlpacaPerSecond);
@@ -131,12 +132,21 @@ contract MiniFL_BaseTest is BaseTest {
     assertEq(_rewardDebt, _expectedRewardDebt);
   }
 
-  function assertTotalUserStakingAmount(address _user, uint256 _pid, uint256 _expectedAmount) internal {
+  function assertTotalUserStakingAmount(
+    address _user,
+    uint256 _pid,
+    uint256 _expectedAmount
+  ) internal {
     (uint256 _totalAmount, ) = miniFL.userInfo(_pid, _user);
     assertEq(_totalAmount, _expectedAmount);
   }
 
-  function assertFunderAmount(address _funder, address _for, uint256 _pid, uint256 _expectedAmount) internal {
+  function assertFunderAmount(
+    address _funder,
+    address _for,
+    uint256 _pid,
+    uint256 _expectedAmount
+  ) internal {
     uint256 _amount = miniFL.getUserAmountFundedBy(_funder, _for, _pid);
     assertEq(_amount, _expectedAmount);
   }

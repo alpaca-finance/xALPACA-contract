@@ -10,9 +10,17 @@ interface IMiniFL {
   error MiniFL_InsufficientFundedAmount();
   error MiniFL_Unauthorized();
 
-  function deposit(address _for, uint256 _pid, uint256 _amountToDeposit) external;
+  function deposit(
+    address _for,
+    uint256 _pid,
+    uint256 _amountToDeposit
+  ) external;
 
-  function withdraw(address _from, uint256 _pid, uint256 _amountToWithdraw) external;
+  function withdraw(
+    address _from,
+    uint256 _pid,
+    uint256 _amountToWithdraw
+  ) external;
 
   function poolLength() external view returns (uint256);
 
@@ -22,9 +30,17 @@ interface IMiniFL {
 
   function setWhitelistedCallers(address[] calldata _callers, bool _allow) external;
 
-  function setPool(uint256 _pid, uint256 _newAllocPoint, bool _withUpdate) external;
+  function setPool(
+    uint256 _pid,
+    uint256 _newAllocPoint,
+    bool _withUpdate
+  ) external;
 
-  function setAlpacaPerSecond(uint256 _newAlpacaPerSecond, bool _withUpdate) external;
+  function setAlpacaPerSecond(
+    uint256 _newAlpacaPerSecond,
+    uint256 _rewardEndTimestamp,
+    bool _withUpdate
+  ) external;
 
   function harvest(uint256 _pid) external;
 
