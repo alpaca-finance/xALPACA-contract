@@ -13,7 +13,6 @@ contract MiniFL_WithdrawTest is MiniFL_BaseTest {
     super.setUp();
   }
 
-  // #withdraw ibToken (not debt token)
   function testCorrectness_WhenWithdrawAmountThatCoveredByBalance() external {
     // alice deposited
     vm.startPrank(ALICE);
@@ -30,6 +29,18 @@ contract MiniFL_WithdrawTest is MiniFL_BaseTest {
 
     // check reserve amount
     assertStakingReserve(5 ether);
+  }
+
+  function testRevert_WhenWithdrawMoreThanDeposit() external {
+    // alice deposited
+    vm.startPrank(ALICE);
+    alpaca.approve(address(miniFL), 10 ether);
+    miniFL.deposit(ALICE, 10 ether);
+    vm.stopPrank();
+
+    vm.prank(ALICE);
+    vm.expectRevert(abi.encodeWithSelector(IMiniFL.MiniFL_InsufficientAmount.selector));
+    miniFL.withdraw(ALICE, 11 ether);
   }
 
   function testRevert_WhenNonWhitelistedCallersWithDrawFromMiniFL() external {
