@@ -131,6 +131,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @dev Perform actual update pool.
   /// @return _poolInfo Returns the pool that was updated.
   function _updatePool() internal returns (PoolInfo memory _poolInfo) {
+    _poolInfo = poolInfo;
     if (block.timestamp > _poolInfo.lastRewardTime) {
       uint256 stakedBalance = stakingReserve;
       if (stakedBalance > 0) {
