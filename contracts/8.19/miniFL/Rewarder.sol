@@ -27,14 +27,11 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   struct PoolInfo {
     uint128 accRewardPerShare;
     uint64 lastRewardTime;
-    uint64 allocPoint;
   }
 
-  mapping(uint256 => PoolInfo) public poolInfo;
-  uint256[] public poolIds;
+  PoolInfo public poolInfo;
 
-  mapping(uint256 => mapping(address => UserInfo)) public userInfo;
-  uint256 public totalAllocPoint;
+  mapping(address => UserInfo) public userInfo;
   uint256 public rewardPerSecond;
   uint256 private constant ACC_REWARD_PRECISION = 1e12;
 
@@ -43,12 +40,10 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
   uint256 public maxRewardPerSecond;
 
-  event LogOnDeposit(address indexed _user, uint256 indexed _pid, uint256 _amount);
-  event LogOnWithdraw(address indexed _user, uint256 indexed _pid, uint256 _amount);
-  event LogHarvest(address indexed _user, uint256 indexed _pid, uint256 _amount);
-  event LogAddPool(uint256 indexed _pid, uint256 _allocPoint);
-  event LogSetPool(uint256 indexed _pid, uint256 _newAllocPoint);
-  event LogUpdatePool(uint256 indexed _pid, uint64 _lastRewardTime, uint256 _stakedBalance, uint256 _accRewardPerShare);
+  event LogOnDeposit(address indexed _user, uint256 _amount);
+  event LogOnWithdraw(address indexed _user, uint256 _amount);
+  event LogHarvest(address indexed _user, uint256 _amount);
+  event LogUpdatePool(uint64 _lastRewardTime, uint256 _stakedBalance, uint256 _accRewardPerShare);
   event LogRewardPerSecond(uint256 _newRewardPerSecond);
   event LogSetName(string _name);
   event LogSetMaxRewardPerSecond(uint256 _newMaxRewardPerSecond);
@@ -74,7 +69,7 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     // sanity check
     IERC20Upgradeable(_rewardToken).totalSupply();
-    IMiniFL(_miniFL).poolLength();
+    IMiniFL(_miniFL).stakingReserve();
 
     name = _name;
     miniFL = _miniFL;
@@ -83,12 +78,11 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   }
 
   /// @notice Hook deposit action from MiniFL.
-  /// @param _pid The index of the pool. See `poolInfo`.
   /// @param _user The beneficary address of the deposit.
   /// @param _newAmount new staking amount from MiniFL.
-  function onDeposit(uint256 _pid, address _user, uint256 _newAmount) external override onlyMiniFL {
-    PoolInfo memory pool = _updatePool(_pid);
-    UserInfo storage user = userInfo[_pid][_user];
+  function onDeposit(address _user, uint256 _newAmount) external override onlyMiniFL {
+    PoolInfo memory pool = _updatePool();
+    UserInfo storage user = userInfo[_user];
 
     // calculate new staked amount
     // example: if user deposit another 500 shares
@@ -107,16 +101,16 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     //  This means newly deposit share does not eligible for 25,000 pending rewards
     user.rewardDebt = user.rewardDebt + ((_amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION).toInt256();
 
-    emit LogOnDeposit(_user, _pid, _amount);
+    emit LogOnDeposit(_user, _amount);
   }
 
   /// @notice Hook Withdraw action from MiniFL.
-  /// @param _pid The index of the pool. See `poolInfo`.
+
   /// @param _user Withdraw from who?
   /// @param _newAmount new staking amount from MiniFL.
-  function onWithdraw(uint256 _pid, address _user, uint256 _newAmount) external override onlyMiniFL {
-    PoolInfo memory pool = _updatePool(_pid);
-    UserInfo storage user = userInfo[_pid][_user];
+  function onWithdraw(address _user, uint256 _newAmount) external override onlyMiniFL {
+    PoolInfo memory pool = _updatePool();
+    UserInfo storage user = userInfo[_user];
 
     uint256 _currentAmount = user.amount;
     if (_currentAmount >= _newAmount) {
@@ -139,23 +133,22 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
         (((_withdrawAmount * pool.accRewardPerShare) / ACC_REWARD_PRECISION)).toInt256();
       user.amount = _newAmount;
 
-      emit LogOnWithdraw(_user, _pid, _withdrawAmount);
+      emit LogOnWithdraw(_user, _withdrawAmount);
     } else {
       // Handling when rewarder1 getting set after the pool is live
       // if user.amount < _newAmount, then it is first deposit.
       user.amount = _newAmount;
       user.rewardDebt = user.rewardDebt + ((_newAmount * pool.accRewardPerShare) / ACC_REWARD_PRECISION).toInt256();
 
-      emit LogOnDeposit(_user, _pid, _newAmount);
+      emit LogOnDeposit(_user, _newAmount);
     }
   }
 
   /// @notice Hook Harvest action from MiniFL.
-  /// @param _pid The index of the pool. See `poolInfo`.
   /// @param _user The beneficary address.
-  function onHarvest(uint256 _pid, address _user) external override onlyMiniFL {
-    PoolInfo memory pool = _updatePool(_pid);
-    UserInfo storage user = userInfo[_pid][_user];
+  function onHarvest(address _user) external override onlyMiniFL {
+    PoolInfo memory pool = _updatePool();
+    UserInfo storage user = userInfo[_user];
 
     // example:
     //  - totalAmount         = 100
@@ -173,103 +166,54 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
       IERC20Upgradeable(rewardToken).safeTransfer(_user, _pendingRewards);
     }
 
-    emit LogHarvest(_user, _pid, _pendingRewards);
+    emit LogHarvest(_user, _pendingRewards);
   }
 
   /// @notice Sets the reward per second to be distributed.
   /// @dev Can only be called by the owner.
   /// @param _newRewardPerSecond The amount of reward token to be distributed per second.
-  /// @param _withUpdate If true, do mass update pools
-  function setRewardPerSecond(uint256 _newRewardPerSecond, bool _withUpdate) external onlyOwner {
+  function setRewardPerSecond(uint256 _newRewardPerSecond) external onlyOwner {
     if (_newRewardPerSecond > maxRewardPerSecond) revert Rewarder1_BadArguments();
 
-    if (_withUpdate) _massUpdatePools();
+    _updatePool();
     rewardPerSecond = _newRewardPerSecond;
     emit LogRewardPerSecond(_newRewardPerSecond);
   }
 
-  /// @notice Add a new pool. Can only be called by the owner.
-  /// @param _pid The Pool ID on MiniFL
-  /// @param _allocPoint The new allocation point
-  /// @param _withUpdate If true, do mass update pools
-  function addPool(uint256 _pid, uint256 _allocPoint, bool _withUpdate) external onlyOwner {
-    if (poolInfo[_pid].lastRewardTime != 0) revert Rewarder1_PoolExisted();
-
-    if (_withUpdate) _massUpdatePools();
-
-    totalAllocPoint = totalAllocPoint + _allocPoint;
-
-    poolInfo[_pid] = PoolInfo({
-      allocPoint: _allocPoint.toUint64(),
-      lastRewardTime: block.timestamp.toUint64(),
-      accRewardPerShare: 0
-    });
-    poolIds.push(_pid);
-    emit LogAddPool(_pid, _allocPoint);
-  }
-
-  /// @notice Update the given pool's allocation point.
-  /// @dev Can only be called by the owner.
-  /// @param _pid The index of the pool. See `poolInfo`.
-  /// @param _newAllocPoint The allocation point of the pool.
-  /// @param _withUpdate If true, do mass update pools
-  function setPool(uint256 _pid, uint256 _newAllocPoint, bool _withUpdate) external onlyOwner {
-    if (poolInfo[_pid].lastRewardTime == 0) revert Rewarder1_PoolNotExisted();
-    if (_withUpdate) _massUpdatePools();
-    totalAllocPoint = totalAllocPoint - poolInfo[_pid].allocPoint + _newAllocPoint;
-    poolInfo[_pid].allocPoint = _newAllocPoint.toUint64();
-    emit LogSetPool(_pid, _newAllocPoint);
-  }
-
   /// @notice View function to see pending rewards for a given pool.
-  /// @param _pid The index of the pool. See `poolInfo`.
+
   /// @param _user Address of user.
   /// @return pending reward for a given user.
-  function pendingToken(uint256 _pid, address _user) public view returns (uint256) {
-    PoolInfo memory _poolInfo = poolInfo[_pid];
-    UserInfo storage _userInfo = userInfo[_pid][_user];
+  function pendingToken(address _user) public view returns (uint256) {
+    PoolInfo memory _poolInfo = poolInfo;
+    UserInfo storage _userInfo = userInfo[_user];
     uint256 _accRewardPerShare = _poolInfo.accRewardPerShare;
-    uint256 _stakedBalance = IMiniFL(miniFL).getStakingReserves(_pid);
+    uint256 _stakedBalance = IMiniFL(miniFL).stakingReserve();
     if (block.timestamp > _poolInfo.lastRewardTime && _stakedBalance != 0) {
       uint256 _timePast;
       unchecked {
         _timePast = block.timestamp - _poolInfo.lastRewardTime;
       }
-      uint256 _rewards = totalAllocPoint != 0
-        ? (_timePast * rewardPerSecond * _poolInfo.allocPoint) / totalAllocPoint
-        : 0;
+      uint256 _rewards = _timePast * rewardPerSecond;
+
       _accRewardPerShare = _accRewardPerShare + ((_rewards * ACC_REWARD_PRECISION) / _stakedBalance);
     }
     return
       (((_userInfo.amount * _accRewardPerShare) / ACC_REWARD_PRECISION).toInt256() - _userInfo.rewardDebt).toUint256();
   }
 
-  /// @notice Update reward variables for all pools.
-  function _massUpdatePools() internal {
-    uint256 _len = poolLength();
-    for (uint256 _i; _i < _len; ) {
-      _updatePool(poolIds[_i]);
-      unchecked {
-        ++_i;
-      }
-    }
-  }
-
   /// @dev Perform the actual updatePool
-  /// @param _pid The index of the pool. See `poolInfo`.
-  function _updatePool(uint256 _pid) internal returns (PoolInfo memory) {
-    PoolInfo memory _poolInfo = poolInfo[_pid];
-
-    if (_poolInfo.lastRewardTime == 0) revert Rewarder1_PoolNotExisted();
+  function _updatePool() internal returns (PoolInfo memory) {
+    PoolInfo memory _poolInfo = poolInfo;
 
     if (block.timestamp > _poolInfo.lastRewardTime) {
-      uint256 _stakedBalance = IMiniFL(miniFL).getStakingReserves(_pid);
+      uint256 _stakedBalance = IMiniFL(miniFL).stakingReserve();
       if (_stakedBalance > 0) {
         uint256 _timePast;
         unchecked {
           _timePast = block.timestamp - _poolInfo.lastRewardTime;
         }
-        uint256 _rewards = (_timePast * rewardPerSecond * _poolInfo.allocPoint) / totalAllocPoint;
+        uint256 _rewards = _timePast * rewardPerSecond;
 
         // increase accRewardPerShare with `_rewards/stakedBalance` amount
         // example:
@@ -283,33 +227,16 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
           ((_rewards * ACC_REWARD_PRECISION) / _stakedBalance).toUint128();
       }
       _poolInfo.lastRewardTime = block.timestamp.toUint64();
-      poolInfo[_pid] = _poolInfo;
-      emit LogUpdatePool(_pid, _poolInfo.lastRewardTime, _stakedBalance, _poolInfo.accRewardPerShare);
+      poolInfo = _poolInfo;
+      emit LogUpdatePool(_poolInfo.lastRewardTime, _stakedBalance, _poolInfo.accRewardPerShare);
     }
     return _poolInfo;
   }
 
-  /// @notice Update reward variables of the given pool.
-  /// @param _pid The index of the pool. See `poolInfo`.
+  /// @notice Update reward variables of the pool.
   /// @return pool Returns the pool that was updated.
-  function updatePool(uint256 _pid) external returns (PoolInfo memory) {
-    return _updatePool(_pid);
-  }
-
-  /// @notice Update reward variables for a given pools.
-  function updatePools(uint256[] calldata _pids) external nonReentrant {
-    uint256 len = _pids.length;
-    for (uint256 _i; _i < len; ) {
-      _updatePool(_pids[_i]);
-      unchecked {
-        ++_i;
-      }
-    }
-  }
-
-  /// @notice Update reward variables for all pools. Be careful of gas spending!
-  function massUpdatePools() external nonReentrant {
-    _massUpdatePools();
+  function updatePool() external returns (PoolInfo memory) {
+    return _updatePool();
   }
 
   /// @notice Change the name of the rewarder.
@@ -319,29 +246,9 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     emit LogSetName(_newName);
   }
 
-  /// @notice Set max reward per second
-  /// @param _newMaxRewardPerSecond The max reward per second
-  function setMaxRewardPerSecond(uint256 _newMaxRewardPerSecond) external onlyOwner {
-    if (_newMaxRewardPerSecond <= rewardPerSecond) revert Rewarder1_BadArguments();
-
-    maxRewardPerSecond = _newMaxRewardPerSecond;
-    emit LogSetMaxRewardPerSecond(_newMaxRewardPerSecond);
-  }
-
-  /// @notice Returns the number of pools.
-  function poolLength() public view returns (uint256 _poolLength) {
-    _poolLength = poolIds.length;
-  }
-
   /// @notice Return the last reward time of the given pool id
   /// @return Last reward time
-  function lastRewardTime(uint256 _pid) external view returns (uint256) {
-    return poolInfo[_pid].lastRewardTime;
-  }
-
-  /// @notice Returns the allocation point of a pool.
-  /// @param _pid The index of the pool. See `poolInfo`.
-  function getPoolAllocPoint(uint256 _pid) external view returns (uint256 _allocPoint) {
-    _allocPoint = poolInfo[_pid].allocPoint;
+  function lastRewardTime() external view returns (uint256) {
+    return poolInfo.lastRewardTime;
   }
 }

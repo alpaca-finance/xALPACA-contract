@@ -28,8 +28,6 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
   MockERC20 internal rewardToken1;
   MockERC20 internal rewardToken2;
   MockERC20 internal mockToken1;
-  MockERC20 internal weth;
-  MockERC20 internal usdc;
 
   ProxyAdminLike internal proxyAdmin;
 
@@ -60,24 +58,6 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
     rewardToken1 = deployMockErc20("Reward Token 1", "RTOKEN1", 18);
     rewardToken2 = deployMockErc20("Reward Token 2", "RTOKEN2", 6);
     mockToken1 = deployMockErc20("Mock Token 1", "MTOKEN1", 18);
-    weth = deployMockErc20("Wrapped Ethereum", "WETH", 18);
-    usdc = deployMockErc20("USD COIN", "USDC", 6);
-
-    uint256 wethDecimal = weth.decimals();
-    uint256 usdcDecimal = usdc.decimals();
-
-    weth.mint(ALICE, normalizeEther(1000 ether, wethDecimal));
-
-    usdc.mint(ALICE, normalizeEther(1000 ether, usdcDecimal));
-
-    weth.mint(EVE, normalizeEther(1000 ether, wethDecimal));
-
-    usdc.mint(EVE, normalizeEther(1000 ether, usdcDecimal));
-
-    weth.mint(BOB, normalizeEther(1000 ether, wethDecimal));
-
-    usdc.mint(BOB, normalizeEther(1000 ether, usdcDecimal));
-
 
     miniFL = deployMiniFL(address(alpaca));
 
@@ -111,6 +91,7 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer);
     return xALPACAv2(_proxy);
   }
+
   function deployMiniFL(address _rewardToken) internal returns (MiniFL) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/MiniFL.sol/MiniFL.json"));
     bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(address)")), _rewardToken);

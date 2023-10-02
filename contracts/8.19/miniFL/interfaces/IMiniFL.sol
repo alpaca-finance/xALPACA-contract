@@ -7,42 +7,20 @@ interface IMiniFL {
   error MiniFL_DuplicatePool();
   error MiniFL_InvalidArguments();
   error MiniFL_BadRewarder();
-  error MiniFL_InsufficientFundedAmount();
   error MiniFL_Unauthorized();
+  error MiniFL_InsufficientAmount();
 
-  function deposit(
-    address _for,
-    uint256 _pid,
-    uint256 _amountToDeposit
-  ) external;
+  function deposit(address _for, uint256 _amountToDeposit) external;
 
-  function withdraw(
-    address _from,
-    uint256 _pid,
-    uint256 _amountToWithdraw
-  ) external;
+  function withdraw(address _from, uint256 _amountToWithdraw) external;
 
-  function poolLength() external view returns (uint256);
-
-  function stakingTokens(uint256 _pid) external view returns (address);
-
-  function getStakingReserves(uint256 _pid) external view returns (uint256);
+  function stakingReserve() external view returns (uint256);
 
   function setWhitelistedCallers(address[] calldata _callers, bool _allow) external;
 
-  function setPool(
-    uint256 _pid,
-    uint256 _newAllocPoint,
-    bool _withUpdate
-  ) external;
-
   function feed(uint256 _rewardAmount, uint256 _rewardEndTimestamp) external;
 
-  function harvest(uint256 _pid) external;
+  function harvest() external;
 
-  function harvestMany(uint256[] calldata _pids) external;
-
-  function massUpdatePools() external;
-
-  function setPoolRewarders(uint256 _pid, address[] calldata _newRewarders) external;
+  function setPoolRewarders(address[] calldata _newRewarders) external;
 }
