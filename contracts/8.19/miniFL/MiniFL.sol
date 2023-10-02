@@ -38,7 +38,6 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
   address public ALPACA;
   PoolInfo public poolInfo;
-  address[] public stakingTokens;
 
   address[] public rewarders;
   uint256 public stakingReserve;
