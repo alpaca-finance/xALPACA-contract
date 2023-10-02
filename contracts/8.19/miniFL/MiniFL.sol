@@ -92,9 +92,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
       _rewardAmount += (rewardEndTimestamp - block.timestamp) * alpacaPerSecond;
     }
 
-    uint256 _secondsUntilEnd = _newRewardEndTimestamp - block.timestamp;
-
-    alpacaPerSecond = _rewardAmount / _secondsUntilEnd;
+    alpacaPerSecond = _rewardAmount / (_newRewardEndTimestamp - block.timestamp);
     rewardEndTimestamp = _newRewardEndTimestamp;
 
     emit LogFeed(alpacaPerSecond, _newRewardEndTimestamp);
