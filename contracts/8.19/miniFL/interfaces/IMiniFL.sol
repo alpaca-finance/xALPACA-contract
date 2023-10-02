@@ -18,7 +18,7 @@ interface IMiniFL {
 
   function setWhitelistedCallers(address[] calldata _callers, bool _allow) external;
 
-  function feed(uint256 _rewardAmount, uint256 _rewardEndTimestamp) external;
+  function feed(uint256 _rewardAmount, uint256 _newRewardEndTimestamp) external;
 
   function harvest() external;
 

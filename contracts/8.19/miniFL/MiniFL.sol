@@ -21,7 +21,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   event LogEmergencyWithdraw(address indexed _user, uint256 _amount);
   event LogHarvest(address indexed _user, uint256 _amount);
   event LogUpdatePool(uint64 _lastRewardTime, uint256 _stakedBalance, uint256 _accAlpacaPerShare);
-  event LogAlpacaPerSecond(uint256 _newAlpacaPerSecond);
+  event LogFeed(uint256 _newAlpacaPerSecond, uint256 _rewardEndTimestamp);
   event LogApproveStakeDebtToken(address indexed _staker, bool _allow);
   event LogSetPoolRewarder(address _rewarder);
   event LogSetWhitelistedCaller(address indexed _caller, bool _allow);
@@ -74,19 +74,30 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
   /// @notice Sets the ALPACA per second to be distributed. Can only be called by the owner.
   /// @param _rewardAmount The amount of ALPACA to be distributed
-  /// @param _seconds The amount of time to distribute
-  function feed(uint256 _rewardAmount, uint256 _seconds) external onlyOwner {
-    IERC20Upgradeable(ALPACA).safeTransferFrom(msg.sender, address(this), _rewardAmount);
+  /// @param _newRewardEndTimestamp The time that reward will stop
+  function feed(uint256 _rewardAmount, uint256 _newRewardEndTimestamp) external onlyOwner {
+    if (_newRewardEndTimestamp <= block.timestamp) {
+      revert MiniFL_InvalidArguments();
+    }
+
+    // in case we only change the reward end timestamp
+    // skip the token transfer
+    if (_rewardAmount > 0) {
+      IERC20Upgradeable(ALPACA).safeTransferFrom(msg.sender, address(this), _rewardAmount);
+    }
+
     _updatePool();
     // roll over outstanding reward
     if (rewardEndTimestamp > block.timestamp) {
       _rewardAmount += (rewardEndTimestamp - block.timestamp) * alpacaPerSecond;
     }
 
-    alpacaPerSecond = _rewardAmount / _seconds;
-    rewardEndTimestamp = block.timestamp + _seconds;
+    uint256 _secondsUntilEnd = _newRewardEndTimestamp - block.timestamp;
 
-    emit LogAlpacaPerSecond(alpacaPerSecond);
+    alpacaPerSecond = _rewardAmount / _secondsUntilEnd;
+    rewardEndTimestamp = _newRewardEndTimestamp;
+
+    emit LogFeed(alpacaPerSecond, _newRewardEndTimestamp);
   }
 
   /// @notice View function to see pending ALPACA on frontend.
