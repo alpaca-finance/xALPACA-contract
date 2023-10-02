@@ -30,7 +30,6 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   }
 
   PoolInfo public poolInfo;
-  uint256[] public poolIds;
 
   mapping(address => UserInfo) public userInfo;
   uint256 public rewardPerSecond;
@@ -245,20 +244,6 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   function setName(string calldata _newName) external onlyOwner {
     name = _newName;
     emit LogSetName(_newName);
-  }
-
-  /// @notice Set max reward per second
-  /// @param _newMaxRewardPerSecond The max reward per second
-  function setMaxRewardPerSecond(uint256 _newMaxRewardPerSecond) external onlyOwner {
-    if (_newMaxRewardPerSecond <= rewardPerSecond) revert Rewarder1_BadArguments();
-
-    maxRewardPerSecond = _newMaxRewardPerSecond;
-    emit LogSetMaxRewardPerSecond(_newMaxRewardPerSecond);
-  }
-
-  /// @notice Returns the number of pools.
-  function poolLength() public view returns (uint256 _poolLength) {
-    _poolLength = poolIds.length;
   }
 
   /// @notice Return the last reward time of the given pool id
