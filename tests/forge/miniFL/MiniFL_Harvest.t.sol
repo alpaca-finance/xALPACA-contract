@@ -33,6 +33,13 @@ contract MiniFL_HarvestTest is MiniFL_BaseTest {
     vm.startPrank(BOB);
     alpaca.approve(address(miniFL), 100 ether);
     miniFL.deposit(BOB, 100 ether);
+    skip(50);
+
+    uint256 _bobAlpacaBefore = alpaca.balanceOf(BOB);
+
+    miniFL.harvest();
+
+    assertEq(alpaca.balanceOf(BOB) - _bobAlpacaBefore, 25000 ether);
     vm.stopPrank();
   }
 
