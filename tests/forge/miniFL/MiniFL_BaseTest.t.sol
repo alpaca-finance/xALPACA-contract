@@ -20,8 +20,6 @@ contract MiniFL_BaseTest is BaseTest {
     alpaca.approve(address(miniFL), 1000000 ether);
     miniFL.feed(1000 ether * 100, block.timestamp + 100);
 
-    console.log(alpaca.balanceOf(address(miniFL)));
-
     rewarder1 = deployRewarder("REWARDER01", address(miniFL), address(rewardToken1), maxAlpacaPerSecond);
     rewarder2 = deployRewarder("REWARDER02", address(miniFL), address(rewardToken2), maxAlpacaPerSecond);
 

@@ -35,4 +35,84 @@ contract MiniFL_HarvestTest is MiniFL_BaseTest {
     miniFL.deposit(BOB, 100 ether);
     vm.stopPrank();
   }
+
+  function testCorrectness_MutipleStakers_FeedAfterRewardEnded_ShouldAllocateCorrectly() external {
+    vm.startPrank(ALICE);
+    alpaca.approve(address(miniFL), 100 ether);
+    miniFL.deposit(ALICE, 100 ether);
+    vm.stopPrank();
+
+    skip(50);
+
+    vm.startPrank(ALICE);
+    miniFL.harvest();
+    vm.stopPrank();
+
+    vm.startPrank(BOB);
+    alpaca.approve(address(miniFL), 100 ether);
+    miniFL.deposit(BOB, 100 ether);
+    vm.stopPrank();
+
+    // skip to 120, reward has stopped at 100
+    skip(70);
+
+    // 10 ether per sec
+    miniFL.feed(500 ether, block.timestamp + 50);
+
+    skip(50);
+
+    vm.startPrank(ALICE);
+    uint256 _alpacaAliceBefore = alpaca.balanceOf(ALICE);
+    miniFL.harvest();
+    // (50 * 1000 ether)/2 + (50 * 10)/2 = 25000 + 250 = 25050
+    assertEq(alpaca.balanceOf(ALICE) - _alpacaAliceBefore, 25250 ether);
+    vm.stopPrank();
+
+    vm.startPrank(BOB);
+    uint256 _alpacaBobBefore = alpaca.balanceOf(BOB);
+    miniFL.harvest();
+    // (50 * 1000 ether)/2 + (50 * 10)/2 = 25000 + 250 = 25050
+    assertEq(alpaca.balanceOf(BOB) - _alpacaBobBefore, 25250 ether);
+    vm.stopPrank();
+  }
+
+  function testCorrectness_MutipleStakers_FeedBeforeRewardEnded_ShouldAllocateCorrectly() external {
+    vm.startPrank(ALICE);
+    alpaca.approve(address(miniFL), 100 ether);
+    miniFL.deposit(ALICE, 100 ether);
+    vm.stopPrank();
+
+    skip(50);
+
+    vm.startPrank(ALICE);
+    miniFL.harvest();
+    vm.stopPrank();
+
+    vm.startPrank(BOB);
+    alpaca.approve(address(miniFL), 100 ether);
+    miniFL.deposit(BOB, 100 ether);
+    vm.stopPrank();
+
+    // skip to 70, reward will stop at 100
+    skip(20);
+
+    // 10 ether per sec
+    miniFL.feed(500 ether, block.timestamp + 50);
+
+    skip(50);
+
+    vm.startPrank(ALICE);
+    uint256 _alpacaAliceBefore = alpaca.balanceOf(ALICE);
+    miniFL.harvest();
+    // (50 * 1000 ether)/2 +(30 * 10)/2 = 25000 + 250 = 25050
+    assertEq(alpaca.balanceOf(ALICE) - _alpacaAliceBefore, 25250 ether);
+    vm.stopPrank();
+
+    vm.startPrank(BOB);
+    uint256 _alpacaBobBefore = alpaca.balanceOf(BOB);
+    miniFL.harvest();
+    // (50 * 1000 ether)/2 + (50 * 10)/2 = 25000 + 250 = 25050
+    assertEq(alpaca.balanceOf(BOB) - _alpacaBobBefore, 25250 ether);
+    vm.stopPrank();
+  }
 }
