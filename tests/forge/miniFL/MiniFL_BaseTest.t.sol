@@ -11,11 +11,20 @@ import { Rewarder } from "../../../contracts/8.19/miniFL/Rewarder.sol";
 
 contract MiniFL_BaseTest is BaseTest {
   address[] internal whitelistedCallers = new address[](5);
+  address[] internal whitelistedFeeders = new address[](1);
 
   Rewarder internal rewarder1;
   Rewarder internal rewarder2;
 
   function setUp() public virtual {
+    whitelistedCallers[0] = address(this);
+    whitelistedCallers[1] = ALICE;
+    whitelistedCallers[2] = BOB;
+    miniFL.setWhitelistedCallers(whitelistedCallers, true);
+
+    whitelistedFeeders[0] = address(this);
+    miniFL.setWhitelistedFeeders(whitelistedFeeders, true);
+
     alpaca.mint(address(this), 10000000 ether);
     alpaca.approve(address(miniFL), 1000000 ether);
     miniFL.feed(1000 ether * 100, block.timestamp + 100);
@@ -32,11 +41,6 @@ contract MiniFL_BaseTest is BaseTest {
     alpaca.mint(ALICE, 100 ether);
     alpaca.mint(EVE, 100 ether);
     alpaca.mint(BOB, 100 ether);
-
-    whitelistedCallers[0] = address(this);
-    whitelistedCallers[1] = ALICE;
-    whitelistedCallers[2] = BOB;
-    miniFL.setWhitelistedCallers(whitelistedCallers, true);
   }
 
   function setupRewarder() internal {

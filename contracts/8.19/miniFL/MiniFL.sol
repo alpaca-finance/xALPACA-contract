@@ -25,6 +25,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   event LogApproveStakeDebtToken(address indexed _staker, bool _allow);
   event LogSetPoolRewarder(address _rewarder);
   event LogSetWhitelistedCaller(address indexed _caller, bool _allow);
+  event LogSetWhitelistedFeeder(address indexed _feeder, bool _allow);
 
   struct UserInfo {
     uint256 totalAmount;
@@ -44,6 +45,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
   mapping(address => UserInfo) public userInfo;
   mapping(address => bool) public whitelistedCallers;
+  mapping(address => bool) public feeders;
 
   uint256 public alpacaPerSecond;
   uint256 private constant ACC_ALPACA_PRECISION = 1e12;
@@ -53,6 +55,14 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @dev allow only whitelised callers
   modifier onlyWhitelisted() {
     if (!whitelistedCallers[msg.sender]) {
+      revert MiniFL_Unauthorized();
+    }
+    _;
+  }
+
+  /// @dev allow only whitelised callers
+  modifier onlyFeeder() {
+    if (!feeders[msg.sender]) {
       revert MiniFL_Unauthorized();
     }
     _;
@@ -75,7 +85,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @notice Sets the ALPACA per second to be distributed. Can only be called by the owner.
   /// @param _rewardAmount The amount of ALPACA to be distributed
   /// @param _newRewardEndTimestamp The time that reward will stop
-  function feed(uint256 _rewardAmount, uint256 _newRewardEndTimestamp) external onlyOwner {
+  function feed(uint256 _rewardAmount, uint256 _newRewardEndTimestamp) external onlyFeeder {
     if (_newRewardEndTimestamp <= block.timestamp) {
       revert MiniFL_InvalidArguments();
     }
@@ -356,6 +366,21 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     for (uint256 _i; _i < _length; ) {
       whitelistedCallers[_callers[_i]] = _allow;
       emit LogSetWhitelistedCaller(_callers[_i], _allow);
+
+      unchecked {
+        ++_i;
+      }
+    }
+  }
+
+  /// @notice Set whitelisted feeders
+  /// @param _feeders The addresses of the feeders that are going to be whitelisted.
+  /// @param _allow Whether to allow or disallow feeders.
+  function setWhitelistedFeeders(address[] calldata _feeders, bool _allow) external onlyOwner {
+    uint256 _length = _feeders.length;
+    for (uint256 _i; _i < _length; ) {
+      feeders[_feeders[_i]] = _allow;
+      emit LogSetWhitelistedFeeder(_feeders[_i], _allow);
 
       unchecked {
         ++_i;
