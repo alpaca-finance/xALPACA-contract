@@ -32,25 +32,34 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   PoolInfo public poolInfo;
 
   mapping(address => UserInfo) public userInfo;
+  mapping(address => bool) public feeders;
+
   uint256 public rewardPerSecond;
+  uint256 public rewardEndTimestamp;
   uint256 private constant ACC_REWARD_PRECISION = 1e12;
 
   address public miniFL;
   string public name;
 
-  uint256 public maxRewardPerSecond;
-
   event LogOnDeposit(address indexed _user, uint256 _amount);
   event LogOnWithdraw(address indexed _user, uint256 _amount);
   event LogHarvest(address indexed _user, uint256 _amount);
   event LogUpdatePool(uint64 _lastRewardTime, uint256 _stakedBalance, uint256 _accRewardPerShare);
-  event LogRewardPerSecond(uint256 _newRewardPerSecond);
+  event LogFeed(uint256 _newRewardPerSecond, uint256 _newRewardEndTimestamp);
   event LogSetName(string _name);
-  event LogSetMaxRewardPerSecond(uint256 _newMaxRewardPerSecond);
+  event LogSetWhitelistedFeeder(address indexed _feeder, bool _allow);
 
   /// @dev allow only MiniFL
   modifier onlyMiniFL() {
-    if (msg.sender != miniFL) revert Rewarder1_NotFL();
+    if (msg.sender != miniFL) revert Rewarder_NotFL();
+    _;
+  }
+
+  /// @dev allow only whitelised callers
+  modifier onlyFeeder() {
+    if (!feeders[msg.sender]) {
+      revert Rewarder_Unauthorized();
+    }
     _;
   }
 
@@ -61,8 +70,7 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   function initialize(
     string calldata _name,
     address _miniFL,
-    address _rewardToken,
-    uint256 _maxRewardPerSecond
+    address _rewardToken
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
@@ -74,7 +82,6 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     name = _name;
     miniFL = _miniFL;
     rewardToken = _rewardToken;
-    maxRewardPerSecond = _maxRewardPerSecond;
   }
 
   /// @notice Hook deposit action from MiniFL.
@@ -169,15 +176,46 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     emit LogHarvest(_user, _pendingRewards);
   }
 
+  /// @notice Set whitelisted feeders
+  /// @param _feeders The addresses of the feeders that are going to be whitelisted.
+  /// @param _allow Whether to allow or disallow feeders.
+  function setWhitelistedFeeders(address[] calldata _feeders, bool _allow) external onlyOwner {
+    uint256 _length = _feeders.length;
+    for (uint256 _i; _i < _length; ) {
+      feeders[_feeders[_i]] = _allow;
+      emit LogSetWhitelistedFeeder(_feeders[_i], _allow);
+
+      unchecked {
+        ++_i;
+      }
+    }
+  }
+
   /// @notice Sets the reward per second to be distributed.
   /// @dev Can only be called by the owner.
-  /// @param _newRewardPerSecond The amount of reward token to be distributed per second.
-  function setRewardPerSecond(uint256 _newRewardPerSecond) external onlyOwner {
-    if (_newRewardPerSecond > maxRewardPerSecond) revert Rewarder1_BadArguments();
+  /// @param _rewardAmount The amount of reward token to be distributed.
+  /// @param _newRewardEndTimestamp The time that reward will stop
+  function feed(uint256 _rewardAmount, uint256 _newRewardEndTimestamp) external onlyOwner {
+    if (_newRewardEndTimestamp <= block.timestamp) {
+      revert Rewarder_InvalidArguments();
+    }
 
     _updatePool();
-    rewardPerSecond = _newRewardPerSecond;
-    emit LogRewardPerSecond(_newRewardPerSecond);
+
+    // in case we only change the reward end timestamp
+    // skip the token transfer
+    if (_rewardAmount > 0) {
+      IERC20Upgradeable(rewardToken).safeTransferFrom(msg.sender, address(this), _rewardAmount);
+    }
+
+    // roll over outstanding reward
+    if (rewardEndTimestamp > block.timestamp) {
+      _rewardAmount += (rewardEndTimestamp - block.timestamp) * rewardPerSecond;
+    }
+
+    // roll over outstanding reward
+    rewardPerSecond = _rewardAmount / (_newRewardEndTimestamp - block.timestamp);
+    emit LogFeed(rewardPerSecond, _newRewardEndTimestamp);
   }
 
   /// @notice View function to see pending rewards for a given pool.

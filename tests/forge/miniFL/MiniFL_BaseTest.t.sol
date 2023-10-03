@@ -29,14 +29,16 @@ contract MiniFL_BaseTest is BaseTest {
     alpaca.approve(address(miniFL), 1000000 ether);
     miniFL.feed(1000 ether * 100, block.timestamp + 100);
 
-    rewarder1 = deployRewarder("REWARDER01", address(miniFL), address(rewardToken1), maxAlpacaPerSecond);
-    rewarder2 = deployRewarder("REWARDER02", address(miniFL), address(rewardToken2), maxAlpacaPerSecond);
+    rewarder1 = deployRewarder("REWARDER01", address(miniFL), address(rewardToken1));
+    rewarder2 = deployRewarder("REWARDER02", address(miniFL), address(rewardToken2));
 
-    rewarder1.setRewardPerSecond(100 ether);
-    rewarder2.setRewardPerSecond(150 ether);
+    rewardToken1.mint(address(this), 10000 ether);
+    rewardToken2.mint(address(this), 15000 ether);
 
-    rewardToken1.mint(address(rewarder1), 10000 ether);
-    rewardToken2.mint(address(rewarder2), 15000 ether);
+    rewardToken1.approve(address(rewarder1), 10000 ether);
+    rewardToken2.approve(address(rewarder2), 15000 ether);
+    rewarder1.feed(100 ether * 100, block.timestamp + 100);
+    rewarder2.feed(150 ether * 100, block.timestamp + 100);
 
     alpaca.mint(ALICE, 100 ether);
     alpaca.mint(EVE, 100 ether);
