@@ -8,10 +8,10 @@ import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { SafeCastUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 
-import { IMiniFL } from "./interfaces/IMiniFL.sol";
-import { IRewarder } from "./interfaces/IRewarder.sol";
+import { IxALPACAv2RevenueDistributor } from "./interfaces/IxALPACAv2RevenueDistributor.sol";
+import { IxALPACAv2Rewarder } from "./interfaces/IxALPACAv2Rewarder.sol";
 
-contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
+contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   using SafeCastUpgradeable for uint256;
   using SafeCastUpgradeable for uint128;
   using SafeCastUpgradeable for int256;
@@ -37,7 +37,7 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   uint256 public rewardEndTimestamp;
   uint256 private constant ACC_REWARD_PRECISION = 1e12;
 
-  address public miniFL;
+  address public xALPACAv2RevenueDistributor;
   string public name;
 
   event LogOnDeposit(address indexed _user, uint256 _amount);
@@ -47,16 +47,16 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   event LogFeed(uint256 _newRewardPerSecond, uint256 _newRewardEndTimestamp);
   event LogSetName(string _name);
 
-  /// @dev allow only MiniFL
-  modifier onlyMiniFL() {
-    if (msg.sender != miniFL) revert Rewarder_NotFL();
+  /// @dev allow only xALPACAv2RevenueDistributor
+  modifier onlyxALPACAv2RevenueDistributor() {
+    if (msg.sender != xALPACAv2RevenueDistributor) revert xALPACAv2Rewarder_NotxALPACAv2RevenueDistributor();
     _;
   }
 
   /// @dev allow only whitelised callers
   modifier onlyFeeder() {
-    if (!IMiniFL(miniFL).feeders(msg.sender)) {
-      revert Rewarder_Unauthorized();
+    if (!IxALPACAv2RevenueDistributor(xALPACAv2RevenueDistributor).feeders(msg.sender)) {
+      revert xALPACAv2Rewarder_Unauthorized();
     }
     _;
   }
@@ -67,7 +67,7 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
   function initialize(
     string calldata _name,
-    address _miniFL,
+    address _xALPACAv2RevenueDistributor,
     address _rewardToken
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
@@ -75,26 +75,26 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     // sanity check
     IERC20Upgradeable(_rewardToken).totalSupply();
-    IMiniFL(_miniFL).stakingReserve();
+    IxALPACAv2RevenueDistributor(_xALPACAv2RevenueDistributor).stakingReserve();
 
     name = _name;
-    miniFL = _miniFL;
+    xALPACAv2RevenueDistributor = _xALPACAv2RevenueDistributor;
     rewardToken = _rewardToken;
 
     poolInfo = PoolInfo({ accRewardPerShare: 0, lastRewardTime: block.timestamp.toUint64() });
   }
 
-  /// @notice Hook deposit action from MiniFL.
+  /// @notice Hook deposit action from xALPACAv2RevenueDistributor.
   /// @param _user The beneficary address of the deposit.
-  /// @param _newAmount new staking amount from MiniFL.
-  function onDeposit(address _user, uint256 _newAmount) external override onlyMiniFL {
+  /// @param _newAmount new staking amount from xALPACAv2RevenueDistributor.
+  function onDeposit(address _user, uint256 _newAmount) external override onlyxALPACAv2RevenueDistributor {
     PoolInfo memory pool = _updatePool();
     UserInfo storage user = userInfo[_user];
 
     // calculate new staked amount
     // example: if user deposit another 500 shares
     //  - user.amount  = 100 => from previous deposit
-    //  - _newAmount   = 600 => updated staking amount from MiniFL
+    //  - _newAmount   = 600 => updated staking amount from xALPACAv2RevenueDistributor
     //  _amount = _newAmount - user.amount = 600 - 100 = 500
     uint256 _amount = _newAmount - user.amount;
 
@@ -111,11 +111,11 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     emit LogOnDeposit(_user, _amount);
   }
 
-  /// @notice Hook Withdraw action from MiniFL.
+  /// @notice Hook Withdraw action from xALPACAv2RevenueDistributor.
 
   /// @param _user Withdraw from who?
-  /// @param _newAmount new staking amount from MiniFL.
-  function onWithdraw(address _user, uint256 _newAmount) external override onlyMiniFL {
+  /// @param _newAmount new staking amount from xALPACAv2RevenueDistributor.
+  function onWithdraw(address _user, uint256 _newAmount) external override onlyxALPACAv2RevenueDistributor {
     PoolInfo memory pool = _updatePool();
     UserInfo storage user = userInfo[_user];
 
@@ -151,9 +151,9 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     }
   }
 
-  /// @notice Hook Harvest action from MiniFL.
+  /// @notice Hook Harvest action from xALPACAv2RevenueDistributor.
   /// @param _user The beneficary address.
-  function onHarvest(address _user) external override onlyMiniFL {
+  function onHarvest(address _user) external override onlyxALPACAv2RevenueDistributor {
     PoolInfo memory pool = _updatePool();
     UserInfo storage user = userInfo[_user];
 
@@ -182,7 +182,7 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @param _newRewardEndTimestamp The time that reward will stop
   function feed(uint256 _rewardAmount, uint256 _newRewardEndTimestamp) external onlyFeeder {
     if (_newRewardEndTimestamp <= block.timestamp) {
-      revert Rewarder_InvalidArguments();
+      revert xALPACAv2Rewarder_InvalidArguments();
     }
 
     _updatePool();
@@ -212,7 +212,7 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     PoolInfo memory _poolInfo = poolInfo;
     UserInfo storage _userInfo = userInfo[_user];
     uint256 _accRewardPerShare = _poolInfo.accRewardPerShare;
-    uint256 _stakedBalance = IMiniFL(miniFL).stakingReserve();
+    uint256 _stakedBalance = IxALPACAv2RevenueDistributor(xALPACAv2RevenueDistributor).stakingReserve();
     if (block.timestamp > _poolInfo.lastRewardTime && _stakedBalance != 0) {
       // if reward has ended, accumulated only before reward end
       // otherwise, accumulated up to now
@@ -240,7 +240,7 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     PoolInfo memory _poolInfo = poolInfo;
 
     if (block.timestamp > _poolInfo.lastRewardTime) {
-      uint256 _stakedBalance = IMiniFL(miniFL).stakingReserve();
+      uint256 _stakedBalance = IxALPACAv2RevenueDistributor(xALPACAv2RevenueDistributor).stakingReserve();
       if (_stakedBalance > 0) {
         // if reward has ended, accumulated only before reward end
         // otherwise, accumulated up to now

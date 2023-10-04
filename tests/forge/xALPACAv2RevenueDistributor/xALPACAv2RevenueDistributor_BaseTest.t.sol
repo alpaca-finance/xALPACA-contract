@@ -6,31 +6,31 @@ import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC
 import { BaseTest, console } from "../base/BaseTest.sol";
 
 // interfaces
-import { MiniFL } from "../../../contracts/8.19/miniFL/MiniFL.sol";
-import { Rewarder } from "../../../contracts/8.19/miniFL/Rewarder.sol";
+import { xALPACAv2RevenueDistributor } from "../../../contracts/8.19/xALPACAv2RevenueDistributor/xALPACAv2RevenueDistributor.sol";
+import { xALPACAv2Rewarder } from "../../../contracts/8.19/xALPACAv2RevenueDistributor/xALPACAv2Rewarder.sol";
 
-contract MiniFL_BaseTest is BaseTest {
+contract xALPACAv2RevenueDistributor_BaseTest is BaseTest {
   address[] internal whitelistedCallers = new address[](5);
   address[] internal whitelistedFeeders = new address[](1);
 
-  Rewarder internal rewarder1;
-  Rewarder internal rewarder2;
+  xALPACAv2Rewarder internal rewarder1;
+  xALPACAv2Rewarder internal rewarder2;
 
   function setUp() public virtual {
     whitelistedCallers[0] = address(this);
     whitelistedCallers[1] = ALICE;
     whitelistedCallers[2] = BOB;
-    miniFL.setWhitelistedCallers(whitelistedCallers, true);
+    revenueDistributor.setWhitelistedCallers(whitelistedCallers, true);
 
     whitelistedFeeders[0] = address(this);
-    miniFL.setWhitelistedFeeders(whitelistedFeeders, true);
+    revenueDistributor.setWhitelistedFeeders(whitelistedFeeders, true);
 
     alpaca.mint(address(this), 10000000 ether);
-    alpaca.approve(address(miniFL), 1000000 ether);
-    miniFL.feed(1000 ether * 100, block.timestamp + 100);
+    alpaca.approve(address(revenueDistributor), 1000000 ether);
+    revenueDistributor.feed(1000 ether * 100, block.timestamp + 100);
 
-    rewarder1 = deployRewarder("REWARDER01", address(miniFL), address(rewardToken1));
-    rewarder2 = deployRewarder("REWARDER02", address(miniFL), address(rewardToken2));
+    rewarder1 = deployRewarder("REWARDER01", address(revenueDistributor), address(rewardToken1));
+    rewarder2 = deployRewarder("REWARDER02", address(revenueDistributor), address(rewardToken2));
 
     rewardToken1.mint(address(this), 10000000 ether);
     rewardToken2.mint(address(this), 15000000 ether);
@@ -49,11 +49,11 @@ contract MiniFL_BaseTest is BaseTest {
     address[] memory rewarders = new address[](2);
     rewarders[0] = address(rewarder1);
     rewarders[1] = address(rewarder2);
-    miniFL.setPoolRewarders(rewarders);
+    revenueDistributor.setPoolRewarders(rewarders);
   }
 
   function assertRewarderUserInfo(
-    Rewarder _rewarder,
+    xALPACAv2Rewarder _rewarder,
     address _user,
     uint256 _expectedAmount,
     int256 _expectedRewardDebt
@@ -64,6 +64,6 @@ contract MiniFL_BaseTest is BaseTest {
   }
 
   function assertStakingReserve(uint256 _expectedAmount) internal {
-    assertEq(miniFL.stakingReserve(), _expectedAmount);
+    assertEq(revenueDistributor.stakingReserve(), _expectedAmount);
   }
 }

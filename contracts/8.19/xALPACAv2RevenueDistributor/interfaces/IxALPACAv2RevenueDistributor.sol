@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "./IRewarder.sol";
+import "./IxALPACAv2Rewarder.sol";
 
-interface IMiniFL {
-  error MiniFL_DuplicatePool();
-  error MiniFL_InvalidArguments();
-  error MiniFL_BadRewarder();
-  error MiniFL_Unauthorized();
-  error MiniFL_InsufficientAmount();
+interface IxALPACAv2RevenueDistributor {
+  error xALPACAv2RevenueDistributor_DuplicatePool();
+  error xALPACAv2RevenueDistributor_InvalidArguments();
+  error xALPACAv2RevenueDistributor_BadRewarder();
+  error xALPACAv2RevenueDistributor_Unauthorized();
+  error xALPACAv2RevenueDistributor_InsufficientAmount();
 
   function deposit(address _for, uint256 _amountToDeposit) external;
 

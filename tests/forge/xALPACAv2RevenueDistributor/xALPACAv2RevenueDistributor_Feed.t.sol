@@ -3,24 +3,24 @@ pragma solidity 0.8.19;
 
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
-import { MiniFL_BaseTest } from "./MiniFL_BaseTest.t.sol";
+import { xALPACAv2RevenueDistributor_BaseTest } from "./xALPACAv2RevenueDistributor_BaseTest.t.sol";
 
 // interfaces
-import { IMiniFL } from "../../../contracts/8.19/miniFL/interfaces/IMiniFL.sol";
-import { IRewarder } from "../../../contracts/8.19/miniFL/interfaces/IRewarder.sol";
+import { IxALPACAv2RevenueDistributor } from "../../../contracts/8.19/xALPACAv2RevenueDistributor/interfaces/IxALPACAv2RevenueDistributor.sol";
+import { IxALPACAv2Rewarder } from "../../../contracts/8.19/xALPACAv2RevenueDistributor/interfaces/IxALPACAv2Rewarder.sol";
 
-contract MiniFL_FeedTest is MiniFL_BaseTest {
+contract xALPACAv2RevenueDistributor_FeedTest is xALPACAv2RevenueDistributor_BaseTest {
   function setUp() public override {
     super.setUp();
   }
 
   function testCorrectness_WhenRewardEndedAndSetAlpacaPerSecond_ShouldNotRollOver() external {
     // set from base test as max
-    assertEq(miniFL.alpacaPerSecond(), maxAlpacaPerSecond);
+    assertEq(revenueDistributor.alpacaPerSecond(), maxAlpacaPerSecond);
     skip(100);
     // 500 per second ether for 100 second
-    miniFL.feed(500 ether * 100, block.timestamp + 100);
-    assertEq(miniFL.alpacaPerSecond(), 500 ether);
+    revenueDistributor.feed(500 ether * 100, block.timestamp + 100);
+    assertEq(revenueDistributor.alpacaPerSecond(), 500 ether);
   }
 
   function testCorrectness_WhenPreviousRewardHasNotEnd_ShouldRollover() external {
@@ -31,9 +31,9 @@ contract MiniFL_FeedTest is MiniFL_BaseTest {
 
     skip(50);
 
-    miniFL.feed(10000 ether, block.timestamp + 100);
+    revenueDistributor.feed(10000 ether, block.timestamp + 100);
 
-    assertEq(miniFL.alpacaPerSecond(), 600 ether);
+    assertEq(revenueDistributor.alpacaPerSecond(), 600 ether);
   }
 
   function testCorrectness_WhenFeedWithEarlierEndRewardTimeWithoutNewAmount_ShouldRecalculate() external {
@@ -44,9 +44,9 @@ contract MiniFL_FeedTest is MiniFL_BaseTest {
 
     skip(50);
 
-    miniFL.feed(0, block.timestamp + 20);
+    revenueDistributor.feed(0, block.timestamp + 20);
 
-    assertEq(miniFL.alpacaPerSecond(), 2500 ether);
+    assertEq(revenueDistributor.alpacaPerSecond(), 2500 ether);
   }
 
   function testCorrectness_WhenFeedWithEarlierEndRewardTimeWithNewAmount_ShouldRecalculate() external {
@@ -57,14 +57,16 @@ contract MiniFL_FeedTest is MiniFL_BaseTest {
 
     skip(50);
 
-    miniFL.feed(10000 ether, block.timestamp + 20);
+    revenueDistributor.feed(10000 ether, block.timestamp + 20);
 
-    assertEq(miniFL.alpacaPerSecond(), 3000 ether);
+    assertEq(revenueDistributor.alpacaPerSecond(), 3000 ether);
   }
 
   function testRevert_WhenFeedRewardWithTimestampInThePast_ShouldRevert() external {
     skip(100);
-    vm.expectRevert(abi.encodeWithSelector(IMiniFL.MiniFL_InvalidArguments.selector));
-    miniFL.feed(10000 ether, block.timestamp);
+    vm.expectRevert(
+      abi.encodeWithSelector(IxALPACAv2RevenueDistributor.xALPACAv2RevenueDistributor_InvalidArguments.selector)
+    );
+    revenueDistributor.feed(10000 ether, block.timestamp);
   }
 }

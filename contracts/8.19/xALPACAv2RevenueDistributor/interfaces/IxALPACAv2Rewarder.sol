@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-interface IRewarder {
-  error Rewarder_InvalidArguments();
-  error Rewarder_NotFL();
-  error Rewarder_PoolExisted();
-  error Rewarder_PoolNotExisted();
-  error Rewarder_Unauthorized();
+interface IxALPACAv2Rewarder {
+  error xALPACAv2Rewarder_InvalidArguments();
+  error xALPACAv2Rewarder_NotxALPACAv2RevenueDistributor();
+  error xALPACAv2Rewarder_PoolExisted();
+  error xALPACAv2Rewarder_PoolNotExisted();
+  error xALPACAv2Rewarder_Unauthorized();
 
   function name() external view returns (string memory);
 
-  function miniFL() external view returns (address);
+  function xALPACAv2RevenueDistributor() external view returns (address);
 
   function onDeposit(address user, uint256 newStakeTokenAmount) external;
 
