@@ -32,11 +32,11 @@ contract MiniFL_BaseTest is BaseTest {
     rewarder1 = deployRewarder("REWARDER01", address(miniFL), address(rewardToken1));
     rewarder2 = deployRewarder("REWARDER02", address(miniFL), address(rewardToken2));
 
-    rewardToken1.mint(address(this), 10000 ether);
-    rewardToken2.mint(address(this), 15000 ether);
+    rewardToken1.mint(address(this), 10000000 ether);
+    rewardToken2.mint(address(this), 15000000 ether);
 
-    rewardToken1.approve(address(rewarder1), 10000 ether);
-    rewardToken2.approve(address(rewarder2), 15000 ether);
+    rewardToken1.approve(address(rewarder1), 10000000 ether);
+    rewardToken2.approve(address(rewarder2), 15000000 ether);
     rewarder1.feed(100 ether * 100, block.timestamp + 100);
     rewarder2.feed(150 ether * 100, block.timestamp + 100);
 

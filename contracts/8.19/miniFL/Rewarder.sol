@@ -82,6 +82,8 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     name = _name;
     miniFL = _miniFL;
     rewardToken = _rewardToken;
+
+    poolInfo = PoolInfo({ accRewardPerShare: 0, lastRewardTime: block.timestamp.toUint64() });
   }
 
   /// @notice Hook deposit action from MiniFL.
@@ -215,6 +217,7 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     // roll over outstanding reward
     rewardPerSecond = _rewardAmount / (_newRewardEndTimestamp - block.timestamp);
+    rewardEndTimestamp = _newRewardEndTimestamp;
     emit LogFeed(rewardPerSecond, _newRewardEndTimestamp);
   }
 
@@ -222,17 +225,26 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
   /// @param _user Address of user.
   /// @return pending reward for a given user.
-  function pendingToken(address _user) public view returns (uint256) {
+  function pendingToken(address _user) external view returns (uint256) {
     PoolInfo memory _poolInfo = poolInfo;
     UserInfo storage _userInfo = userInfo[_user];
     uint256 _accRewardPerShare = _poolInfo.accRewardPerShare;
     uint256 _stakedBalance = IMiniFL(miniFL).stakingReserve();
     if (block.timestamp > _poolInfo.lastRewardTime && _stakedBalance != 0) {
-      uint256 _timePast;
-      unchecked {
-        _timePast = block.timestamp - _poolInfo.lastRewardTime;
+      // if reward has ended, accumulated only before reward end
+      // otherwise, accumulated up to now
+      uint256 _timePast = block.timestamp > rewardEndTimestamp
+        ? rewardEndTimestamp - _poolInfo.lastRewardTime
+        : block.timestamp - _poolInfo.lastRewardTime;
+
+      // calculate total alpacaReward since lastRewardTime
+      uint256 _rewards;
+      {
+        // if the reward has ended, overwrite alpaca per sec to 0
+        uint256 _rewardPerSecond = _poolInfo.lastRewardTime < rewardEndTimestamp ? rewardPerSecond : 0;
+
+        _rewards = _timePast * _rewardPerSecond;
       }
-      uint256 _rewards = _timePast * rewardPerSecond;
 
       _accRewardPerShare = _accRewardPerShare + ((_rewards * ACC_REWARD_PRECISION) / _stakedBalance);
     }
@@ -247,11 +259,20 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     if (block.timestamp > _poolInfo.lastRewardTime) {
       uint256 _stakedBalance = IMiniFL(miniFL).stakingReserve();
       if (_stakedBalance > 0) {
-        uint256 _timePast;
-        unchecked {
-          _timePast = block.timestamp - _poolInfo.lastRewardTime;
+        // if reward has ended, accumulated only before reward end
+        // otherwise, accumulated up to now
+        uint256 _timePast = block.timestamp > rewardEndTimestamp
+          ? rewardEndTimestamp - _poolInfo.lastRewardTime
+          : block.timestamp - _poolInfo.lastRewardTime;
+
+        // calculate total alpacaReward since lastRewardTime
+        uint256 _rewards;
+        {
+          // if the reward has ended, overwrite alpaca per sec to 0
+          uint256 _rewardPerSecond = _poolInfo.lastRewardTime < rewardEndTimestamp ? rewardPerSecond : 0;
+
+          _rewards = _timePast * _rewardPerSecond;
         }
-        uint256 _rewards = _timePast * rewardPerSecond;
 
         // increase accRewardPerShare with `_rewards/stakedBalance` amount
         // example:
