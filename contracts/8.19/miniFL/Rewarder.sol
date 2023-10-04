@@ -32,7 +32,6 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   PoolInfo public poolInfo;
 
   mapping(address => UserInfo) public userInfo;
-  mapping(address => bool) public feeders;
 
   uint256 public rewardPerSecond;
   uint256 public rewardEndTimestamp;
@@ -47,7 +46,6 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   event LogUpdatePool(uint64 _lastRewardTime, uint256 _stakedBalance, uint256 _accRewardPerShare);
   event LogFeed(uint256 _newRewardPerSecond, uint256 _newRewardEndTimestamp);
   event LogSetName(string _name);
-  event LogSetWhitelistedFeeder(address indexed _feeder, bool _allow);
 
   /// @dev allow only MiniFL
   modifier onlyMiniFL() {
@@ -57,7 +55,7 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
   /// @dev allow only whitelised callers
   modifier onlyFeeder() {
-    if (!feeders[msg.sender]) {
+    if (!IMiniFL(miniFL).feeders(msg.sender)) {
       revert Rewarder_Unauthorized();
     }
     _;
@@ -178,26 +176,11 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     emit LogHarvest(_user, _pendingRewards);
   }
 
-  /// @notice Set whitelisted feeders
-  /// @param _feeders The addresses of the feeders that are going to be whitelisted.
-  /// @param _allow Whether to allow or disallow feeders.
-  function setWhitelistedFeeders(address[] calldata _feeders, bool _allow) external onlyOwner {
-    uint256 _length = _feeders.length;
-    for (uint256 _i; _i < _length; ) {
-      feeders[_feeders[_i]] = _allow;
-      emit LogSetWhitelistedFeeder(_feeders[_i], _allow);
-
-      unchecked {
-        ++_i;
-      }
-    }
-  }
-
   /// @notice Sets the reward per second to be distributed.
   /// @dev Can only be called by the owner.
   /// @param _rewardAmount The amount of reward token to be distributed.
   /// @param _newRewardEndTimestamp The time that reward will stop
-  function feed(uint256 _rewardAmount, uint256 _newRewardEndTimestamp) external onlyOwner {
+  function feed(uint256 _rewardAmount, uint256 _newRewardEndTimestamp) external onlyFeeder {
     if (_newRewardEndTimestamp <= block.timestamp) {
       revert Rewarder_InvalidArguments();
     }
