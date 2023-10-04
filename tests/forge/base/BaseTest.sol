@@ -11,8 +11,8 @@ import { ProxyAdminLike } from "../interfaces/ProxyAdminLike.sol";
 
 import { MockERC20 } from "../mocks/MockERC20.sol";
 
-import { MiniFL } from "@xalpacav2/miniFL/MiniFL.sol";
-import { Rewarder } from "@xalpacav2/miniFL/Rewarder.sol";
+import { xALPACAv2RevenueDistributor } from "@xalpacav2/xALPACAv2RevenueDistributor/xALPACAv2RevenueDistributor.sol";
+import { xALPACAv2Rewarder } from "@xalpacav2/xALPACAv2RevenueDistributor/xALPACAv2Rewarder.sol";
 import { xALPACAv2 } from "@xalpacav2/xALPACAv2.sol";
 
 contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
@@ -31,7 +31,7 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
 
   ProxyAdminLike internal proxyAdmin;
 
-  MiniFL internal miniFL;
+  xALPACAv2RevenueDistributor internal revenueDistributor;
   xALPACAv2 internal xALPACA;
 
   address internal treasury;
@@ -46,7 +46,7 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
     // mint token
     vm.deal(ALICE, 1000 ether);
 
-    // miniFL
+    // xALPACAv2RevenueDistributor
     proxyAdmin = _setupProxyAdmin();
 
     vm.label(DEPLOYER, "DEPLOYER");
@@ -59,7 +59,7 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
     rewardToken2 = deployMockErc20("Reward Token 2", "RTOKEN2", 6);
     mockToken1 = deployMockErc20("Mock Token 1", "MTOKEN1", 18);
 
-    miniFL = deployMiniFL(address(alpaca));
+    revenueDistributor = deployxALPACAv2RevenueDistributor(address(alpaca));
 
     treasury = address(9999999);
     xALPACA = deployxALPACAv2(address(alpaca), 0, treasury, 0);
@@ -92,27 +92,29 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
     return xALPACAv2(_proxy);
   }
 
-  function deployMiniFL(address _rewardToken) internal returns (MiniFL) {
-    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/MiniFL.sol/MiniFL.json"));
+  function deployxALPACAv2RevenueDistributor(address _rewardToken) internal returns (xALPACAv2RevenueDistributor) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/xALPACAv2RevenueDistributor.sol/xALPACAv2RevenueDistributor.json")
+    );
     bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(address)")), _rewardToken);
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer);
-    return MiniFL(_proxy);
+    return xALPACAv2RevenueDistributor(_proxy);
   }
 
   function deployRewarder(
     string memory _name,
-    address _miniFL,
+    address _xALPACAv2RevenueDistributor,
     address _rewardToken
-  ) internal returns (Rewarder) {
-    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/Rewarder.sol/Rewarder.json"));
+  ) internal returns (xALPACAv2Rewarder) {
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/xALPACAv2Rewarder.sol/xALPACAv2Rewarder.json"));
     bytes memory _initializer = abi.encodeWithSelector(
       bytes4(keccak256("initialize(string,address,address)")),
       _name,
-      _miniFL,
+      _xALPACAv2RevenueDistributor,
       _rewardToken
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer);
-    return Rewarder(_proxy);
+    return xALPACAv2Rewarder(_proxy);
   }
 
   function _setupUpgradeable(bytes memory _logicBytecode, bytes memory _initializer) internal returns (address) {

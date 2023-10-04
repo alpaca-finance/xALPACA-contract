@@ -8,10 +8,10 @@ import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { SafeCastUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 
-import { IMiniFL } from "./interfaces/IMiniFL.sol";
-import { IRewarder } from "./interfaces/IRewarder.sol";
+import { IxALPACAv2RevenueDistributor } from "./interfaces/IxALPACAv2RevenueDistributor.sol";
+import { IxALPACAv2Rewarder } from "./interfaces/IxALPACAv2Rewarder.sol";
 
-contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
+contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   using SafeCastUpgradeable for uint256;
   using SafeCastUpgradeable for int256;
   using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -55,7 +55,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @dev allow only whitelised callers
   modifier onlyWhitelisted() {
     if (!whitelistedCallers[msg.sender]) {
-      revert MiniFL_Unauthorized();
+      revert xALPACAv2RevenueDistributor_Unauthorized();
     }
     _;
   }
@@ -63,7 +63,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @dev allow only whitelised callers
   modifier onlyFeeder() {
     if (!feeders[msg.sender]) {
-      revert MiniFL_Unauthorized();
+      revert xALPACAv2RevenueDistributor_Unauthorized();
     }
     _;
   }
@@ -87,7 +87,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   /// @param _newRewardEndTimestamp The time that reward will stop
   function feed(uint256 _rewardAmount, uint256 _newRewardEndTimestamp) external onlyFeeder {
     if (_newRewardEndTimestamp <= block.timestamp) {
-      revert MiniFL_InvalidArguments();
+      revert xALPACAv2RevenueDistributor_InvalidArguments();
     }
 
     // in case we only change the reward end timestamp
@@ -184,7 +184,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     return _updatePool();
   }
 
-  /// @notice Deposit tokens to MiniFL
+  /// @notice Deposit tokens to xALPACAv2RevenueDistributor
   /// @param _for The beneficary address of the deposit.
   /// @param _amountToDeposit amount to deposit.
   function deposit(address _for, uint256 _amountToDeposit) external onlyWhitelisted nonReentrant {
@@ -219,7 +219,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     for (uint256 _i; _i < _rewarderLength; ) {
       _rewarder = rewarders[_i];
       // rewarder callback to do accounting
-      IRewarder(_rewarder).onDeposit(_for, user.totalAmount);
+      IxALPACAv2Rewarder(_rewarder).onDeposit(_for, user.totalAmount);
       unchecked {
         ++_i;
       }
@@ -228,14 +228,14 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     emit LogDeposit(msg.sender, _for, _receivedAmount);
   }
 
-  /// @notice Withdraw tokens from MiniFL.
+  /// @notice Withdraw tokens from xALPACAv2RevenueDistributor.
   /// @param _from Withdraw from who?
   /// @param _amountToWithdraw Staking token amount to withdraw.
   function withdraw(address _from, uint256 _amountToWithdraw) external onlyWhitelisted nonReentrant {
     UserInfo storage user = userInfo[_from];
 
     if (user.totalAmount < _amountToWithdraw) {
-      revert MiniFL_InsufficientAmount();
+      revert xALPACAv2RevenueDistributor_InsufficientAmount();
     }
 
     // Effects
@@ -266,7 +266,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     for (uint256 _i; _i < _rewarderLength; ) {
       _rewarder = rewarders[_i];
       // rewarder callback to do accounting
-      IRewarder(_rewarder).onWithdraw(_from, user.totalAmount);
+      IxALPACAv2Rewarder(_rewarder).onWithdraw(_from, user.totalAmount);
       unchecked {
         ++_i;
       }
@@ -315,7 +315,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     for (uint256 _i; _i < _rewarderLength; ) {
       _rewarder = rewarders[_i];
       // rewarder callback to claim reward
-      IRewarder(_rewarder).onHarvest(msg.sender);
+      IxALPACAv2Rewarder(_rewarder).onHarvest(msg.sender);
       unchecked {
         ++_i;
       }
@@ -329,11 +329,14 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   function setPoolRewarders(address[] calldata _newRewarders) external onlyOwner {
     uint256 _length = _newRewarders.length;
     address _rewarder;
-    // loop to check rewarder should be belong to this MiniFL only
+    // loop to check rewarder should be belong to this xALPACAv2RevenueDistributor only
     for (uint256 _i; _i < _length; ) {
       _rewarder = _newRewarders[_i];
-      if ((IRewarder(_rewarder).miniFL() != address(this)) || (IRewarder(_rewarder).lastRewardTime() == 0)) {
-        revert MiniFL_BadRewarder();
+      if (
+        (IxALPACAv2Rewarder(_rewarder).xALPACAv2RevenueDistributor() != address(this)) ||
+        (IxALPACAv2Rewarder(_rewarder).lastRewardTime() == 0)
+      ) {
+        revert xALPACAv2RevenueDistributor_BadRewarder();
       }
       unchecked {
         ++_i;
