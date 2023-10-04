@@ -82,7 +82,7 @@ contract MiniFL is IMiniFL, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     poolInfo = PoolInfo({ lastRewardTime: block.timestamp.toUint64(), accAlpacaPerShare: 0 });
   }
 
-  /// @notice Sets the ALPACA per second to be distributed. Can only be called by the owner.
+  /// @notice Sets the ALPACA per second to be distributed. Can only be called by whitelisted callers.
   /// @param _rewardAmount The amount of ALPACA to be distributed
   /// @param _newRewardEndTimestamp The time that reward will stop
   function feed(uint256 _rewardAmount, uint256 _newRewardEndTimestamp) external onlyFeeder {
