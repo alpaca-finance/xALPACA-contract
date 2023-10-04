@@ -103,10 +103,10 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     user.amount = _newAmount;
     // update user rewardDebt to separate new deposit share amount from pending reward in the pool
     // example:
-    //  - accAlpacaPerShare    = 250
+    //  - accRewardPerShare    = 250
     //  - _receivedAmount      = 100
-    //  - pendingAlpacaReward  = 25,000
-    //  rewardDebt = oldRewardDebt + (_receivedAmount * accAlpacaPerShare)= 0 + (100 * 250) = 25,000
+    //  - pendingRewardReward  = 25,000
+    //  rewardDebt = oldRewardDebt + (_receivedAmount * accRewardPerShare)= 0 + (100 * 250) = 25,000
     //  This means newly deposit share does not eligible for 25,000 pending rewards
     user.rewardDebt = user.rewardDebt + ((_amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION).toInt256();
 
@@ -131,11 +131,11 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
       // update reward debt
       // example:
-      //  - accAlpacaPerShare    = 300
+      //  - accRewardPerShare    = 300
       //  - _amountToWithdraw    = 100
       //  - oldRewardDebt        = 25,000
-      //  - pendingAlpacaReward  = 35,000
-      //  rewardDebt = oldRewardDebt - (_amountToWithdraw * accAlpacaPerShare) = 25,000 - (100 * 300) = -5000
+      //  - pendingRewardReward  = 35,000
+      //  rewardDebt = oldRewardDebt - (_amountToWithdraw * accRewardPerShare) = 25,000 - (100 * 300) = -5000
       //  This means withdrawn share is eligible for previous pending reward in the pool = 5000
       user.rewardDebt =
         user.rewardDebt -
@@ -161,10 +161,10 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     // example:
     //  - totalAmount         = 100
-    //  - accAlpacaPerShare   = 250
+    //  - accRewardPerShare   = 250
     //  - rewardDebt          = 0
-    //  accumulatedAlpaca     = totalAmount * accAlpacaPerShare = 100 * 250 = 25,000
-    //  _pendingAlpaca         = accumulatedAlpaca - rewardDebt = 25,000 - 0 = 25,000
+    //  accumulatedReward     = totalAmount * accRewardPerShare = 100 * 250 = 25,000
+    //  _pendingReward         = accumulatedReward - rewardDebt = 25,000 - 0 = 25,000
     //   Meaning user eligible for 25,000 rewards in this harvest
     int256 _accumulatedRewards = ((user.amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION).toInt256();
     uint256 _pendingRewards = (_accumulatedRewards - user.rewardDebt).toUint256();
@@ -237,10 +237,10 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
         ? rewardEndTimestamp - _poolInfo.lastRewardTime
         : block.timestamp - _poolInfo.lastRewardTime;
 
-      // calculate total alpacaReward since lastRewardTime
+      // calculate total reward since lastRewardTime
       uint256 _rewards;
       {
-        // if the reward has ended, overwrite alpaca per sec to 0
+        // if the reward has ended, overwrite reward per sec to 0
         uint256 _rewardPerSecond = _poolInfo.lastRewardTime < rewardEndTimestamp ? rewardPerSecond : 0;
 
         _rewards = _timePast * _rewardPerSecond;
@@ -265,10 +265,10 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
           ? rewardEndTimestamp - _poolInfo.lastRewardTime
           : block.timestamp - _poolInfo.lastRewardTime;
 
-        // calculate total alpacaReward since lastRewardTime
+        // calculate total rewardReward since lastRewardTime
         uint256 _rewards;
         {
-          // if the reward has ended, overwrite alpaca per sec to 0
+          // if the reward has ended, overwrite reward per sec to 0
           uint256 _rewardPerSecond = _poolInfo.lastRewardTime < rewardEndTimestamp ? rewardPerSecond : 0;
 
           _rewards = _timePast * _rewardPerSecond;
