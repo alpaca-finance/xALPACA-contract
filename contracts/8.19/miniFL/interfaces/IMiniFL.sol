@@ -23,4 +23,6 @@ interface IMiniFL {
   function harvest() external;
 
   function setPoolRewarders(address[] calldata _newRewarders) external;
+
+  function feeders(address _feeder) external view returns (bool _allow);
 }

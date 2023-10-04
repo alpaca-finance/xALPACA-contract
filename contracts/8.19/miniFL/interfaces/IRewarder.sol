@@ -2,10 +2,11 @@
 pragma solidity 0.8.19;
 
 interface IRewarder {
-  error Rewarder1_BadArguments();
-  error Rewarder1_NotFL();
-  error Rewarder1_PoolExisted();
-  error Rewarder1_PoolNotExisted();
+  error Rewarder_InvalidArguments();
+  error Rewarder_NotFL();
+  error Rewarder_PoolExisted();
+  error Rewarder_PoolNotExisted();
+  error Rewarder_Unauthorized();
 
   function name() external view returns (string memory);
 
@@ -21,7 +22,7 @@ interface IRewarder {
 
   function lastRewardTime() external view returns (uint256);
 
-  function setRewardPerSecond(uint256 _newRewardPerSecond) external;
+  function feed(uint256 _newRewardPerSecond, uint256 _newRewardEndTimestamp) external;
 
   function rewardToken() external view returns (address);
 

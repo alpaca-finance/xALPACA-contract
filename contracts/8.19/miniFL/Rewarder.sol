@@ -32,25 +32,32 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   PoolInfo public poolInfo;
 
   mapping(address => UserInfo) public userInfo;
+
   uint256 public rewardPerSecond;
+  uint256 public rewardEndTimestamp;
   uint256 private constant ACC_REWARD_PRECISION = 1e12;
 
   address public miniFL;
   string public name;
 
-  uint256 public maxRewardPerSecond;
-
   event LogOnDeposit(address indexed _user, uint256 _amount);
   event LogOnWithdraw(address indexed _user, uint256 _amount);
   event LogHarvest(address indexed _user, uint256 _amount);
   event LogUpdatePool(uint64 _lastRewardTime, uint256 _stakedBalance, uint256 _accRewardPerShare);
-  event LogRewardPerSecond(uint256 _newRewardPerSecond);
+  event LogFeed(uint256 _newRewardPerSecond, uint256 _newRewardEndTimestamp);
   event LogSetName(string _name);
-  event LogSetMaxRewardPerSecond(uint256 _newMaxRewardPerSecond);
 
   /// @dev allow only MiniFL
   modifier onlyMiniFL() {
-    if (msg.sender != miniFL) revert Rewarder1_NotFL();
+    if (msg.sender != miniFL) revert Rewarder_NotFL();
+    _;
+  }
+
+  /// @dev allow only whitelised callers
+  modifier onlyFeeder() {
+    if (!IMiniFL(miniFL).feeders(msg.sender)) {
+      revert Rewarder_Unauthorized();
+    }
     _;
   }
 
@@ -61,8 +68,7 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   function initialize(
     string calldata _name,
     address _miniFL,
-    address _rewardToken,
-    uint256 _maxRewardPerSecond
+    address _rewardToken
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
@@ -74,7 +80,8 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     name = _name;
     miniFL = _miniFL;
     rewardToken = _rewardToken;
-    maxRewardPerSecond = _maxRewardPerSecond;
+
+    poolInfo = PoolInfo({ accRewardPerShare: 0, lastRewardTime: block.timestamp.toUint64() });
   }
 
   /// @notice Hook deposit action from MiniFL.
@@ -94,10 +101,10 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     user.amount = _newAmount;
     // update user rewardDebt to separate new deposit share amount from pending reward in the pool
     // example:
-    //  - accAlpacaPerShare    = 250
+    //  - accRewardPerShare    = 250
     //  - _receivedAmount      = 100
-    //  - pendingAlpacaReward  = 25,000
-    //  rewardDebt = oldRewardDebt + (_receivedAmount * accAlpacaPerShare)= 0 + (100 * 250) = 25,000
+    //  - pendingRewardReward  = 25,000
+    //  rewardDebt = oldRewardDebt + (_receivedAmount * accRewardPerShare)= 0 + (100 * 250) = 25,000
     //  This means newly deposit share does not eligible for 25,000 pending rewards
     user.rewardDebt = user.rewardDebt + ((_amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION).toInt256();
 
@@ -122,11 +129,11 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
       // update reward debt
       // example:
-      //  - accAlpacaPerShare    = 300
+      //  - accRewardPerShare    = 300
       //  - _amountToWithdraw    = 100
       //  - oldRewardDebt        = 25,000
-      //  - pendingAlpacaReward  = 35,000
-      //  rewardDebt = oldRewardDebt - (_amountToWithdraw * accAlpacaPerShare) = 25,000 - (100 * 300) = -5000
+      //  - pendingRewardReward  = 35,000
+      //  rewardDebt = oldRewardDebt - (_amountToWithdraw * accRewardPerShare) = 25,000 - (100 * 300) = -5000
       //  This means withdrawn share is eligible for previous pending reward in the pool = 5000
       user.rewardDebt =
         user.rewardDebt -
@@ -152,10 +159,10 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     // example:
     //  - totalAmount         = 100
-    //  - accAlpacaPerShare   = 250
+    //  - accRewardPerShare   = 250
     //  - rewardDebt          = 0
-    //  accumulatedAlpaca     = totalAmount * accAlpacaPerShare = 100 * 250 = 25,000
-    //  _pendingAlpaca         = accumulatedAlpaca - rewardDebt = 25,000 - 0 = 25,000
+    //  accumulatedReward     = totalAmount * accRewardPerShare = 100 * 250 = 25,000
+    //  _pendingReward         = accumulatedReward - rewardDebt = 25,000 - 0 = 25,000
     //   Meaning user eligible for 25,000 rewards in this harvest
     int256 _accumulatedRewards = ((user.amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION).toInt256();
     uint256 _pendingRewards = (_accumulatedRewards - user.rewardDebt).toUint256();
@@ -171,30 +178,56 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
   /// @notice Sets the reward per second to be distributed.
   /// @dev Can only be called by the owner.
-  /// @param _newRewardPerSecond The amount of reward token to be distributed per second.
-  function setRewardPerSecond(uint256 _newRewardPerSecond) external onlyOwner {
-    if (_newRewardPerSecond > maxRewardPerSecond) revert Rewarder1_BadArguments();
+  /// @param _rewardAmount The amount of reward token to be distributed.
+  /// @param _newRewardEndTimestamp The time that reward will stop
+  function feed(uint256 _rewardAmount, uint256 _newRewardEndTimestamp) external onlyFeeder {
+    if (_newRewardEndTimestamp <= block.timestamp) {
+      revert Rewarder_InvalidArguments();
+    }
 
     _updatePool();
-    rewardPerSecond = _newRewardPerSecond;
-    emit LogRewardPerSecond(_newRewardPerSecond);
+
+    // in case we only change the reward end timestamp
+    // skip the token transfer
+    if (_rewardAmount > 0) {
+      IERC20Upgradeable(rewardToken).safeTransferFrom(msg.sender, address(this), _rewardAmount);
+    }
+
+    // roll over outstanding reward
+    if (rewardEndTimestamp > block.timestamp) {
+      _rewardAmount += (rewardEndTimestamp - block.timestamp) * rewardPerSecond;
+    }
+
+    // roll over outstanding reward
+    rewardPerSecond = _rewardAmount / (_newRewardEndTimestamp - block.timestamp);
+    rewardEndTimestamp = _newRewardEndTimestamp;
+    emit LogFeed(rewardPerSecond, _newRewardEndTimestamp);
   }
 
   /// @notice View function to see pending rewards for a given pool.
 
   /// @param _user Address of user.
   /// @return pending reward for a given user.
-  function pendingToken(address _user) public view returns (uint256) {
+  function pendingToken(address _user) external view returns (uint256) {
     PoolInfo memory _poolInfo = poolInfo;
     UserInfo storage _userInfo = userInfo[_user];
     uint256 _accRewardPerShare = _poolInfo.accRewardPerShare;
     uint256 _stakedBalance = IMiniFL(miniFL).stakingReserve();
     if (block.timestamp > _poolInfo.lastRewardTime && _stakedBalance != 0) {
-      uint256 _timePast;
-      unchecked {
-        _timePast = block.timestamp - _poolInfo.lastRewardTime;
+      // if reward has ended, accumulated only before reward end
+      // otherwise, accumulated up to now
+      uint256 _timePast = block.timestamp > rewardEndTimestamp
+        ? rewardEndTimestamp - _poolInfo.lastRewardTime
+        : block.timestamp - _poolInfo.lastRewardTime;
+
+      // calculate total reward since lastRewardTime
+      uint256 _rewards;
+      {
+        // if the reward has ended, overwrite reward per sec to 0
+        uint256 _rewardPerSecond = _poolInfo.lastRewardTime < rewardEndTimestamp ? rewardPerSecond : 0;
+
+        _rewards = _timePast * _rewardPerSecond;
       }
-      uint256 _rewards = _timePast * rewardPerSecond;
 
       _accRewardPerShare = _accRewardPerShare + ((_rewards * ACC_REWARD_PRECISION) / _stakedBalance);
     }
@@ -209,11 +242,20 @@ contract Rewarder is IRewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     if (block.timestamp > _poolInfo.lastRewardTime) {
       uint256 _stakedBalance = IMiniFL(miniFL).stakingReserve();
       if (_stakedBalance > 0) {
-        uint256 _timePast;
-        unchecked {
-          _timePast = block.timestamp - _poolInfo.lastRewardTime;
+        // if reward has ended, accumulated only before reward end
+        // otherwise, accumulated up to now
+        uint256 _timePast = block.timestamp > rewardEndTimestamp
+          ? rewardEndTimestamp - _poolInfo.lastRewardTime
+          : block.timestamp - _poolInfo.lastRewardTime;
+
+        // calculate total rewardReward since lastRewardTime
+        uint256 _rewards;
+        {
+          // if the reward has ended, overwrite reward per sec to 0
+          uint256 _rewardPerSecond = _poolInfo.lastRewardTime < rewardEndTimestamp ? rewardPerSecond : 0;
+
+          _rewards = _timePast * _rewardPerSecond;
         }
-        uint256 _rewards = _timePast * rewardPerSecond;
 
         // increase accRewardPerShare with `_rewards/stakedBalance` amount
         // example:

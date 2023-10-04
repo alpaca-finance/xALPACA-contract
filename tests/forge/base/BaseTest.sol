@@ -102,16 +102,14 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
   function deployRewarder(
     string memory _name,
     address _miniFL,
-    address _rewardToken,
-    uint256 _maxRewardPerSecond
+    address _rewardToken
   ) internal returns (Rewarder) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/Rewarder.sol/Rewarder.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(string,address,address,uint256)")),
+      bytes4(keccak256("initialize(string,address,address)")),
       _name,
       _miniFL,
-      _rewardToken,
-      _maxRewardPerSecond
+      _rewardToken
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer);
     return Rewarder(_proxy);
