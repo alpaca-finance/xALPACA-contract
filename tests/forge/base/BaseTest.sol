@@ -62,7 +62,12 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
     revenueDistributor = deployxALPACAv2RevenueDistributor(address(alpaca));
 
     treasury = address(9999999);
-    xALPACA = deployxALPACAv2(address(alpaca), 0, treasury, 0);
+    xALPACA = deployxALPACAv2(address(alpaca), address(revenueDistributor), 0, treasury, 0);
+
+    address[] memory _whitelistCallers = new address[](1);
+    _whitelistCallers[0] = address(xALPACA);
+
+    revenueDistributor.setWhitelistedCallers(_whitelistCallers, true);
   }
 
   function deployMockErc20(
@@ -76,14 +81,16 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
 
   function deployxALPACAv2(
     address _token,
+    address _revenueDistributor,
     uint256 _delayUnlockTime,
     address _feeTreasury,
     uint256 _earlyWithdrawFeeBpsPerDay
   ) internal returns (xALPACAv2) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/xALPACAv2.sol/xALPACAv2.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,uint256,address,uint256)")),
+      bytes4(keccak256("initialize(address,address,uint256,address,uint256)")),
       _token,
+      _revenueDistributor,
       _delayUnlockTime,
       _feeTreasury,
       _earlyWithdrawFeeBpsPerDay

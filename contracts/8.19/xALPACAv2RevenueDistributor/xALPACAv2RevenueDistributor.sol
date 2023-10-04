@@ -80,6 +80,8 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     ALPACA = _alpaca;
 
     poolInfo = PoolInfo({ lastRewardTime: block.timestamp.toUint64(), accAlpacaPerShare: 0 });
+
+    rewardEndTimestamp = block.timestamp;
   }
 
   /// @notice Sets the ALPACA per second to be distributed. Can only be called by whitelisted callers.
@@ -191,6 +193,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     UserInfo storage user = userInfo[_for];
 
     // call _updatePool in order to update poolInfo.accAlpacaPerShare
+
     PoolInfo memory _poolInfo = _updatePool();
 
     uint256 _receivedAmount = _unsafePullToken(msg.sender, ALPACA, _amountToDeposit);

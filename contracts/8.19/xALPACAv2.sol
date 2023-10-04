@@ -20,6 +20,8 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 import { IBEP20 } from "./interfaces/IBEP20.sol";
 import { SafeToken } from "./SafeToken.sol";
 
+import { IxALPACAv2RevenueDistributor } from "./xALPACAv2RevenueDistributor/interfaces/IxALPACAv2RevenueDistributor.sol";
+
 /// @title xALPACAv2 - The governance locking contract of Alpaca Finance (v2)
 // solhint-disable not-rely-on-time
 // solhint-disable-next-line contract-name-camelcase
@@ -77,6 +79,9 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   // Protocol Early Withdrawal Fee treasury
   address public feeTreasury;
 
+  // Revenue Distributor
+  address public revenueDistributor;
+
   // penalty per day
   uint256 public earlyWithdrawFeeBpsPerDay;
 
@@ -92,6 +97,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
   function initialize(
     address _token,
+    address _revenueDistributor,
     uint256 _delayUnlockTime,
     address _feeTreasury,
     uint256 _earlyWithdrawFeeBpsPerDay
@@ -101,6 +107,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     // sanity check
     IBEP20(_token).decimals();
+    IxALPACAv2RevenueDistributor(_revenueDistributor).stakingReserve();
 
     // max lock time = 365 day
     if (_delayUnlockTime > 365 days) {
@@ -120,6 +127,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     earlyWithdrawFeeBpsPerDay = _earlyWithdrawFeeBpsPerDay;
     delayUnlockTime = _delayUnlockTime;
     token = _token;
+    revenueDistributor = _revenueDistributor;
   }
 
   /// @notice Lock token to receive voting power
@@ -130,7 +138,9 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     totalLocked += _amount;
     // interaction
     token.safeTransferFrom(msg.sender, address(this), _amount);
-    // todo: deposit to miniFL on behalf of user
+
+    token.safeApprove(revenueDistributor, _amount);
+    IxALPACAv2RevenueDistributor(revenueDistributor).deposit(msg.sender, _amount);
 
     emit LogLock(msg.sender, _amount);
   }
@@ -163,11 +173,11 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
       _userRequests.push(_request);
       // interaction
-      // todo: withdraw from miniFL
+      IxALPACAv2RevenueDistributor(revenueDistributor).withdraw(msg.sender, _amount);
 
       emit LogUnlock(msg.sender, _unlockRequestId);
     } else {
-      // todo: withdraw from miniFL
+      IxALPACAv2RevenueDistributor(revenueDistributor).withdraw(msg.sender, _amount);
       token.safeTransfer(msg.sender, _amount);
     }
   }
@@ -246,7 +256,8 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     request.status = UnlockStatus.CANCELED;
 
     // interaction
-    // todo: deposit back to miniFL
+    token.safeApprove(revenueDistributor, request.amount);
+    IxALPACAv2RevenueDistributor(revenueDistributor).deposit(msg.sender, request.amount);
 
     emit LogUnlock(msg.sender, _unlockRequestId);
   }
