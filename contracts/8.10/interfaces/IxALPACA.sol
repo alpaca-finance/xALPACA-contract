@@ -11,7 +11,7 @@
  * Alpaca Fin Corporation
  */
 
-pragma solidity 0.8.10;
+pragma solidity ^0.8.10;
 
 struct Point {
   int128 bias; // Voting weight
@@ -35,4 +35,6 @@ interface IxALPACA {
 
   /// @dev Trigger global check point
   function checkpoint() external;
+
+  function createLock(uint256 _amount, uint256 _unlockTime) external;
 }

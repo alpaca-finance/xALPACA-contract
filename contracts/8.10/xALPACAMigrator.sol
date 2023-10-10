@@ -114,7 +114,7 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
   mapping(address => bool) public whitelistedRedistributors;
 
   // --- migrate address  ---
-  address xALPACAv2;
+  address public xALPACAv2;
 
   modifier onlyRedistributors() {
     require(whitelistedRedistributors[msg.sender], "not redistributors");
@@ -672,6 +672,9 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
       if (_amount > 0) {
         // unlocked from current gov
         _unlock(_lock, _amount);
+
+        // approve xALPACAv2
+        token.safeApprove(xALPACAv2, _amount);
 
         // migrate to xALPACAv2
         IxALPACAv2(xALPACAv2).lock(_user, _amount);
