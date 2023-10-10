@@ -13,36 +13,35 @@ contract xALPACAv2_WithdrawTest is BaseTest {
   function setUp() public {
     alpaca.mint(ALICE, 100 ether);
     alpaca.mint(BOB, 100 ether);
-    console.log(xALPACA.owner());
-    xALPACA.setDelayUnlockTime(DELAY_UNLOCK_TIME);
+    xAlpacaV2.setDelayUnlockTime(DELAY_UNLOCK_TIME);
   }
 
   function testRevert_WhenUserWantToWithdrawBeforeUnlockCompleted_ShouldRevert() external {
     vm.startPrank(ALICE);
 
-    alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(ALICE, 10 ether);
-    uint256 _unlockId = xALPACA.unlock(4 ether);
+    alpaca.approve(address(xAlpacaV2), type(uint256).max);
+    xAlpacaV2.lock(ALICE, 10 ether);
+    uint256 _unlockId = xAlpacaV2.unlock(4 ether);
 
     vm.expectRevert(abi.encodeWithSelector(xALPACAv2.xALPACAv2_UnlockTimeUnreached.selector));
-    xALPACA.withdraw(_unlockId);
+    xAlpacaV2.withdraw(_unlockId);
     vm.stopPrank();
   }
 
   function testRevert_WhenUserTryToWithdrawAgain_ShouldRevert() external {
     vm.startPrank(ALICE);
 
-    alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(ALICE, 10 ether);
+    alpaca.approve(address(xAlpacaV2), type(uint256).max);
+    xAlpacaV2.lock(ALICE, 10 ether);
 
-    uint256 _unlockId = xALPACA.unlock(4 ether);
+    uint256 _unlockId = xAlpacaV2.unlock(4 ether);
 
     skip(DELAY_UNLOCK_TIME);
 
-    xALPACA.withdraw(_unlockId);
+    xAlpacaV2.withdraw(_unlockId);
 
     vm.expectRevert(abi.encodeWithSelector(xALPACAv2.xALPACAv2_InvalidStatus.selector));
-    xALPACA.withdraw(_unlockId);
+    xAlpacaV2.withdraw(_unlockId);
 
     vm.stopPrank();
   }
@@ -50,17 +49,17 @@ contract xALPACAv2_WithdrawTest is BaseTest {
   function testRevert_WhenUserHasCanceledButTryToWithdraw_ShouldRevert() external {
     vm.startPrank(ALICE);
 
-    alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(ALICE, 10 ether);
+    alpaca.approve(address(xAlpacaV2), type(uint256).max);
+    xAlpacaV2.lock(ALICE, 10 ether);
 
-    uint256 _unlockId = xALPACA.unlock(4 ether);
+    uint256 _unlockId = xAlpacaV2.unlock(4 ether);
 
     skip(DELAY_UNLOCK_TIME);
 
-    xALPACA.cancelUnlock(_unlockId);
+    xAlpacaV2.cancelUnlock(_unlockId);
 
     vm.expectRevert(abi.encodeWithSelector(xALPACAv2.xALPACAv2_InvalidStatus.selector));
-    xALPACA.withdraw(_unlockId);
+    xAlpacaV2.withdraw(_unlockId);
 
     vm.stopPrank();
   }
@@ -72,14 +71,14 @@ contract xALPACAv2_WithdrawTest is BaseTest {
     uint256 _startingBalance = alpaca.balanceOf(ALICE);
     vm.startPrank(ALICE);
 
-    alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(ALICE, _lockAmount);
+    alpaca.approve(address(xAlpacaV2), type(uint256).max);
+    xAlpacaV2.lock(ALICE, _lockAmount);
 
-    uint256 _unlockId = xALPACA.unlock(_unlockAmount);
+    uint256 _unlockId = xAlpacaV2.unlock(_unlockAmount);
 
     skip(DELAY_UNLOCK_TIME);
 
-    xALPACA.withdraw(_unlockId);
+    xAlpacaV2.withdraw(_unlockId);
 
     assertEq(alpaca.balanceOf(ALICE), _startingBalance - _lockAmount + _unlockAmount); // start at 100, lock 10, unlock 4, result in 94
     vm.stopPrank();
@@ -90,19 +89,19 @@ contract xALPACAv2_WithdrawTest is BaseTest {
     uint256 _unlockAmount = 4 ether;
     uint256 _earlyWithdrawFeeBpsPerDay = 50;
     // 50 bps per day
-    xALPACA.setEarlyWithdrawFeeBpsPerDay(_earlyWithdrawFeeBpsPerDay);
+    xAlpacaV2.setEarlyWithdrawFeeBpsPerDay(_earlyWithdrawFeeBpsPerDay);
 
     uint256 _startingBalance = alpaca.balanceOf(ALICE);
     vm.startPrank(ALICE);
 
-    alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(ALICE, _lockAmount);
+    alpaca.approve(address(xAlpacaV2), type(uint256).max);
+    xAlpacaV2.lock(ALICE, _lockAmount);
 
-    uint256 _unlockId = xALPACA.unlock(_unlockAmount);
+    uint256 _unlockId = xAlpacaV2.unlock(_unlockAmount);
 
     skip(20.5 days);
 
-    xALPACA.earlyWithdraw(_unlockId);
+    xAlpacaV2.earlyWithdraw(_unlockId);
 
     uint256 _fee = (_unlockAmount * (_earlyWithdrawFeeBpsPerDay / 2)) / 10000;
 
@@ -116,22 +115,22 @@ contract xALPACAv2_WithdrawTest is BaseTest {
     uint256 _unlockAmount = 4 ether;
     uint256 _earlyWithdrawFeeBpsPerDay = 50;
     // 50 bps per day
-    xALPACA.setEarlyWithdrawFeeBpsPerDay(_earlyWithdrawFeeBpsPerDay);
+    xAlpacaV2.setEarlyWithdrawFeeBpsPerDay(_earlyWithdrawFeeBpsPerDay);
 
     uint256 _startingBalance = alpaca.balanceOf(ALICE);
     vm.startPrank(ALICE);
 
-    alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(ALICE, _lockAmount);
+    alpaca.approve(address(xAlpacaV2), type(uint256).max);
+    xAlpacaV2.lock(ALICE, _lockAmount);
 
-    uint256 _unlockId = xALPACA.unlock(_unlockAmount);
+    uint256 _unlockId = xAlpacaV2.unlock(_unlockAmount);
 
     vm.stopPrank();
 
-    xALPACA.setBreaker(1);
+    xAlpacaV2.setBreaker(1);
 
     vm.startPrank(ALICE);
-    xALPACA.earlyWithdraw(_unlockId);
+    xAlpacaV2.earlyWithdraw(_unlockId);
 
     assertEq(alpaca.balanceOf(ALICE), _startingBalance - _lockAmount + _unlockAmount); // start at 100, lock 10, unlock 4, result in 94
     assertEq(alpaca.balanceOf(treasury), 0);

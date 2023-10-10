@@ -32,7 +32,7 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
   ProxyAdminLike internal proxyAdmin;
 
   xALPACAv2RevenueDistributor internal revenueDistributor;
-  xALPACAv2 internal xALPACA;
+  xALPACAv2 internal xAlpacaV2;
 
   address internal treasury;
   uint256 constant maxAlpacaPerSecond = 1000 ether;
@@ -62,10 +62,10 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
     revenueDistributor = deployxALPACAv2RevenueDistributor(address(alpaca));
 
     treasury = address(9999999);
-    xALPACA = deployxALPACAv2(address(alpaca), address(revenueDistributor), 0, treasury, 0);
+    xAlpacaV2 = deployxALPACAv2(address(alpaca), address(revenueDistributor), 0, treasury, 0);
 
     address[] memory _whitelistCallers = new address[](1);
-    _whitelistCallers[0] = address(xALPACA);
+    _whitelistCallers[0] = address(xAlpacaV2);
 
     revenueDistributor.setWhitelistedCallers(_whitelistCallers, true);
   }

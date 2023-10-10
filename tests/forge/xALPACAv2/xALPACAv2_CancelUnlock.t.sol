@@ -13,25 +13,24 @@ contract xALPACAv2_CancelUnlockTest is BaseTest {
   function setUp() public {
     alpaca.mint(ALICE, 100 ether);
     alpaca.mint(BOB, 100 ether);
-    console.log(xALPACA.owner());
-    xALPACA.setDelayUnlockTime(DELAY_UNLOCK_TIME);
+    xAlpacaV2.setDelayUnlockTime(DELAY_UNLOCK_TIME);
   }
 
   function testRevert_WhenUserWantToCancelClaimedUnlock_ShouldRevert() external {
     vm.startPrank(ALICE);
 
-    alpaca.approve(address(xALPACA), type(uint256).max);
+    alpaca.approve(address(xAlpacaV2), type(uint256).max);
 
-    xALPACA.lock(ALICE, 10 ether);
+    xAlpacaV2.lock(ALICE, 10 ether);
 
-    uint256 _unlockId = xALPACA.unlock(4 ether);
+    uint256 _unlockId = xAlpacaV2.unlock(4 ether);
 
     skip(DELAY_UNLOCK_TIME);
 
-    xALPACA.cancelUnlock(_unlockId);
+    xAlpacaV2.cancelUnlock(_unlockId);
 
     vm.expectRevert(abi.encodeWithSelector(xALPACAv2.xALPACAv2_InvalidStatus.selector));
-    xALPACA.withdraw(_unlockId);
+    xAlpacaV2.withdraw(_unlockId);
 
     vm.stopPrank();
   }
@@ -39,17 +38,17 @@ contract xALPACAv2_CancelUnlockTest is BaseTest {
   function testRevert_WhenUserWantToDoulbeCancel_ShouldRevert() external {
     vm.startPrank(ALICE);
 
-    alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(ALICE, 10 ether);
+    alpaca.approve(address(xAlpacaV2), type(uint256).max);
+    xAlpacaV2.lock(ALICE, 10 ether);
 
-    uint256 _unlockId = xALPACA.unlock(4 ether);
+    uint256 _unlockId = xAlpacaV2.unlock(4 ether);
 
     skip(DELAY_UNLOCK_TIME);
 
-    xALPACA.cancelUnlock(_unlockId);
+    xAlpacaV2.cancelUnlock(_unlockId);
 
     vm.expectRevert(abi.encodeWithSelector(xALPACAv2.xALPACAv2_InvalidStatus.selector));
-    xALPACA.cancelUnlock(_unlockId);
+    xAlpacaV2.cancelUnlock(_unlockId);
 
     vm.stopPrank();
   }
@@ -57,17 +56,17 @@ contract xALPACAv2_CancelUnlockTest is BaseTest {
   function testCorrectness_WhenUserCancel_UnclaimedUnlock_ShouldWork() external {
     vm.startPrank(ALICE);
 
-    alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(ALICE, 10 ether);
+    alpaca.approve(address(xAlpacaV2), type(uint256).max);
+    xAlpacaV2.lock(ALICE, 10 ether);
 
-    uint256 _unlockId = xALPACA.unlock(4 ether);
+    uint256 _unlockId = xAlpacaV2.unlock(4 ether);
 
-    xALPACA.cancelUnlock(_unlockId);
-    (, , xALPACAv2.UnlockStatus _status) = xALPACA.userUnlockRequests(ALICE, _unlockId);
+    xAlpacaV2.cancelUnlock(_unlockId);
+    (, , xALPACAv2.UnlockStatus _status) = xAlpacaV2.userUnlockRequests(ALICE, _unlockId);
 
     assertEq(uint8(_status), 2);
-    assertEq(xALPACA.totalLocked(), 10 ether);
-    assertEq(xALPACA.userLockAmounts(ALICE), 10 ether);
+    assertEq(xAlpacaV2.totalLocked(), 10 ether);
+    assertEq(xAlpacaV2.userLockAmounts(ALICE), 10 ether);
 
     vm.stopPrank();
   }
