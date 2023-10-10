@@ -11,7 +11,7 @@
  * Alpaca Fin Corporation
  */
 
-pragma solidity 0.8.10;
+pragma solidity ^0.8.10;
 
 interface IxALPACAv2 {
   function lock(address _for, uint256 _amount) external;
