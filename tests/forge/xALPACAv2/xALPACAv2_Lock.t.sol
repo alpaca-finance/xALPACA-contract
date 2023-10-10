@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import { BaseTest } from "../base/BaseTest.sol";
+import { xALPACAV2_BaseTest } from "../base/xALPACAV2_BaseTest.sol";
 
 import { xALPACAv2 } from "@xalpacav2/xALPACAv2.sol";
 
-contract xALPACAv2_LockTest is BaseTest {
+contract xALPACAv2_LockTest is xALPACAV2_BaseTest {
   function setUp() public {
     alpaca.mint(ALICE, 100 ether);
     alpaca.mint(BOB, 100 ether);

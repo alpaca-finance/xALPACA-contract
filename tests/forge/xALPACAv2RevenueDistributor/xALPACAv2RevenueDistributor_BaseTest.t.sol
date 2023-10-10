@@ -3,18 +3,20 @@ pragma solidity 0.8.19;
 
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
-import { BaseTest, console } from "../base/BaseTest.sol";
+import { xALPACAV2_BaseTest, console } from "../base/xALPACAV2_BaseTest.sol";
 
 // interfaces
 import { xALPACAv2RevenueDistributor } from "../../../contracts/8.19/xALPACAv2RevenueDistributor/xALPACAv2RevenueDistributor.sol";
 import { xALPACAv2Rewarder } from "../../../contracts/8.19/xALPACAv2RevenueDistributor/xALPACAv2Rewarder.sol";
 
-contract xALPACAv2RevenueDistributor_BaseTest is BaseTest {
+contract xALPACAv2RevenueDistributor_BaseTest is xALPACAV2_BaseTest {
   address[] internal whitelistedCallers = new address[](5);
   address[] internal whitelistedFeeders = new address[](1);
 
   xALPACAv2Rewarder internal rewarder1;
   xALPACAv2Rewarder internal rewarder2;
+
+  uint256 maxAlpacaPerSecond = 1000 ether;
 
   function setUp() public virtual {
     whitelistedCallers[0] = address(this);

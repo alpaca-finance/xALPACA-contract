@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import { BaseTest } from "../base/BaseTest.sol";
+import { xALPACAV2_BaseTest } from "../base/xALPACAV2_BaseTest.sol";
 
 import "../utils/Components.sol";
 
 import { xALPACAv2 } from "@xalpacav2/xALPACAv2.sol";
 
-contract xALPACAv2_CancelUnlockTest is BaseTest {
+contract xALPACAv2_CancelUnlockTest is xALPACAV2_BaseTest {
   uint256 public constant DELAY_UNLOCK_TIME = 21 days;
 
   function setUp() public {
