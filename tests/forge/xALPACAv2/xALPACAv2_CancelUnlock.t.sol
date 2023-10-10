@@ -22,7 +22,7 @@ contract xALPACAv2_CancelUnlockTest is BaseTest {
 
     alpaca.approve(address(xALPACA), type(uint256).max);
 
-    xALPACA.lock(10 ether);
+    xALPACA.lock(ALICE, 10 ether);
 
     uint256 _unlockId = xALPACA.unlock(4 ether);
 
@@ -40,7 +40,7 @@ contract xALPACAv2_CancelUnlockTest is BaseTest {
     vm.startPrank(ALICE);
 
     alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(10 ether);
+    xALPACA.lock(ALICE, 10 ether);
 
     uint256 _unlockId = xALPACA.unlock(4 ether);
 
@@ -58,7 +58,7 @@ contract xALPACAv2_CancelUnlockTest is BaseTest {
     vm.startPrank(ALICE);
 
     alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(10 ether);
+    xALPACA.lock(ALICE, 10 ether);
 
     uint256 _unlockId = xALPACA.unlock(4 ether);
 

@@ -21,7 +21,7 @@ contract xALPACAv2_UnlockTest is BaseTest {
     vm.startPrank(ALICE);
 
     alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(10 ether);
+    xALPACA.lock(ALICE, 10 ether);
 
     vm.expectRevert(abi.encodeWithSelector(xALPACAv2.xALPACAv2_InvalidAmount.selector));
     xALPACA.unlock(11 ether);
@@ -36,7 +36,7 @@ contract xALPACAv2_UnlockTest is BaseTest {
     vm.startPrank(ALICE);
 
     alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(10 ether);
+    xALPACA.lock(ALICE, 10 ether);
 
     xALPACA.unlock(4 ether);
     assertEq(xALPACA.totalLocked(), 6 ether);
@@ -70,7 +70,7 @@ contract xALPACAv2_UnlockTest is BaseTest {
     vm.startPrank(ALICE);
 
     alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(10 ether);
+    xALPACA.lock(ALICE, 10 ether);
     vm.stopPrank();
 
     xALPACA.setBreaker(1);

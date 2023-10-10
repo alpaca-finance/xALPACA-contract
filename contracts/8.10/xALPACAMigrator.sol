@@ -22,7 +22,7 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
 import "./interfaces/IBEP20.sol";
-import "./interfaces/IxALPACAv2RevenueDistributor.sol";
+import "./interfaces/IxALPACAv2.sol";
 
 import "./SafeToken.sol";
 
@@ -49,8 +49,8 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
   event LogRedistribute(address indexed caller, address destination, uint256 amount);
   event LogSetWhitelistedCaller(address indexed caller, address indexed addr, bool ok);
   event LogSetWhitelistedRedistributors(address indexed caller, address indexed addr, bool ok);
-  event LogSetxALPACAv2RevenueDistributor(address indexed caller, address xALPACAv2RevenueDistributor);
-  event LogMigrateToxALPACAv2RevenueDistributor(address indexed user, uint256 amount);
+  event LogSetxALPACAv2(address indexed caller, address xALPACAv2);
+  event LogMigrateToxALPACAv2(address indexed user, uint256 amount);
 
   struct Point {
     int128 bias; // Voting weight
@@ -114,7 +114,7 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
   mapping(address => bool) public whitelistedRedistributors;
 
   // --- migrate address  ---
-  address xALPACAv2RevenueDistributor;
+  address xALPACAv2;
 
   modifier onlyRedistributors() {
     require(whitelistedRedistributors[msg.sender], "not redistributors");
@@ -651,19 +651,17 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
     }
   }
 
-  function setxALPACAv2RevenueDistributor(address _xALPACAv2RevenueDistributor) external onlyOwner {
+  function setxALPACAv2(address _xALPACAv2) external onlyOwner {
     // sanity call
-    IxALPACAv2RevenueDistributor(_xALPACAv2RevenueDistributor).stakingReserve();
+    IxALPACAv2(_xALPACAv2).totalLocked();
 
-    xALPACAv2RevenueDistributor = _xALPACAv2RevenueDistributor;
+    xALPACAv2 = _xALPACAv2;
 
-    emit LogSetxALPACAv2RevenueDistributor(msg.sender, _xALPACAv2RevenueDistributor);
+    emit LogSetxALPACAv2(msg.sender, _xALPACAv2);
   }
 
-  /// @notice Migrate users from current xALPACA to xALPACAv2RevenueDistributor.
+  /// @notice Migrate users from current xALPACA to xALPACAv2.
   function migrateToV2(address[] calldata _users) external onlyOwner {
-    require(xALPACAv2RevenueDistributor != address(0), "!xALPACAv2");
-
     address _user;
     uint256 _amount;
     for (uint256 _i; _i < _users.length; ) {
@@ -675,10 +673,10 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
         // unlocked from current gov
         _unlock(_lock, _amount);
 
-        // migrate to xALPACARevenueDistributor
-        IxALPACAv2RevenueDistributor(xALPACAv2RevenueDistributor).deposit(_user, _amount);
+        // migrate to xALPACAv2
+        IxALPACAv2(xALPACAv2).lock(_user, _amount);
 
-        emit LogMigrateToxALPACAv2RevenueDistributor(_user, _amount);
+        emit LogMigrateToxALPACAv2(_user, _amount);
       }
 
       unchecked {

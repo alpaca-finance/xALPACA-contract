@@ -131,18 +131,19 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   }
 
   /// @notice Lock token to receive voting power
+  /// @param _for The user to create lock
   /// @param _amount The amount of token to be locked
-  function lock(uint256 _amount) external {
+  function lock(address _for, uint256 _amount) external {
     // effect
-    userLockAmounts[msg.sender] += _amount;
+    userLockAmounts[_for] += _amount;
     totalLocked += _amount;
     // interaction
     token.safeTransferFrom(msg.sender, address(this), _amount);
 
     token.safeApprove(revenueDistributor, _amount);
-    IxALPACAv2RevenueDistributor(revenueDistributor).deposit(msg.sender, _amount);
+    IxALPACAv2RevenueDistributor(revenueDistributor).deposit(_for, _amount);
 
-    emit LogLock(msg.sender, _amount);
+    emit LogLock(_for, _amount);
   }
 
   /// @notice Initiate withdrawal process via delayed unlocking

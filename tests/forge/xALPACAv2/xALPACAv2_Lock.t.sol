@@ -20,14 +20,14 @@ contract xALPACAv2_LockTest is BaseTest {
     vm.startPrank(ALICE);
 
     alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(1 ether);
+    xALPACA.lock(ALICE, 1 ether);
 
     vm.stopPrank();
 
     vm.startPrank(BOB);
 
     alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(2 ether);
+    xALPACA.lock(BOB, 2 ether);
 
     vm.stopPrank();
 
