@@ -673,15 +673,17 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
 
   /// @notice Migrate users from current xALPACA to xALPACAv2.
   function migrateToV2(address[] calldata _users) external onlyOwner {
+    LockedBalance memory _lock;
     address _user;
     uint256 _amount;
-    for (uint256 _i; _i < _users.length; ) {
+    uint256 _length = _users.length;
+    for (uint256 _i; _i < _length; ) {
       _user = _users[_i];
-      LockedBalance memory _lock = locks[_user];
-      _amount = SafeCastUpgradeable.toUint256(_lock.amount);
+      _lock = locks[_user];
 
       // migrate only users that lock not expired
       if (block.timestamp < _lock.end) {
+        _amount = SafeCastUpgradeable.toUint256(_lock.amount);
         // unlocked from current gov
         _unlock(_lock, _amount);
 
