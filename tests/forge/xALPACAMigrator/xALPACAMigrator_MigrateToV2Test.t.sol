@@ -26,7 +26,10 @@ contract xALPACAMigrator_MigrateToV2Test is xALPACAMigrator_BaseTest {
     assertEq(xAlpacaV2.totalLocked(), 0);
   }
 
-  function testCorrectness_WhenLockNotExpiredAndMigrateToV2_ShouldWork() external {
+  function testCorrectness_WhenLockExpiredAndMigrateToV2_ShouldSkip() external {
+    // warp timestamp so that alice and bob locks expired
+    vm.warp(block.timestamp + 3 weeks);
+
     vm.startPrank(deployer);
     xalpacaMigrator.setxALPACAv2(address(xAlpacaV2));
 
@@ -37,15 +40,12 @@ contract xALPACAMigrator_MigrateToV2Test is xALPACAMigrator_BaseTest {
 
     vm.stopPrank();
 
-    assertEq(xAlpacaV2.userLockAmounts(ALICE), aliceLockAmount);
-    assertEq(xAlpacaV2.userLockAmounts(BOB), bobLockAmount);
-    assertEq(xAlpacaV2.totalLocked(), aliceLockAmount + bobLockAmount);
+    assertEq(xAlpacaV2.userLockAmounts(ALICE), 0);
+    assertEq(xAlpacaV2.userLockAmounts(BOB), 0);
+    assertEq(xAlpacaV2.totalLocked(), 0);
   }
 
-  function testCorrectness_WhenLockExpiredAndMigrateToV2_ShouldWork() external {
-    // warp timestamp so that alice and bob locks expired
-    vm.warp(block.timestamp + 3 weeks);
-
+  function testCorrectness_WhenLockNotExpiredAndMigrateToV2_ShouldWork() external {
     vm.startPrank(deployer);
     xalpacaMigrator.setxALPACAv2(address(xAlpacaV2));
 

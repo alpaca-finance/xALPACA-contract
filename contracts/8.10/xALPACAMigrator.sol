@@ -33,6 +33,7 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
   using SafeToken for address;
 
   // --- Events ---
+  event LogWithdraw(address indexed locker, uint256 value, uint256 timestamp);
   event LogSetBreaker(uint256 previousBreaker, uint256 breaker);
   event LogSupply(uint256 previousSupply, uint256 supply);
   event LogSetEarlyWithdrawConfig(
@@ -561,7 +562,17 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
 
   /// @notice Withdraw all ALPACA when lock has expired.
   function withdraw() external nonReentrant {
-    revert("!withdraw");
+    LockedBalance memory _lock = locks[msg.sender];
+
+    if (breaker == 0) require(block.timestamp >= _lock.end, "!lock expired");
+
+    uint256 _amount = SafeCastUpgradeable.toUint256(_lock.amount);
+
+    _unlock(_lock, _amount);
+
+    token.safeTransfer(msg.sender, _amount);
+
+    emit LogWithdraw(msg.sender, _amount, block.timestamp);
   }
 
   /// @notice Early withdraw ALPACA with penalty.
@@ -669,7 +680,8 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
       LockedBalance memory _lock = locks[_user];
       _amount = SafeCastUpgradeable.toUint256(_lock.amount);
 
-      if (_amount > 0) {
+      // migrate only users that lock not expired
+      if (block.timestamp < _lock.end) {
         // unlocked from current gov
         _unlock(_lock, _amount);
 
