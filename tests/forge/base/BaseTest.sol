@@ -24,29 +24,12 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
 
   VM internal constant vm = VM(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
-  MockERC20 internal alpaca;
-  MockERC20 internal rewardToken1;
-  MockERC20 internal rewardToken2;
-  MockERC20 internal mockToken1;
-
   ProxyAdminLike internal proxyAdmin;
-
-  xALPACAv2RevenueDistributor internal revenueDistributor;
-  xALPACAv2 internal xALPACA;
-
-  address internal treasury;
-  uint256 constant maxAlpacaPerSecond = 1000 ether;
 
   constructor() {
     // set block.timestamp be 100000
     vm.warp(100000);
-    // deploy
-    alpaca = deployMockErc20("ALPACA TOKEN", "ALPACA", 18);
 
-    // mint token
-    vm.deal(ALICE, 1000 ether);
-
-    // xALPACAv2RevenueDistributor
     proxyAdmin = _setupProxyAdmin();
 
     vm.label(DEPLOYER, "DEPLOYER");
@@ -54,20 +37,6 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
     vm.label(BOB, "BOB");
     vm.label(CAT, "CAT");
     vm.label(EVE, "EVE");
-
-    rewardToken1 = deployMockErc20("Reward Token 1", "RTOKEN1", 18);
-    rewardToken2 = deployMockErc20("Reward Token 2", "RTOKEN2", 6);
-    mockToken1 = deployMockErc20("Mock Token 1", "MTOKEN1", 18);
-
-    revenueDistributor = deployxALPACAv2RevenueDistributor(address(alpaca));
-
-    treasury = address(9999999);
-    xALPACA = deployxALPACAv2(address(alpaca), address(revenueDistributor), 0, treasury, 0);
-
-    address[] memory _whitelistCallers = new address[](1);
-    _whitelistCallers[0] = address(xALPACA);
-
-    revenueDistributor.setWhitelistedCallers(_whitelistCallers, true);
   }
 
   function deployMockErc20(

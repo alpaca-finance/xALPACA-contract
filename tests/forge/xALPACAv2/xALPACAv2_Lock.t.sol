@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import { BaseTest } from "../base/BaseTest.sol";
+import { xALPACAV2_BaseTest } from "../base/xALPACAV2_BaseTest.sol";
 
 import { xALPACAv2 } from "@xalpacav2/xALPACAv2.sol";
 
-contract xALPACAv2_LockTest is BaseTest {
-  xALPACAv2 public xalpaca;
-
+contract xALPACAv2_LockTest is xALPACAV2_BaseTest {
   function setUp() public {
     alpaca.mint(ALICE, 100 ether);
     alpaca.mint(BOB, 100 ether);
@@ -19,15 +17,15 @@ contract xALPACAv2_LockTest is BaseTest {
 
     vm.startPrank(ALICE);
 
-    alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(1 ether);
+    alpaca.approve(address(xAlpacaV2), type(uint256).max);
+    xAlpacaV2.lock(ALICE, 1 ether);
 
     vm.stopPrank();
 
     vm.startPrank(BOB);
 
-    alpaca.approve(address(xALPACA), type(uint256).max);
-    xALPACA.lock(2 ether);
+    alpaca.approve(address(xAlpacaV2), type(uint256).max);
+    xAlpacaV2.lock(BOB, 2 ether);
 
     vm.stopPrank();
 
@@ -38,8 +36,8 @@ contract xALPACAv2_LockTest is BaseTest {
     assertEq(_bobAlpacaLocked, 2 ether);
 
     // assert xALPACA's state
-    assertEq(xALPACA.totalLocked(), 3 ether);
-    assertEq(xALPACA.userLockAmounts(ALICE), 1 ether);
-    assertEq(xALPACA.userLockAmounts(BOB), 2 ether);
+    assertEq(xAlpacaV2.totalLocked(), 3 ether);
+    assertEq(xAlpacaV2.userLockAmounts(ALICE), 1 ether);
+    assertEq(xAlpacaV2.userLockAmounts(BOB), 2 ether);
   }
 }
