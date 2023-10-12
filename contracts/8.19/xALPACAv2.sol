@@ -264,6 +264,9 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     emit LogUnlock(msg.sender, _unlockRequestId);
   }
 
+  /// @notice Transfer xALAPCA to another address
+  /// @param _destination The destination address
+  /// @param _amount The amount to transfer
   function transfer(address _destination, uint256 _amount) external {
     // Check
     if (_destination == address(this) || _destination == address(0) || _destination == msg.sender) {
