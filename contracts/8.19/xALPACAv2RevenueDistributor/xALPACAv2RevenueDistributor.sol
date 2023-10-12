@@ -68,6 +68,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     _;
   }
 
+  /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
   }
@@ -354,11 +355,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
   /// @param _token The address of token to transfer
   /// @param _amount The amount to transfer
   /// @return _receivedAmount The actual amount received after transfer
-  function _unsafePullToken(
-    address _from,
-    address _token,
-    uint256 _amount
-  ) internal returns (uint256 _receivedAmount) {
+  function _unsafePullToken(address _from, address _token, uint256 _amount) internal returns (uint256 _receivedAmount) {
     uint256 _currentTokenBalance = IERC20Upgradeable(_token).balanceOf(address(this));
     IERC20Upgradeable(_token).safeTransferFrom(_from, address(this), _amount);
     _receivedAmount = IERC20Upgradeable(_token).balanceOf(address(this)) - _currentTokenBalance;

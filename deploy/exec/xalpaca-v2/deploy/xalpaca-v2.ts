@@ -19,9 +19,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const initializeInput = {
     token: config.Tokens.ALPACA,
-    revenueDistributor: "",
-    delayUnlockTime: 0, // 28 days
-    earlyWithdrawFeeBpsPerDay: 0, //0.5% per day
+    revenueDistributor: config.xALPACAv2RevenueDistributor!,
+    delayUnlockTime: 1814400, // 21 days
+    feeTreasury: "0x2bfdacF6CdBC3ECcb95E68ec448ECf3d0693F732",
+    earlyWithdrawFeeBpsPerDay: 50, //0.5% per day
   };
 
   const deployer = await getDeployer();
@@ -32,6 +33,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     initializeInput.token,
     initializeInput.revenueDistributor,
     initializeInput.delayUnlockTime,
+    initializeInput.feeTreasury,
     initializeInput.earlyWithdrawFeeBpsPerDay,
   ])) as XALPACAv2;
   await xALPACAv2.deployed();
