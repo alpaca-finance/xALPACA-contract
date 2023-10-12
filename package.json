@@ -1,6 +1,6 @@
 {
   "name": "@alpaca-finance/xalpaca-contract",
-  "version": "0.0.7",
+  "version": "1.0.0",
   "scripts": {
     "build": "yarn run build:cjs",
     "build:cjs": "tsc -p tsconfig.cjs.json",
