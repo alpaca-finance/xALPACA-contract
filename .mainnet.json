@@ -218,5 +218,7 @@
       "rewardToken": "0x4C882ec256823eE773B25b414d36F92ef58a7c0C"
     }
   ],
-  "GrassHouseGateway": "0x50309398E3AbCBD3357b0DD54A624C1251026ee5"
+  "GrassHouseGateway": "0x50309398E3AbCBD3357b0DD54A624C1251026ee5",
+  "xALPACAv2": "",
+  "xALPACAv2RevenueDistributor": "",
 }
