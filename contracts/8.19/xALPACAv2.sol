@@ -44,6 +44,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   event LogCancelUnlock(address indexed _user, uint256 _unlockRequestId);
   event LogWithdraw(address indexed _user, uint256 _amount, uint256 _withdrawalFee);
   event LogWithdrawReserve(address indexed _to, uint256 _amount);
+  event LogTransfer(address indexed _from, address indexed _to, uint256 _amount);
   event LogSetBreaker(uint256 _previousBreaker, uint256 _breaker);
   event LogSetDelayUnlockTime(uint256 _previousDelay, uint256 _newDelay);
   event LogSetFeeTreasury(address _previousFeeTreasury, address _newFeeTreasury);
@@ -261,6 +262,32 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     IxALPACAv2RevenueDistributor(revenueDistributor).deposit(msg.sender, request.amount);
 
     emit LogUnlock(msg.sender, _unlockRequestId);
+  }
+
+  /// @notice Transfer xALAPCA to another address
+  /// @param _destination The destination address
+  /// @param _amount The amount to transfer
+  function transfer(address _destination, uint256 _amount) external {
+    // Check
+    if (_destination == address(this) || _destination == address(0) || _destination == msg.sender) {
+      revert xALPACAv2_InvalidAddress();
+    }
+
+    uint256 _userLockedAmount = userLockAmounts[msg.sender];
+    if (_userLockedAmount < _amount || _amount == 0) {
+      revert xALPACAv2_InvalidAmount();
+    }
+
+    // Effect
+    userLockAmounts[msg.sender] -= _amount;
+    userLockAmounts[_destination] += _amount;
+
+    // Interaction
+    IxALPACAv2RevenueDistributor(revenueDistributor).withdraw(msg.sender, _amount);
+    token.safeApprove(revenueDistributor, _amount);
+    IxALPACAv2RevenueDistributor(revenueDistributor).deposit(_destination, _amount);
+
+    emit LogTransfer(msg.sender, _destination, _amount);
   }
 
   // -------- Privilege Functions -----//
