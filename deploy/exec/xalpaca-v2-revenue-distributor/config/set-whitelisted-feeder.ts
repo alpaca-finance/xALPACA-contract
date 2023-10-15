@@ -16,7 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   Check all variables below before execute the deployment script
   */
 
-  const WHITELISTED_CALLERS = [config.xALPACAv2!];
+  const WHITELISTED_FEEDERS = [""];
   const IS_OK_CALLER = true;
 
   const deployer = await getDeployer();
@@ -26,12 +26,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     deployer
   );
 
-  const setWhitelistedCallerTx = await xALPACAv2RevenueDistributor.setWhitelistedCallers(
-    WHITELISTED_CALLERS,
+  const setWhitelistedFeederTx = await xALPACAv2RevenueDistributor.setWhitelistedFeeders(
+    WHITELISTED_FEEDERS,
     IS_OK_CALLER
   );
 
-  console.log(`✅ Done at: ${setWhitelistedCallerTx.hash}`);
+  console.log(`✅ Done at: ${setWhitelistedFeederTx.hash}`);
 };
 export default func;
-func.tags = ["SetWhitelistedCallersxALPACAv2RevenueDistributor"];
+func.tags = ["SetWhitelistedFeedersxALPACAv2RevenueDistributor"];
