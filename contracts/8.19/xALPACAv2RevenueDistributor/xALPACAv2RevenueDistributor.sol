@@ -122,17 +122,17 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     uint256 accAlpacaPerShare = _poolInfo.accAlpacaPerShare;
     uint256 stakedBalance = stakingReserve;
     if (block.timestamp > _poolInfo.lastRewardTime && stakedBalance != 0) {
-      // if reward has ended, accumulated only before reward end
-      // otherwise, accumulated up to now
-      uint256 _timePast = block.timestamp > rewardEndTimestamp
-        ? rewardEndTimestamp - _poolInfo.lastRewardTime
-        : block.timestamp - _poolInfo.lastRewardTime;
-
       uint256 _alpacaReward;
-      {
-        // if the reward has ended, overwrite alpaca per sec to 0
-        uint256 _alpacaPerSecond = _poolInfo.lastRewardTime < rewardEndTimestamp ? alpacaPerSecond : 0;
-        _alpacaReward = _timePast * _alpacaPerSecond;
+      // if reward has enend and already do updatepool skip calculating _alpacaReward
+      if (rewardEndTimestamp > _poolInfo.lastRewardTime) {
+        // if reward has ended, accumulated only before reward end
+        // otherwise, accumulated up to now
+        uint256 _timePast = block.timestamp > rewardEndTimestamp
+          ? rewardEndTimestamp - _poolInfo.lastRewardTime
+          : block.timestamp - _poolInfo.lastRewardTime;
+
+        // calculate total alpacaReward since lastRewardTime
+        _alpacaReward = _timePast * alpacaPerSecond;
       }
 
       accAlpacaPerShare = accAlpacaPerShare + ((_alpacaReward * ACC_ALPACA_PRECISION) / stakedBalance);
@@ -148,19 +148,17 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     if (block.timestamp > _poolInfo.lastRewardTime) {
       uint256 stakedBalance = stakingReserve;
       if (stakedBalance > 0) {
-        // if reward has ended, accumulated only before reward end
-        // otherwise, accumulated up to now
-        uint256 _timePast = block.timestamp > rewardEndTimestamp
-          ? rewardEndTimestamp - _poolInfo.lastRewardTime
-          : block.timestamp - _poolInfo.lastRewardTime;
-
-        // calculate total alpacaReward since lastRewardTime for this _pid
         uint256 _alpacaReward;
-        {
-          // if the reward has ended, overwrite alpaca per sec to 0
-          uint256 _alpacaPerSecond = _poolInfo.lastRewardTime < rewardEndTimestamp ? alpacaPerSecond : 0;
+        // if reward has enend and already do updatepool skip calculating _alpacaReward
+        if (rewardEndTimestamp > _poolInfo.lastRewardTime) {
+          // if reward has ended, accumulated only before reward end
+          // otherwise, accumulated up to now
+          uint256 _timePast = block.timestamp > rewardEndTimestamp
+            ? rewardEndTimestamp - _poolInfo.lastRewardTime
+            : block.timestamp - _poolInfo.lastRewardTime;
 
-          _alpacaReward = _timePast * _alpacaPerSecond;
+          // calculate total alpacaReward since lastRewardTime
+          _alpacaReward = _timePast * alpacaPerSecond;
         }
 
         // increase accAlpacaPerShare with `_alpacaReward/stakedBalance` amount
