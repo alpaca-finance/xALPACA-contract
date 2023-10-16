@@ -215,7 +215,7 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
     uint256 _stakedBalance = IxALPACAv2RevenueDistributor(xALPACAv2RevenueDistributor).stakingReserve();
     if (block.timestamp > _poolInfo.lastRewardTime && _stakedBalance != 0) {
       uint256 _rewards;
-      // if reward has enend and already do updatepool skip calculating _alpacaReward
+      // if reward has enend and already do updatepool skip calculating _reward
       if (rewardEndTimestamp > _poolInfo.lastRewardTime) {
         // if reward has ended, accumulated only before reward end
         // otherwise, accumulated up to now
@@ -224,7 +224,7 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
           ? rewardEndTimestamp - _poolInfo.lastRewardTime
           : block.timestamp - _poolInfo.lastRewardTime;
 
-        // calculate total alpacaReward since lastRewardTime
+        // calculate total reward since lastRewardTime
         _rewards = _timePast * rewardPerSecond;
       }
 
@@ -242,7 +242,7 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
       uint256 _stakedBalance = IxALPACAv2RevenueDistributor(xALPACAv2RevenueDistributor).stakingReserve();
       if (_stakedBalance > 0) {
         uint256 _rewards;
-        // if reward has enend and already do updatepool skip calculating _alpacaReward
+        // if reward has enend and already do updatepool skip calculating _reward
         if (rewardEndTimestamp > _poolInfo.lastRewardTime) {
           // if reward has ended, accumulated only before reward end
           // otherwise, accumulated up to now
@@ -251,7 +251,7 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
             ? rewardEndTimestamp - _poolInfo.lastRewardTime
             : block.timestamp - _poolInfo.lastRewardTime;
 
-          // calculate total alpacaReward since lastRewardTime
+          // calculate total reward since lastRewardTime
           _rewards = _timePast * rewardPerSecond;
         }
 
