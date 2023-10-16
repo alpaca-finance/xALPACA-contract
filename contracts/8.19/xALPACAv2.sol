@@ -92,6 +92,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   // unlock request of each user
   mapping(address => UnlockRequest[]) public userUnlockRequests;
 
+  /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
   }

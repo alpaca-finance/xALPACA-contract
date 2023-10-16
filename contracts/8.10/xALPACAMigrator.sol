@@ -74,7 +74,7 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
   uint256 public constant WEEK = 7 days;
   // MAX_LOCK 53 weeks - 1 seconds
   uint256 public constant MAX_LOCK = (53 * WEEK) - 1;
-  uint256 public constant MULTIPLIER = 10**18;
+  uint256 public constant MULTIPLIER = 10 ** 18;
 
   // Token to be locked (ALPACA)
   address public token;
@@ -209,11 +209,7 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
   /// @param _address User's wallet address. Only global if 0x0
   /// @param _prevLocked User's previous locked balance and end lock time
   /// @param _newLocked User's new locked balance and end lock time
-  function _checkpoint(
-    address _address,
-    LockedBalance memory _prevLocked,
-    LockedBalance memory _newLocked
-  ) internal {
+  function _checkpoint(address _address, LockedBalance memory _prevLocked, LockedBalance memory _newLocked) internal {
     Point memory _userPrevPoint = Point({ slope: 0, bias: 0, timestamp: 0, blockNumber: 0 });
     Point memory _userNewPoint = Point({ slope: 0, bias: 0, timestamp: 0, blockNumber: 0 });
 
@@ -406,17 +402,12 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
 
   /// @notice Create a new lock.
   /// @dev This will crate a new lock and deposit ALPACA to xALPACA Vault
-  function createLock(
-    uint256 /*_amount/*, uint256 /*_unlockTime*/
-  ) external onlyEOAorWhitelisted nonReentrant {
+  function createLock(uint256 /*_amount/*, uint256 /*_unlockTime*/) external onlyEOAorWhitelisted nonReentrant {
     revert("!createLock");
   }
 
   /// @notice Deposit `_amount` tokens for `_for` and add to `locks[_for]`
-  function depositFor(
-    address, /*_for*/
-    uint256 /*_amount*/
-  ) external nonReentrant {
+  function depositFor(address /*_for*/, uint256 /*_amount*/) external nonReentrant {
     revert("!depositFor");
   }
 
@@ -462,16 +453,12 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
   }
 
   /// @notice Increase lock amount without increase "end"
-  function increaseLockAmount(
-    uint256 /*_amount*/
-  ) external onlyEOAorWhitelisted nonReentrant {
+  function increaseLockAmount(uint256 /*_amount*/) external onlyEOAorWhitelisted nonReentrant {
     revert("!increaseLockAmount");
   }
 
   /// @notice Increase unlock time without changing locked amount
-  function increaseUnlockTime(
-    uint256 /*_newUnlockTime*/
-  ) external onlyEOAorWhitelisted nonReentrant {
+  function increaseUnlockTime(uint256 /*_newUnlockTime*/) external onlyEOAorWhitelisted nonReentrant {
     revert("!increaseUnlockTime");
   }
 
@@ -568,7 +555,7 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
 
     uint256 _amount = SafeCastUpgradeable.toUint256(_lock.amount);
 
-    _unlock(_lock, _amount);
+    _unlock(_lock, msg.sender, _amount);
 
     token.safeTransfer(msg.sender, _amount);
 
@@ -576,9 +563,7 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
   }
 
   /// @notice Early withdraw ALPACA with penalty.
-  function earlyWithdraw(
-    uint256 /*_amount*/
-  ) external nonReentrant {
+  function earlyWithdraw(uint256 /*_amount*/) external nonReentrant {
     revert("!earlyWithdraw");
   }
 
@@ -592,7 +577,7 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
     emit LogRedistribute(msg.sender, redistributeAddr, _amount);
   }
 
-  function _unlock(LockedBalance memory _lock, uint256 _withdrawAmount) internal {
+  function _unlock(LockedBalance memory _lock, address _for, uint256 _withdrawAmount) internal {
     // Cast here for readability
     uint256 _lockedAmount = SafeCastUpgradeable.toUint256(_lock.amount);
     require(_withdrawAmount <= _lockedAmount, "!enough");
@@ -601,7 +586,7 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
     //_lock.end should remain the same if we do partially withdraw
     _lock.end = _lockedAmount == _withdrawAmount ? 0 : _lock.end;
     _lock.amount = SafeCastUpgradeable.toInt128(int256(_lockedAmount - _withdrawAmount));
-    locks[msg.sender] = _lock;
+    locks[_for] = _lock;
 
     uint256 _supplyBefore = supply;
     supply = _supplyBefore - _withdrawAmount;
@@ -609,7 +594,7 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
     // _prevLock can have either block.timstamp >= _lock.end or zero end
     // _lock has only 0 end
     // Both can have >= 0 amount
-    _checkpoint(msg.sender, _prevLock, _lock);
+    _checkpoint(_for, _prevLock, _lock);
     emit LogSupply(_supplyBefore, supply);
   }
 
@@ -685,7 +670,7 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
       if (block.timestamp < _lock.end) {
         _amount = SafeCastUpgradeable.toUint256(_lock.amount);
         // unlocked from current gov
-        _unlock(_lock, _amount);
+        _unlock(_lock, _user, _amount);
 
         // approve xALPACAv2
         token.safeApprove(xALPACAv2, _amount);

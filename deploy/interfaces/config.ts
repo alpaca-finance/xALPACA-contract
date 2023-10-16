@@ -10,6 +10,8 @@ export interface Config {
   ALPACAFeeder: string;
   GrassHouses: GrassHouse[];
   GrassHouseGateway: string;
+  xALPACAv2?: string;
+  xALPACAv2RevenueDistributor?: string;
 }
 
 export interface FairLaunch {
