@@ -14,6 +14,7 @@ import { xALPACAv2RevenueDistributor } from "contracts/8.19/xALPACAv2RevenueDist
 contract xALPACAv2RevenueDistributor_ComplexTest is xALPACAv2RevenueDistributor_BaseTest {
   function setUp() public override {
     super.setUp();
+    setupRewarder();
   }
 
   // 1. ALICE deposits after block.timestamp > rewardEndTimestamp
@@ -47,5 +48,7 @@ contract xALPACAv2RevenueDistributor_ComplexTest is xALPACAv2RevenueDistributor_
 
     skip(100);
     revenueDistributor.pendingAlpaca(ALICE);
+    rewarder1.pendingToken(ALICE);
+    rewarder2.pendingToken(ALICE);
   }
 }
