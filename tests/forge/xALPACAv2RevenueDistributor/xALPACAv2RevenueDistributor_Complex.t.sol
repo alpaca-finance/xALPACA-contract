@@ -14,6 +14,7 @@ import { xALPACAv2RevenueDistributor } from "contracts/8.19/xALPACAv2RevenueDist
 contract xALPACAv2RevenueDistributor_ComplexTest is xALPACAv2RevenueDistributor_BaseTest {
   function setUp() public override {
     super.setUp();
+    setupRewarder();
   }
 
   // 1. ALICE deposits after block.timestamp > rewardEndTimestamp
@@ -26,14 +27,25 @@ contract xALPACAv2RevenueDistributor_ComplexTest is xALPACAv2RevenueDistributor_
     revenueDistributor.deposit(ALICE, 10 ether);
 
     (uint256 accAlpacaPerShareBefore, ) = revenueDistributor.poolInfo();
+    (uint256 rewarder1RewardPerShareBefore, ) = rewarder1.poolInfo();
+    (uint256 rewarder2RewardPerShareBefore, ) = rewarder2.poolInfo();
 
     skip(100);
     alpaca.approve(address(revenueDistributor), 10 ether);
     revenueDistributor.deposit(ALICE, 10 ether);
 
     (uint256 accAlpacaPerShareAfter, uint64 lastRewardTimeAfter) = revenueDistributor.poolInfo();
+    (uint256 rewarder1RewardPerShareAfter, uint64 rewarder1lastRewardTimeAfter) = rewarder1.poolInfo();
+    (uint256 rewarder2RewardPerShareAfter, uint64 rewarder2lastRewardTimeAfter) = rewarder2.poolInfo();
+
     assertEq(accAlpacaPerShareAfter, accAlpacaPerShareBefore);
     assertEq(lastRewardTimeAfter, block.timestamp);
+
+    assertEq(rewarder1RewardPerShareAfter, rewarder1RewardPerShareBefore);
+    assertEq(rewarder1lastRewardTimeAfter, block.timestamp);
+
+    assertEq(rewarder2RewardPerShareAfter, rewarder2RewardPerShareBefore);
+    assertEq(rewarder2lastRewardTimeAfter, block.timestamp);
   }
 
   // 1. ALICE deposits after block.timestamp > rewardEndTimestamp
@@ -47,5 +59,7 @@ contract xALPACAv2RevenueDistributor_ComplexTest is xALPACAv2RevenueDistributor_
 
     skip(100);
     revenueDistributor.pendingAlpaca(ALICE);
+    rewarder1.pendingToken(ALICE);
+    rewarder2.pendingToken(ALICE);
   }
 }
