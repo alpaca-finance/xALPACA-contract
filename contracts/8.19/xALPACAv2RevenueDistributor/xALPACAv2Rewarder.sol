@@ -61,6 +61,7 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
     _;
   }
 
+  /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
   }
