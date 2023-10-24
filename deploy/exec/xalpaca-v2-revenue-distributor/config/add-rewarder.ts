@@ -16,7 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   Check all variables below before execute the deployment script
   */
 
-  const POOL_REWARDERS: string[] = [];
+  const REWARDER = "";
 
   const deployer = await getDeployer();
 
@@ -25,9 +25,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     deployer
   );
 
-  const setPoolRewarder = await xALPACAv2RevenueDistributor.setPoolRewarders(POOL_REWARDERS);
+  const setPoolRewarder = await xALPACAv2RevenueDistributor.addRewarders(REWARDER);
 
   console.log(`✅ Done at: ${setPoolRewarder.hash}`);
 };
 export default func;
-func.tags = ["SetPoolRewardersxALPACAv2RevenueDistributor"];
+func.tags = ["AddRewardersxALPACAv2RevenueDistributor"];
