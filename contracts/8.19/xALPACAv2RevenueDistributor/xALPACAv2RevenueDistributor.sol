@@ -197,6 +197,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
 
     uint256 _receivedAmount = _unsafePullToken(msg.sender, ALPACA, _amountToDeposit);
 
+    uint256 _oldStakingReserve = stakingReserve;
     // Effects
     // can do unchecked since staked token totalSuply < max(uint256)
     unchecked {
@@ -221,7 +222,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     for (uint256 _i; _i < _rewarderLength; ) {
       _rewarder = rewarders[_i];
       // rewarder callback to do accounting
-      IxALPACAv2Rewarder(_rewarder).onDeposit(_for, user.totalAmount);
+      IxALPACAv2Rewarder(_rewarder).onDeposit(_for, user.totalAmount, _oldStakingReserve);
       unchecked {
         ++_i;
       }
@@ -240,15 +241,16 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
       revert xALPACAv2RevenueDistributor_InsufficientAmount();
     }
 
+    uint256 _oldStakingReserve = stakingReserve;
     // Effects
-
-    // call _updatePool in order to update poolInfo.accAlpacaPerShare
-    PoolInfo memory _poolInfo = _updatePool();
-
     unchecked {
       user.totalAmount -= _amountToWithdraw;
       stakingReserve -= _amountToWithdraw;
     }
+
+    // call _updatePool in order to update poolInfo.accAlpacaPerShare
+    PoolInfo memory _poolInfo = _updatePool();
+    uint256 _userOldAmount = user.totalAmount;
 
     // update reward debt
     // example:
@@ -268,7 +270,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     for (uint256 _i; _i < _rewarderLength; ) {
       _rewarder = rewarders[_i];
       // rewarder callback to do accounting
-      IxALPACAv2Rewarder(_rewarder).onWithdraw(_from, user.totalAmount);
+      IxALPACAv2Rewarder(_rewarder).onWithdraw(_from, user.totalAmount, _userOldAmount, _oldStakingReserve);
       unchecked {
         ++_i;
       }

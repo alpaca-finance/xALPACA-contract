@@ -22,6 +22,7 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
   struct UserInfo {
     uint256 amount;
     int256 rewardDebt;
+    bool synced;
   }
 
   struct PoolInfo {
@@ -88,9 +89,14 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
   /// @notice Hook deposit action from xALPACAv2RevenueDistributor.
   /// @param _user The beneficary address of the deposit.
   /// @param _newAmount new staking amount from xALPACAv2RevenueDistributor.
-  function onDeposit(address _user, uint256 _newAmount) external override onlyxALPACAv2RevenueDistributor {
-    PoolInfo memory pool = _updatePool();
+  function onDeposit(
+    address _user,
+    uint256 _newAmount,
+    uint256 _oldTotalStakingReserve
+  ) external override onlyxALPACAv2RevenueDistributor {
+    PoolInfo memory pool = _updatePool(_oldTotalStakingReserve);
     UserInfo storage user = userInfo[_user];
+    user.synced = true;
 
     // calculate new staked amount
     // example: if user deposit another 500 shares
@@ -116,47 +122,34 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
 
   /// @param _user Withdraw from who?
   /// @param _newAmount new staking amount from xALPACAv2RevenueDistributor.
-  function onWithdraw(address _user, uint256 _newAmount) external override onlyxALPACAv2RevenueDistributor {
-    PoolInfo memory pool = _updatePool();
+  function onWithdraw(
+    address _user,
+    uint256 _newAmount,
+    uint256 _oldAmount,
+    uint256 _oldTotalStakingReserve
+  ) external override onlyxALPACAv2RevenueDistributor {
+    PoolInfo memory pool = _updatePool(_oldTotalStakingReserve);
     UserInfo storage user = userInfo[_user];
+    user.synced = true;
 
-    uint256 _currentAmount = user.amount;
-    if (_currentAmount >= _newAmount) {
-      // Handling normal case; When onDeposit call before onWithdraw
-      uint256 _withdrawAmount;
-      unchecked {
-        _withdrawAmount = _currentAmount - _newAmount;
-      }
+    uint256 _withdrawAmount = _oldAmount - _newAmount;
+    user.rewardDebt =
+      user.rewardDebt -
+      (((_withdrawAmount * pool.accRewardPerShare) / ACC_REWARD_PRECISION)).toInt256();
+    user.amount = _newAmount;
 
-      // update reward debt
-      // example:
-      //  - accRewardPerShare    = 300
-      //  - _amountToWithdraw    = 100
-      //  - oldRewardDebt        = 25,000
-      //  - pendingRewardReward  = 35,000
-      //  rewardDebt = oldRewardDebt - (_amountToWithdraw * accRewardPerShare) = 25,000 - (100 * 300) = -5000
-      //  This means withdrawn share is eligible for previous pending reward in the pool = 5000
-      user.rewardDebt =
-        user.rewardDebt -
-        (((_withdrawAmount * pool.accRewardPerShare) / ACC_REWARD_PRECISION)).toInt256();
-      user.amount = _newAmount;
-
-      emit LogOnWithdraw(_user, _withdrawAmount);
-    } else {
-      // Handling when rewarder1 getting set after the pool is live
-      // if user.amount < _newAmount, then it is first deposit.
-      user.amount = _newAmount;
-      user.rewardDebt = user.rewardDebt + ((_newAmount * pool.accRewardPerShare) / ACC_REWARD_PRECISION).toInt256();
-
-      emit LogOnDeposit(_user, _newAmount);
-    }
+    emit LogOnWithdraw(_user, _withdrawAmount);
   }
 
   /// @notice Hook Harvest action from xALPACAv2RevenueDistributor.
   /// @param _user The beneficary address.
   function onHarvest(address _user) external override onlyxALPACAv2RevenueDistributor {
-    PoolInfo memory pool = _updatePool();
+    PoolInfo memory pool = _updatePool(IxALPACAv2RevenueDistributor(xALPACAv2RevenueDistributor).stakingReserve());
     UserInfo storage user = userInfo[_user];
+    if (!user.synced) {
+      user.amount = IxALPACAv2RevenueDistributor(xALPACAv2RevenueDistributor).getUserTotalAmountOf(_user);
+      user.synced = true;
+    }
 
     // example:
     //  - totalAmount         = 100
@@ -166,6 +159,7 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
     //  _pendingReward         = accumulatedReward - rewardDebt = 25,000 - 0 = 25,000
     //   Meaning user eligible for 25,000 rewards in this harvest
     int256 _accumulatedRewards = ((user.amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION).toInt256();
+
     uint256 _pendingRewards = (_accumulatedRewards - user.rewardDebt).toUint256();
 
     user.rewardDebt = _accumulatedRewards;
@@ -186,7 +180,7 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
       revert xALPACAv2Rewarder_InvalidArguments();
     }
 
-    _updatePool();
+    _updatePool(IxALPACAv2RevenueDistributor(xALPACAv2RevenueDistributor).stakingReserve());
 
     // in case we only change the reward end timestamp
     // skip the token transfer
@@ -206,7 +200,6 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
   }
 
   /// @notice View function to see pending rewards for a given pool.
-
   /// @param _user Address of user.
   /// @return pending reward for a given user.
   function pendingToken(address _user) external view returns (uint256) {
@@ -231,17 +224,22 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
 
       _accRewardPerShare = _accRewardPerShare + ((_rewards * ACC_REWARD_PRECISION) / _stakedBalance);
     }
+
+    // add unsync stakedAmount from reveneDistributor
+    uint256 _totalUserAmount = _userInfo.amount;
+    if (!_userInfo.synced) {
+      _totalUserAmount += IxALPACAv2RevenueDistributor(xALPACAv2RevenueDistributor).getUserTotalAmountOf(_user);
+    }
     return
-      (((_userInfo.amount * _accRewardPerShare) / ACC_REWARD_PRECISION).toInt256() - _userInfo.rewardDebt).toUint256();
+      (((_totalUserAmount * _accRewardPerShare) / ACC_REWARD_PRECISION).toInt256() - _userInfo.rewardDebt).toUint256();
   }
 
   /// @dev Perform the actual updatePool
-  function _updatePool() internal returns (PoolInfo memory) {
+  function _updatePool(uint256 _oldTotalStakingReserve) internal returns (PoolInfo memory) {
     PoolInfo memory _poolInfo = poolInfo;
 
     if (block.timestamp > _poolInfo.lastRewardTime) {
-      uint256 _stakedBalance = IxALPACAv2RevenueDistributor(xALPACAv2RevenueDistributor).stakingReserve();
-      if (_stakedBalance > 0) {
+      if (_oldTotalStakingReserve > 0) {
         uint256 _rewards;
         // if reward has enend and already do updatepool skip calculating _reward
         if (rewardEndTimestamp > _poolInfo.lastRewardTime) {
@@ -265,11 +263,11 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
         //  _poolInfo.accRewardPerShare = 0 + 2000/10000 = 0.2
         _poolInfo.accRewardPerShare =
           _poolInfo.accRewardPerShare +
-          ((_rewards * ACC_REWARD_PRECISION) / _stakedBalance).toUint128();
+          ((_rewards * ACC_REWARD_PRECISION) / _oldTotalStakingReserve).toUint128();
       }
       _poolInfo.lastRewardTime = block.timestamp.toUint64();
       poolInfo = _poolInfo;
-      emit LogUpdatePool(_poolInfo.lastRewardTime, _stakedBalance, _poolInfo.accRewardPerShare);
+      emit LogUpdatePool(_poolInfo.lastRewardTime, _oldTotalStakingReserve, _poolInfo.accRewardPerShare);
     }
     return _poolInfo;
   }
@@ -277,7 +275,7 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
   /// @notice Update reward variables of the pool.
   /// @return pool Returns the pool that was updated.
   function updatePool() external returns (PoolInfo memory) {
-    return _updatePool();
+    return _updatePool(IxALPACAv2RevenueDistributor(xALPACAv2RevenueDistributor).stakingReserve());
   }
 
   /// @notice Change the name of the rewarder.

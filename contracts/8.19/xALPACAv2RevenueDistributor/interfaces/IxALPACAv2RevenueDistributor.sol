@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "./IxALPACAv2Rewarder.sol";
-
 interface IxALPACAv2RevenueDistributor {
   error xALPACAv2RevenueDistributor_DuplicatePool();
   error xALPACAv2RevenueDistributor_InvalidArguments();
@@ -25,4 +23,6 @@ interface IxALPACAv2RevenueDistributor {
   function setPoolRewarders(address[] calldata _newRewarders) external;
 
   function feeders(address _feeder) external view returns (bool _allow);
+
+  function getUserTotalAmountOf(address _user) external view returns (uint256);
 }

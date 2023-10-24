@@ -137,4 +137,53 @@ contract xALPACAv2RevenueDistributor_HarvestWithRewarderTest is xALPACAv2Revenue
     assertEq(rewardToken1.balanceOf(BOB) - _rewardToken1BobBefore, 2750 ether);
     vm.stopPrank();
   }
+
+  function testCorrectness_DepositBeforeSettingRewarder_ShouldBeEligibleForReward() public {
+    // alice deposit before setting rewarder
+    vm.startPrank(ALICE);
+    alpaca.approve(address(revenueDistributor), 100 ether);
+    revenueDistributor.deposit(ALICE, 100 ether);
+    vm.stopPrank();
+
+    skip(50);
+
+    address[] memory rewarders = new address[](1);
+    rewarders[0] = address(rewarder3);
+
+    revenueDistributor.setPoolRewarders(rewarders);
+
+    skip(50);
+
+    // bob deposit after setting rewarder
+    vm.startPrank(BOB);
+    alpaca.approve(address(revenueDistributor), 100 ether);
+    revenueDistributor.deposit(BOB, 100 ether);
+    vm.stopPrank();
+
+    uint256 rewardAmount = 100 ether;
+    rewardToken3.mint(address(this), rewardAmount);
+    rewardToken3.approve(address(rewarder3), rewardAmount);
+    rewarder3.feed(rewardAmount, block.timestamp + 100);
+
+    skip(100);
+
+    uint256 _alicePendingReward = rewarder3.pendingToken(ALICE);
+    uint256 _bobPendingReward = rewarder3.pendingToken(BOB);
+
+    assertEq(_alicePendingReward, 50 ether);
+    assertEq(_bobPendingReward, 50 ether);
+
+    vm.startPrank(ALICE);
+    revenueDistributor.harvest();
+    vm.stopPrank();
+
+    vm.startPrank(BOB);
+    revenueDistributor.harvest();
+    vm.stopPrank();
+
+    uint256 _aliceBalanceAfter = rewardToken3.balanceOf(ALICE);
+    uint256 _bobBalanceAfter = rewardToken3.balanceOf(BOB);
+    assertEq(_aliceBalanceAfter, 50 ether);
+    assertEq(_bobBalanceAfter, 50 ether);
+  }
 }

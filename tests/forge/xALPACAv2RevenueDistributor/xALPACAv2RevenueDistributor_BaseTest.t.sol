@@ -15,6 +15,7 @@ contract xALPACAv2RevenueDistributor_BaseTest is xALPACAV2_BaseTest {
 
   xALPACAv2Rewarder internal rewarder1;
   xALPACAv2Rewarder internal rewarder2;
+  xALPACAv2Rewarder internal rewarder3;
 
   uint256 maxAlpacaPerSecond = 1000 ether;
 
@@ -33,6 +34,7 @@ contract xALPACAv2RevenueDistributor_BaseTest is xALPACAV2_BaseTest {
 
     rewarder1 = deployRewarder("REWARDER01", address(revenueDistributor), address(rewardToken1));
     rewarder2 = deployRewarder("REWARDER02", address(revenueDistributor), address(rewardToken2));
+    rewarder3 = deployRewarder("REWARDER03", address(revenueDistributor), address(rewardToken3));
 
     rewardToken1.mint(address(this), 10000000 ether);
     rewardToken2.mint(address(this), 15000000 ether);
@@ -60,7 +62,7 @@ contract xALPACAv2RevenueDistributor_BaseTest is xALPACAV2_BaseTest {
     uint256 _expectedAmount,
     int256 _expectedRewardDebt
   ) internal {
-    (uint256 _totalAmount, int256 _rewardDebt) = _rewarder.userInfo(_user);
+    (uint256 _totalAmount, int256 _rewardDebt, ) = _rewarder.userInfo(_user);
     assertEq(_totalAmount, _expectedAmount);
     assertEq(_rewardDebt, _expectedRewardDebt);
   }
