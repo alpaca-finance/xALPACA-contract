@@ -50,10 +50,8 @@ contract xALPACAv2RevenueDistributor_BaseTest is xALPACAV2_BaseTest {
   }
 
   function setupRewarder() internal {
-    address[] memory rewarders = new address[](2);
-    rewarders[0] = address(rewarder1);
-    rewarders[1] = address(rewarder2);
-    revenueDistributor.setPoolRewarders(rewarders);
+    revenueDistributor.addRewarders(address(rewarder1));
+    revenueDistributor.addRewarders(address(rewarder2));
   }
 
   function assertRewarderUserInfo(

@@ -20,7 +20,7 @@ interface IxALPACAv2RevenueDistributor {
 
   function harvest() external;
 
-  function setPoolRewarders(address[] calldata _newRewarders) external;
+  function addRewarders(address _rewarder) external;
 
   function feeders(address _feeder) external view returns (bool _allow);
 

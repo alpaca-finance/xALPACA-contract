@@ -147,10 +147,7 @@ contract xALPACAv2RevenueDistributor_HarvestWithRewarderTest is xALPACAv2Revenue
 
     skip(50);
 
-    address[] memory rewarders = new address[](1);
-    rewarders[0] = address(rewarder3);
-
-    revenueDistributor.setPoolRewarders(rewarders);
+    revenueDistributor.addRewarders(address(rewarder3));
 
     skip(50);
 
@@ -185,5 +182,176 @@ contract xALPACAv2RevenueDistributor_HarvestWithRewarderTest is xALPACAv2Revenue
     uint256 _bobBalanceAfter = rewardToken3.balanceOf(BOB);
     assertEq(_aliceBalanceAfter, 50 ether);
     assertEq(_bobBalanceAfter, 50 ether);
+    assertEq(rewarder3.pendingToken(ALICE), 0);
+    assertEq(rewarder3.pendingToken(BOB), 0);
+  }
+
+  function testCorrectness_DepositBeforeSettingRewarder_ThenPartialWithdraw_ShouldBeEligibleForCorrectReward() public {
+    // alice deposit before setting rewarder
+    vm.startPrank(ALICE);
+    alpaca.approve(address(revenueDistributor), 100 ether);
+    revenueDistributor.deposit(ALICE, 100 ether);
+    vm.stopPrank();
+
+    skip(50);
+
+    revenueDistributor.addRewarders(address(rewarder3));
+
+    skip(50);
+
+    // bob deposit after setting rewarder
+    vm.startPrank(BOB);
+    alpaca.approve(address(revenueDistributor), 100 ether);
+    revenueDistributor.deposit(BOB, 100 ether);
+    vm.stopPrank();
+
+    uint256 rewardAmount = 100 ether;
+    rewardToken3.mint(address(this), rewardAmount);
+    rewardToken3.approve(address(rewarder3), rewardAmount);
+    // feed reward for 100 seconds
+    rewarder3.feed(rewardAmount, block.timestamp + 100);
+
+    // 50 seconds pass
+    skip(50);
+    vm.prank(ALICE);
+    revenueDistributor.withdraw(ALICE, 50 ether);
+
+    // reward = 100, per 100 sec, 1 rewarder per sec
+    // pending reward = rewardPerSec * timepass * stakedAmount / totalAmount
+    // ALICE pending reward = (1*50)*100/200 = 25
+    // BOB pending reward = (1*50)*100/200 25
+    assertEq(rewarder3.pendingToken(ALICE), 25 ether);
+    assertEq(rewarder3.pendingToken(BOB), 25 ether);
+
+    // another 50 seconds pass
+    skip(50);
+    // ALICE pending reward = 25 + (1*50*50)/150 = 41.666666666650000000
+    // BOB pending reward = 25 + (1*50*100)/150 = 58.333333333300000000
+    assertEq(rewarder3.pendingToken(ALICE), 41.66666666665 ether);
+    assertEq(rewarder3.pendingToken(BOB), 58.3333333333 ether);
+
+    // perform actual harvest
+    vm.startPrank(ALICE);
+    revenueDistributor.harvest();
+    vm.stopPrank();
+
+    vm.startPrank(BOB);
+    revenueDistributor.harvest();
+    vm.stopPrank();
+
+    assertEq(rewardToken3.balanceOf(ALICE), 41.66666666665 ether);
+    assertEq(rewardToken3.balanceOf(BOB), 58.3333333333 ether);
+    assertEq(rewarder3.pendingToken(ALICE), 0);
+    assertEq(rewarder3.pendingToken(BOB), 0);
+  }
+
+  function testCorrectness_MultipleFeed_ThenHarvestLater_ShouldBeEligibleForCorrectReward() public {
+    // alice deposit before setting rewarder
+    vm.startPrank(ALICE);
+    alpaca.approve(address(revenueDistributor), 100 ether);
+    revenueDistributor.deposit(ALICE, 100 ether);
+    vm.stopPrank();
+
+    revenueDistributor.addRewarders(address(rewarder3));
+
+    skip(50);
+
+    // bob deposit after setting rewarder
+    vm.startPrank(BOB);
+    alpaca.approve(address(revenueDistributor), 100 ether);
+    revenueDistributor.deposit(BOB, 100 ether);
+    vm.stopPrank();
+
+    uint256 rewardAmount = 100 ether;
+    rewardToken3.mint(address(this), rewardAmount);
+    rewardToken3.approve(address(rewarder3), rewardAmount);
+    // feed reward for 100 seconds
+    rewarder3.feed(rewardAmount, block.timestamp + 100);
+
+    // 50 seconds pass, and bob withdraw
+    skip(50);
+    vm.prank(BOB);
+    revenueDistributor.withdraw(BOB, 50 ether);
+
+    // reward = 100, per 100 sec, 1 rewarder per sec
+    // pending reward = rewardPerSec * timepass * stakedAmount / totalAmount
+    // ALICE pending reward = (1*50)*100/200 = 25
+    // BOB pending reward = (1*50)*100/200 25
+    assertEq(rewarder3.pendingToken(ALICE), 25 ether);
+    assertEq(rewarder3.pendingToken(BOB), 25 ether);
+
+    // feed with 50 more reward and extend end timestamp for 50 seconds
+    rewardToken3.mint(address(this), 50 ether);
+    rewardToken3.approve(address(rewarder3), 50 ether);
+    // feed reward for 50 seconds
+    // rewardPersec is (newReward + undistributedReward)/(endtime - currentTimeStamp) = (50 + 50)/100 = 1 reward per sec
+    rewarder3.feed(50 ether, block.timestamp + 100);
+    assertEq(rewarder3.rewardPerSecond(), 1 ether);
+
+    // another 100 seconds pass
+    skip(100);
+    // ALICE pending reward = 25 + (1*100*100)/150 = 91.6666666666
+    // BOB pending reward = 25 + (1*100*50)/150 = 58.333333333300000000
+    assertEq(rewarder3.pendingToken(ALICE), 91.6666666666 ether);
+    assertEq(rewarder3.pendingToken(BOB), 58.3333333333 ether);
+
+    skip(10);
+    // BOB deposit another 10, now bob totaStaked = 60
+    vm.startPrank(BOB);
+    alpaca.approve(address(revenueDistributor), 10 ether);
+    revenueDistributor.deposit(BOB, 10 ether);
+    vm.stopPrank();
+    (uint256 _bobStakedAmount, , ) = rewarder3.userInfo(BOB);
+    assertEq(_bobStakedAmount, 60 ether);
+
+    // Feed another 200 token for 50 seconds
+    rewardToken3.mint(address(this), 200 ether);
+    rewardToken3.approve(address(rewarder3), 200 ether);
+    // feed reward for 50 seconds
+    // rewardPersec is (newReward + undistributedReward)/(endtime - currentTimeStamp) = (0 + 200)/4 = 4 reward per sec
+    rewarder3.feed(200 ether, block.timestamp + 50);
+    assertEq(rewarder3.rewardPerSecond(), 4 ether);
+
+    // another 25 seconds pass
+    skip(25);
+    // ALICE pending reward = 91.6666666666 + (4*25*100)/160 = 154.1666666666
+    // BOB pending reward = 58.3333333333 + (4*25*60)/160 = 95.8333333333
+    assertEq(rewarder3.pendingToken(ALICE), 154.1666666666 ether);
+    assertEq(rewarder3.pendingToken(BOB), 95.8333333333 ether);
+
+    // perform actual harvest
+    vm.startPrank(ALICE);
+    revenueDistributor.harvest();
+    vm.stopPrank();
+
+    vm.startPrank(BOB);
+    revenueDistributor.harvest();
+    vm.stopPrank();
+
+    assertEq(rewardToken3.balanceOf(ALICE), 154.1666666666 ether);
+    assertEq(rewardToken3.balanceOf(BOB), 95.8333333333 ether);
+    assertEq(rewarder3.pendingToken(ALICE), 0);
+    assertEq(rewarder3.pendingToken(BOB), 0);
+
+    // another 50 seconds pass with remaining rewardendTime = 25 seconds
+    skip(50);
+    // ALICE pending reward = 154.1666666666 + (4*25*100)/160 = 62.5
+    // BOB pending reward = 95.8333333333 + (4*25*60)/160 = 37.5
+    assertEq(rewarder3.pendingToken(ALICE), 62.5 ether);
+    assertEq(rewarder3.pendingToken(BOB), 37.5 ether);
+
+    // perform actual harvest
+    vm.startPrank(ALICE);
+    revenueDistributor.harvest();
+    vm.stopPrank();
+
+    vm.startPrank(BOB);
+    revenueDistributor.harvest();
+    vm.stopPrank();
+
+    assertEq(rewardToken3.balanceOf(ALICE), 216.6666666666 ether);
+    assertEq(rewardToken3.balanceOf(BOB), 133.3333333333 ether);
+    assertEq(rewarder3.pendingToken(ALICE), 0);
+    assertEq(rewarder3.pendingToken(BOB), 0);
   }
 }
