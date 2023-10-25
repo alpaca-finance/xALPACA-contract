@@ -23,6 +23,7 @@ contract xALPACAv2RevenueDistributor_BaseTest is xALPACAV2_BaseTest {
     whitelistedCallers[0] = address(this);
     whitelistedCallers[1] = ALICE;
     whitelistedCallers[2] = BOB;
+    whitelistedCallers[3] = CAT;
     revenueDistributor.setWhitelistedCallers(whitelistedCallers, true);
 
     whitelistedFeeders[0] = address(this);

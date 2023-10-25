@@ -35,7 +35,7 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
 
   uint256 public rewardPerSecond;
   uint256 public rewardEndTimestamp;
-  uint256 private constant ACC_REWARD_PRECISION = 1e12;
+  uint256 private constant ACC_REWARD_PRECISION = 1e18;
 
   address public xALPACAv2RevenueDistributor;
   string public name;
