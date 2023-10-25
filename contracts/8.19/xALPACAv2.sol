@@ -146,6 +146,11 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
       revert xALPACAv2_TooMuchFee();
     }
 
+    // bps cannot more than 10000
+    if (_redistributionBps > 10000) {
+      revert xALPACAv2_InvalidParams();
+    }
+
     feeTreasury = _feeTreasury;
     earlyWithdrawFeeBpsPerDay = _earlyWithdrawFeeBpsPerDay;
     delayUnlockTime = _delayUnlockTime;
