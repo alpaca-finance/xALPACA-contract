@@ -37,6 +37,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   error xALPACAv2_InvalidAddress();
   error xALPACAv2_TooMuchDelay();
   error xALPACAv2_TooMuchFee();
+  error xALPACAv2_Unauthorized();
 
   //--------- Events ------------//
   event LogLock(address indexed _user, uint256 _amount);
@@ -49,6 +50,8 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   event LogSetDelayUnlockTime(uint256 _previousDelay, uint256 _newDelay);
   event LogSetFeeTreasury(address _previousFeeTreasury, address _newFeeTreasury);
   event LogSetEarlyWithdrawFeeBpsPerDay(uint256 _previousFee, uint256 _newFee);
+  event LogRedistribute(address indexed _from, address indexed _to, uint256 _amount);
+  event LogSetWhitelistedRedistributors(address indexed caller, address indexed addr, bool ok);
 
   //--------- Enum --------------//
   enum UnlockStatus {
@@ -86,11 +89,24 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   // penalty per day
   uint256 public earlyWithdrawFeeBpsPerDay;
 
+  // Accumulated token to be redistributed from earlywithdraw
+  uint256 public accumRedistribute;
+
   // lock amount of each user
   mapping(address => uint256) public userLockAmounts;
 
   // unlock request of each user
   mapping(address => UnlockRequest[]) public userUnlockRequests;
+
+  // whitelisted address for calling redistribute
+  mapping(address => bool) public whitelistedRedistributors;
+
+  modifier onlyRedistributors() {
+    if (!whitelistedRedistributors[msg.sender]) {
+      revert xALPACAv2_Unauthorized();
+    }
+    _;
+  }
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -135,7 +151,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   /// @notice Lock token to receive voting power
   /// @param _for The user to create lock
   /// @param _amount The amount of token to be locked
-  function lock(address _for, uint256 _amount) external {
+  function lock(address _for, uint256 _amount) external nonReentrant {
     // effect
     userLockAmounts[_for] += _amount;
     totalLocked += _amount;
@@ -150,7 +166,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
   /// @notice Initiate withdrawal process via delayed unlocking
   /// @param _amount The amount to unlock
-  function unlock(uint256 _amount) external returns (uint256 _unlockRequestId) {
+  function unlock(uint256 _amount) external nonReentrant returns (uint256 _unlockRequestId) {
     // check
     uint256 _userLockedAmount = userLockAmounts[msg.sender];
     if (_userLockedAmount < _amount || _amount == 0) {
@@ -187,7 +203,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
   /// @notice Claim the unlocked ALPACA
   /// @param _unlockRequestId The id of request to withdraw from
-  function withdraw(uint256 _unlockRequestId) external {
+  function withdraw(uint256 _unlockRequestId) external nonReentrant {
     UnlockRequest storage request = userUnlockRequests[msg.sender][_unlockRequestId];
 
     // check
@@ -212,7 +228,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
   /// @notice Premature withdrawal before unlock completed
   /// @param _unlockRequestId The id of request to withdraw from
-  function earlyWithdraw(uint256 _unlockRequestId) external {
+  function earlyWithdraw(uint256 _unlockRequestId) external nonReentrant {
     UnlockRequest storage request = userUnlockRequests[msg.sender][_unlockRequestId];
 
     // check
@@ -233,18 +249,35 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     // if early withdraw fee is greater than amount, should revert here
     uint256 _amountToUser = request.amount - _earlyWithdrawalFee;
 
+    accumRedistribute += _amountToUser;
     request.status = UnlockStatus.CLAIMED;
 
     // interaction
-    token.safeTransfer(msg.sender, _amountToUser);
     token.safeTransfer(feeTreasury, _earlyWithdrawalFee);
 
     emit LogWithdraw(msg.sender, _amountToUser, _earlyWithdrawalFee);
   }
 
+  /// @notice Redistribute accumulated token from earlywithdraw back to revenueDistributor
+  function redistribute() external onlyRedistributors nonReentrant {
+    uint256 _amount = accumRedistribute;
+
+    accumRedistribute = 0;
+
+    token.safeApprove(revenueDistributor, _amount);
+
+    // redistribute to revenueDistributor without chaging reward end timestamp
+    IxALPACAv2RevenueDistributor(revenueDistributor).feed(
+      _amount,
+      IxALPACAv2RevenueDistributor(revenueDistributor).rewardEndTimestamp()
+    );
+
+    emit LogRedistribute(msg.sender, revenueDistributor, _amount);
+  }
+
   /// @notice Reverse the withdrawal unlocking process
   /// @param _unlockRequestId The id of request to cancel
-  function cancelUnlock(uint256 _unlockRequestId) external {
+  function cancelUnlock(uint256 _unlockRequestId) external nonReentrant {
     UnlockRequest storage request = userUnlockRequests[msg.sender][_unlockRequestId];
 
     // check
@@ -268,7 +301,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   /// @notice Transfer xALAPCA to another address
   /// @param _destination The destination address
   /// @param _amount The amount to transfer
-  function transfer(address _destination, uint256 _amount) external {
+  function transfer(address _destination, uint256 _amount) external nonReentrant {
     // Check
     if (_destination == address(this) || _destination == address(0) || _destination == msg.sender) {
       revert xALPACAv2_InvalidAddress();
@@ -341,6 +374,17 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     // waive early withdraw fee
     emit LogSetEarlyWithdrawFeeBpsPerDay(earlyWithdrawFeeBpsPerDay, 0);
     earlyWithdrawFeeBpsPerDay = 0;
+  }
+
+  function setWhitelistedRedistributors(address[] calldata _callers, bool _ok) external onlyOwner {
+    uint256 _length = _callers.length;
+    for (uint256 _idx = 0; _idx < _length; ) {
+      whitelistedRedistributors[_callers[_idx]] = _ok;
+      emit LogSetWhitelistedRedistributors(_msgSender(), _callers[_idx], _ok);
+      unchecked {
+        _idx++;
+      }
+    }
   }
 
   // -------- View Functions --------//

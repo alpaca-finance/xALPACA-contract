@@ -25,4 +25,6 @@ interface IxALPACAv2RevenueDistributor {
   function setPoolRewarders(address[] calldata _newRewarders) external;
 
   function feeders(address _feeder) external view returns (bool _allow);
+
+  function rewardEndTimestamp() external view returns (uint256);
 }
