@@ -48,7 +48,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "upgrade(address,address)",
         ["address", "address"],
         [grasshouse.address, preparedNewGrassHouse],
-        EXACT_ETA
+        EXACT_ETA,
+        {}
       )
     );
     console.log("> ✅ Done");

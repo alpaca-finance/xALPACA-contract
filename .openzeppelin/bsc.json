@@ -2984,6 +2984,221 @@
           }
         }
       }
+    },
+    "d9fc45bfeabce363a4d66b782c90853ab49566b903cb6c5b93942ada09064bad": {
+      "address": "0x4eEBbEd6F1507e89CFAb5Ac29731A879afdB4df7",
+      "layout": {
+        "solcVersion": "0.8.10",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:88"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "startWeekCursor",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_uint256",
+            "contract": "GrassHouse",
+            "src": "contracts/8.10/GrassHouse.sol:49"
+          },
+          {
+            "label": "weekCursor",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_uint256",
+            "contract": "GrassHouse",
+            "src": "contracts/8.10/GrassHouse.sol:49"
+          },
+          {
+            "label": "weekCursorOf",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "GrassHouse",
+            "src": "contracts/8.10/GrassHouse.sol:50"
+          },
+          {
+            "label": "userEpochOf",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "GrassHouse",
+            "src": "contracts/8.10/GrassHouse.sol:52"
+          },
+          {
+            "label": "lastTokenTimestamp",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_uint256",
+            "contract": "GrassHouse",
+            "src": "contracts/8.10/GrassHouse.sol:53"
+          },
+          {
+            "label": "tokensPerWeek",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "contract": "GrassHouse",
+            "src": "contracts/8.10/GrassHouse.sol:55"
+          },
+          {
+            "label": "xALPACA",
+            "offset": 0,
+            "slot": "157",
+            "type": "t_address",
+            "contract": "GrassHouse",
+            "src": "contracts/8.10/GrassHouse.sol:57"
+          },
+          {
+            "label": "rewardToken",
+            "offset": 0,
+            "slot": "158",
+            "type": "t_address",
+            "contract": "GrassHouse",
+            "src": "contracts/8.10/GrassHouse.sol:59"
+          },
+          {
+            "label": "lastTokenBalance",
+            "offset": 0,
+            "slot": "159",
+            "type": "t_uint256",
+            "contract": "GrassHouse",
+            "src": "contracts/8.10/GrassHouse.sol:59"
+          },
+          {
+            "label": "totalSupplyAt",
+            "offset": 0,
+            "slot": "160",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "contract": "GrassHouse",
+            "src": "contracts/8.10/GrassHouse.sol:62"
+          },
+          {
+            "label": "canCheckpointToken",
+            "offset": 0,
+            "slot": "161",
+            "type": "t_bool",
+            "contract": "GrassHouse",
+            "src": "contracts/8.10/GrassHouse.sol:64"
+          },
+          {
+            "label": "isKilled",
+            "offset": 1,
+            "slot": "161",
+            "type": "t_bool",
+            "contract": "GrassHouse",
+            "src": "contracts/8.10/GrassHouse.sol:68"
+          },
+          {
+            "label": "emergencyReturn",
+            "offset": 2,
+            "slot": "161",
+            "type": "t_address",
+            "contract": "GrassHouse",
+            "src": "contracts/8.10/GrassHouse.sol:68"
+          },
+          {
+            "label": "whitelistedCheckpointCallers",
+            "offset": 0,
+            "slot": "162",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "GrassHouse",
+            "src": "contracts/8.10/GrassHouse.sol:71"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
     }
   }
 }
