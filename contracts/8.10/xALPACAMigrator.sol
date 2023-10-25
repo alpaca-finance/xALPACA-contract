@@ -568,13 +568,7 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
   }
 
   function redistribute() external onlyRedistributors nonReentrant {
-    uint256 _amount = accumRedistribute;
-
-    accumRedistribute = 0;
-
-    token.safeTransfer(redistributeAddr, _amount);
-
-    emit LogRedistribute(msg.sender, redistributeAddr, _amount);
+    revert("!redistribute");
   }
 
   function _unlock(LockedBalance memory _lock, address _for, uint256 _withdrawAmount) internal {
@@ -684,6 +678,18 @@ contract xALPACAMigrator is Initializable, ReentrancyGuardUpgradeable, OwnableUp
       unchecked {
         _i++;
       }
+    }
+  }
+
+  function withdrawAccumRedistribute(address _to) external onlyOwner {
+    uint256 _amount = accumRedistribute;
+
+    accumRedistribute = 0;
+
+    if (_amount > 0) {
+      token.safeTransfer(_to, _amount);
+
+      emit LogRedistribute(msg.sender, _to, _amount);
     }
   }
 }
