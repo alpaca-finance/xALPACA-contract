@@ -12,13 +12,18 @@ interface IxALPACAv2Rewarder {
 
   function xALPACAv2RevenueDistributor() external view returns (address);
 
-  function onDeposit(address user, uint256 newStakeTokenAmount) external;
+  function onDeposit(address _user, uint256 _newStakeTokenAmount, uint256 _previousStakingReserve) external;
 
-  function onWithdraw(address user, uint256 newStakeTokenAmount) external;
+  function onWithdraw(
+    address _user,
+    uint256 _newStakeTokenAmount,
+    uint256 _previousStakeTokenAmount,
+    uint256 _previousStakingReserve
+  ) external;
 
-  function onHarvest(address user) external;
+  function onHarvest(address _user, uint256 _userAmount, uint256 _stakingReserve) external;
 
-  function pendingToken(address user) external view returns (uint256);
+  function pendingToken(address _user) external view returns (uint256);
 
   function lastRewardTime() external view returns (uint256);
 

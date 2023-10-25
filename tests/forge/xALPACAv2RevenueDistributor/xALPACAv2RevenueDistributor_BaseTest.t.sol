@@ -15,6 +15,7 @@ contract xALPACAv2RevenueDistributor_BaseTest is xALPACAV2_BaseTest {
 
   xALPACAv2Rewarder internal rewarder1;
   xALPACAv2Rewarder internal rewarder2;
+  xALPACAv2Rewarder internal rewarder3;
 
   uint256 maxAlpacaPerSecond = 1000 ether;
 
@@ -22,6 +23,7 @@ contract xALPACAv2RevenueDistributor_BaseTest is xALPACAV2_BaseTest {
     whitelistedCallers[0] = address(this);
     whitelistedCallers[1] = ALICE;
     whitelistedCallers[2] = BOB;
+    whitelistedCallers[3] = CAT;
     revenueDistributor.setWhitelistedCallers(whitelistedCallers, true);
 
     whitelistedFeeders[0] = address(this);
@@ -33,6 +35,7 @@ contract xALPACAv2RevenueDistributor_BaseTest is xALPACAV2_BaseTest {
 
     rewarder1 = deployRewarder("REWARDER01", address(revenueDistributor), address(rewardToken1));
     rewarder2 = deployRewarder("REWARDER02", address(revenueDistributor), address(rewardToken2));
+    rewarder3 = deployRewarder("REWARDER03", address(revenueDistributor), address(rewardToken3));
 
     rewardToken1.mint(address(this), 10000000 ether);
     rewardToken2.mint(address(this), 15000000 ether);
@@ -48,10 +51,8 @@ contract xALPACAv2RevenueDistributor_BaseTest is xALPACAV2_BaseTest {
   }
 
   function setupRewarder() internal {
-    address[] memory rewarders = new address[](2);
-    rewarders[0] = address(rewarder1);
-    rewarders[1] = address(rewarder2);
-    revenueDistributor.setPoolRewarders(rewarders);
+    revenueDistributor.addRewarders(address(rewarder1));
+    revenueDistributor.addRewarders(address(rewarder2));
   }
 
   function assertRewarderUserInfo(

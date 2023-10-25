@@ -23,7 +23,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
   event LogUpdatePool(uint64 _lastRewardTime, uint256 _stakedBalance, uint256 _accAlpacaPerShare);
   event LogFeed(uint256 _newAlpacaPerSecond, uint256 _rewardEndTimestamp);
   event LogApproveStakeDebtToken(address indexed _staker, bool _allow);
-  event LogSetPoolRewarder(address _rewarder);
+  event LogAddRewarder(address _rewarder);
   event LogSetWhitelistedCaller(address indexed _caller, bool _allow);
   event LogSetWhitelistedFeeder(address indexed _feeder, bool _allow);
 
@@ -48,7 +48,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
   mapping(address => bool) public feeders;
 
   uint256 public alpacaPerSecond;
-  uint256 private constant ACC_ALPACA_PRECISION = 1e12;
+  uint256 private constant ACC_ALPACA_PRECISION = 1e18;
 
   uint256 public rewardEndTimestamp;
 
@@ -163,10 +163,10 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
 
         // increase accAlpacaPerShare with `_alpacaReward/stakedBalance` amount
         // example:
-        //  - oldAccAlpacaPerShare = 0
+        //  - previousAccAlpacaPerShare    = 0
         //  - _alpacaReward                = 2000
         //  - stakedBalance               = 10000
-        //  _poolInfo.accAlpacaPerShare = oldAccAlpacaPerShare + (_alpacaReward/stakedBalance)
+        //  _poolInfo.accAlpacaPerShare = previousAccAlpacaPerShare + (_alpacaReward/stakedBalance)
         //  _poolInfo.accAlpacaPerShare = 0 + 2000/10000 = 0.2
         _poolInfo.accAlpacaPerShare =
           _poolInfo.accAlpacaPerShare +
@@ -197,6 +197,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
 
     uint256 _receivedAmount = _unsafePullToken(msg.sender, ALPACA, _amountToDeposit);
 
+    uint256 _previousStakingReserve = stakingReserve;
     // Effects
     // can do unchecked since staked token totalSuply < max(uint256)
     unchecked {
@@ -209,7 +210,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     //  - accAlpacaPerShare    = 250
     //  - _receivedAmount      = 100
     //  - pendingAlpacaReward  = 25,000
-    //  rewardDebt = oldRewardDebt + (_receivedAmount * accAlpacaPerShare)= 0 + (100 * 250) = 25,000
+    //  rewardDebt = previousRewardDebt + (_receivedAmount * accAlpacaPerShare)= 0 + (100 * 250) = 25,000
     //  This means newly deposit share does not eligible for 25,000 pending rewards
     user.rewardDebt =
       user.rewardDebt +
@@ -221,7 +222,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     for (uint256 _i; _i < _rewarderLength; ) {
       _rewarder = rewarders[_i];
       // rewarder callback to do accounting
-      IxALPACAv2Rewarder(_rewarder).onDeposit(_for, user.totalAmount);
+      IxALPACAv2Rewarder(_rewarder).onDeposit(_for, user.totalAmount, _previousStakingReserve);
       unchecked {
         ++_i;
       }
@@ -236,15 +237,17 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
   function withdraw(address _from, uint256 _amountToWithdraw) external onlyWhitelisted nonReentrant {
     UserInfo storage user = userInfo[_from];
 
+    // Checks
     if (user.totalAmount < _amountToWithdraw) {
       revert xALPACAv2RevenueDistributor_InsufficientAmount();
     }
 
-    // Effects
-
     // call _updatePool in order to update poolInfo.accAlpacaPerShare
     PoolInfo memory _poolInfo = _updatePool();
 
+    uint256 _previousStakingReserve = stakingReserve;
+    uint256 _previousUserAmount = user.totalAmount;
+    // Effects
     unchecked {
       user.totalAmount -= _amountToWithdraw;
       stakingReserve -= _amountToWithdraw;
@@ -254,9 +257,9 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     // example:
     //  - accAlpacaPerShare    = 300
     //  - _amountToWithdraw    = 100
-    //  - oldRewardDebt        = 25,000
+    //  - previousRewardDebt   = 25,000
     //  - pendingAlpacaReward  = 35,000
-    //  rewardDebt = oldRewardDebt - (_amountToWithdraw * accAlpacaPerShare) = 25,000 - (100 * 300) = -5000
+    //  rewardDebt = previousRewardDebt - (_amountToWithdraw * accAlpacaPerShare) = 25,000 - (100 * 300) = -5000
     //  This means withdrawn share is eligible for previous pending reward in the pool = 5000
     user.rewardDebt =
       user.rewardDebt -
@@ -268,7 +271,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     for (uint256 _i; _i < _rewarderLength; ) {
       _rewarder = rewarders[_i];
       // rewarder callback to do accounting
-      IxALPACAv2Rewarder(_rewarder).onWithdraw(_from, user.totalAmount);
+      IxALPACAv2Rewarder(_rewarder).onWithdraw(_from, user.totalAmount, _previousUserAmount, _previousStakingReserve);
       unchecked {
         ++_i;
       }
@@ -317,7 +320,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     for (uint256 _i; _i < _rewarderLength; ) {
       _rewarder = rewarders[_i];
       // rewarder callback to claim reward
-      IxALPACAv2Rewarder(_rewarder).onHarvest(msg.sender);
+      IxALPACAv2Rewarder(_rewarder).onHarvest(msg.sender, user.totalAmount, stakingReserve);
       unchecked {
         ++_i;
       }
@@ -327,25 +330,18 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
   }
 
   /// @notice Set rewarders in Pool
-  /// @param _newRewarders rewarders
-  function setPoolRewarders(address[] calldata _newRewarders) external onlyOwner {
-    uint256 _length = _newRewarders.length;
-    address _rewarder;
-    // loop to check rewarder should be belong to this xALPACAv2RevenueDistributor only
-    for (uint256 _i; _i < _length; ) {
-      _rewarder = _newRewarders[_i];
-      if (
-        (IxALPACAv2Rewarder(_rewarder).xALPACAv2RevenueDistributor() != address(this)) ||
-        (IxALPACAv2Rewarder(_rewarder).lastRewardTime() == 0)
-      ) {
-        revert xALPACAv2RevenueDistributor_BadRewarder();
-      }
-      unchecked {
-        ++_i;
-      }
+  /// @param _newRewarder rewarders
+  function addRewarders(address _newRewarder) external onlyOwner {
+    if (
+      (IxALPACAv2Rewarder(_newRewarder).xALPACAv2RevenueDistributor() != address(this)) ||
+      (IxALPACAv2Rewarder(_newRewarder).lastRewardTime() == 0)
+    ) {
+      revert xALPACAv2RevenueDistributor_BadRewarder();
     }
 
-    rewarders = _newRewarders;
+    rewarders.push(_newRewarder);
+
+    emit LogAddRewarder(_newRewarder);
   }
 
   /// @dev A routine for tranfering token in. Prevent wrong accounting when token has fee on tranfer

@@ -21,6 +21,7 @@ contract xALPACAV2_BaseTest is BaseTest {
   MockERC20 internal alpaca;
   MockERC20 internal rewardToken1;
   MockERC20 internal rewardToken2;
+  MockERC20 internal rewardToken3;
   MockERC20 internal mockToken1;
 
   xALPACAv2RevenueDistributor revenueDistributor;
@@ -39,6 +40,7 @@ contract xALPACAV2_BaseTest is BaseTest {
 
     rewardToken1 = deployMockErc20("Reward Token 1", "RTOKEN1", 18);
     rewardToken2 = deployMockErc20("Reward Token 2", "RTOKEN2", 6);
+    rewardToken3 = deployMockErc20("Reward Token 3", "RTOKEN2", 18);
     mockToken1 = deployMockErc20("Mock Token 1", "MTOKEN1", 18);
 
     revenueDistributor = deployxALPACAv2RevenueDistributor(address(alpaca));

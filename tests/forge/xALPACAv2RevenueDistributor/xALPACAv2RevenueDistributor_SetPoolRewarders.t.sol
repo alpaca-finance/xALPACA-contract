@@ -16,10 +16,8 @@ contract xALPACAv2RevenueDistributor_SetPoolRewardersTest is xALPACAv2RevenueDis
   }
 
   function testCorrectness_WhenSetPoolRewarders() external {
-    address[] memory _rewarders = new address[](2);
-    _rewarders[0] = address(rewarder1);
-    _rewarders[1] = address(rewarder2);
-    revenueDistributor.setPoolRewarders(_rewarders);
+    revenueDistributor.addRewarders(address(rewarder1));
+    revenueDistributor.addRewarders(address(rewarder2));
 
     assertEq(revenueDistributor.rewarders(0), address(rewarder1));
     assertEq(revenueDistributor.rewarders(1), address(rewarder2));
@@ -34,12 +32,10 @@ contract xALPACAv2RevenueDistributor_SetPoolRewardersTest is xALPACAv2RevenueDis
       address(rewardToken1)
     );
 
-    address[] memory _poolRewarders = new address[](2);
-    _poolRewarders[0] = address(_newRewarder);
-    _poolRewarders[1] = address(rewarder1);
     vm.expectRevert(
       abi.encodeWithSelector(IxALPACAv2RevenueDistributor.xALPACAv2RevenueDistributor_BadRewarder.selector)
     );
-    revenueDistributor.setPoolRewarders(_poolRewarders);
+    revenueDistributor.addRewarders(address(_newRewarder));
+    revenueDistributor.addRewarders(address(rewarder1));
   }
 }
