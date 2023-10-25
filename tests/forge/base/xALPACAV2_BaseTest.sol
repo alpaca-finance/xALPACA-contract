@@ -46,7 +46,7 @@ contract xALPACAV2_BaseTest is BaseTest {
     revenueDistributor = deployxALPACAv2RevenueDistributor(address(alpaca));
 
     treasury = address(9999999);
-    xAlpacaV2 = deployxALPACAv2(address(alpaca), address(revenueDistributor), 0, treasury, 0);
+    xAlpacaV2 = deployxALPACAv2(address(alpaca), address(revenueDistributor), 0, treasury, 0, 0);
 
     address[] memory _whitelistCallers = new address[](1);
     _whitelistCallers[0] = address(xAlpacaV2);

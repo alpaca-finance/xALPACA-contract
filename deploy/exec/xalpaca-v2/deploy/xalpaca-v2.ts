@@ -23,6 +23,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     delayUnlockTime: 1814400, // 21 days
     feeTreasury: "0x2bfdacF6CdBC3ECcb95E68ec448ECf3d0693F732",
     earlyWithdrawFeeBpsPerDay: 50, //0.5% per day
+    redistributionBps: 5000, //50% from earlyWithdraw fee
   };
 
   const deployer = await getDeployer();
@@ -35,6 +36,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     initializeInput.delayUnlockTime,
     initializeInput.feeTreasury,
     initializeInput.earlyWithdrawFeeBpsPerDay,
+    initializeInput.redistributionBps,
   ])) as XALPACAv2;
   await xALPACAv2.deployed();
   console.log(`>> Deployed at ${xALPACAv2.address}`);

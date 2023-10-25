@@ -53,16 +53,18 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
     address _revenueDistributor,
     uint256 _delayUnlockTime,
     address _feeTreasury,
-    uint256 _earlyWithdrawFeeBpsPerDay
+    uint256 _earlyWithdrawFeeBpsPerDay,
+    uint256 _redistributionBps
   ) internal returns (xALPACAv2) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/xALPACAv2.sol/xALPACAv2.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,uint256,address,uint256)")),
+      bytes4(keccak256("initialize(address,address,uint256,address,uint256,uint256)")),
       _token,
       _revenueDistributor,
       _delayUnlockTime,
       _feeTreasury,
-      _earlyWithdrawFeeBpsPerDay
+      _earlyWithdrawFeeBpsPerDay,
+      _redistributionBps
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer);
     return xALPACAv2(_proxy);
@@ -126,6 +128,6 @@ contract BaseTest is DSTest, StdUtils, StdAssertions, StdCheats {
   }
 
   function normalizeEther(uint256 _ether, uint256 _decimal) internal pure returns (uint256 _normalizedEther) {
-    _normalizedEther = _ether / 10**(18 - _decimal);
+    _normalizedEther = _ether / 10 ** (18 - _decimal);
   }
 }

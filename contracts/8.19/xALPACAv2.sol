@@ -44,8 +44,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   event LogLock(address indexed _user, uint256 _amount);
   event LogUnlock(address indexed _user, uint256 _unlockRequestId);
   event LogCancelUnlock(address indexed _user, uint256 _unlockRequestId);
-  event LogWithdraw(address indexed _user, uint256 _amount);
-  event LogEarlyWithdraw(address indexed _user, uint256 _feeToTreasury, uint256 _toRedistribute);
+  event LogWithdraw(address indexed _user, uint256 _amount, uint256 _feeToTreasury, uint256 _toRedistribute);
   event LogTransfer(address indexed _from, address indexed _to, uint256 _amount);
   event LogSetBreaker(uint256 _previousBreaker, uint256 _breaker);
   event LogSetDelayUnlockTime(uint256 _previousDelay, uint256 _newDelay);
@@ -230,7 +229,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     // interaction
     token.safeTransfer(msg.sender, request.amount);
 
-    emit LogWithdraw(msg.sender, request.amount);
+    emit LogWithdraw(msg.sender, request.amount, 0, 0);
   }
 
   /// @notice Premature withdrawal before unlock completed
@@ -265,8 +264,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     token.safeTransfer(msg.sender, _amountToUser);
     token.safeTransfer(feeTreasury, _amountToTreasury);
 
-    emit LogWithdraw(msg.sender, _amountToUser);
-    emit LogEarlyWithdraw(msg.sender, _amountToTreasury, _amountToRedistribute);
+    emit LogWithdraw(msg.sender, _amountToUser, _amountToTreasury, _amountToRedistribute);
   }
 
   /// @notice Redistribute accumulated token from earlywithdraw back to revenueDistributor

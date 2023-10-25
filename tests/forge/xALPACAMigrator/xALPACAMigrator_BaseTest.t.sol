@@ -50,7 +50,7 @@ contract xALPACAMigrator_BaseTest is BaseTest {
     // deploy related contracts
     vm.startPrank(deployer, deployer);
     xAlpacaV2ReveneuDistirubor = deployxALPACAv2RevenueDistributor(alpaca);
-    xAlpacaV2 = deployxALPACAv2(alpaca, address(xAlpacaV2ReveneuDistirubor), 0, feeTreasury, 0);
+    xAlpacaV2 = deployxALPACAv2(alpaca, address(xAlpacaV2ReveneuDistirubor), 0, feeTreasury, 0, 0);
 
     address[] memory _whitelistCallers = new address[](1);
     _whitelistCallers[0] = address(xAlpacaV2);
