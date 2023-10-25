@@ -60,7 +60,7 @@ contract xALPACAv2RevenueDistributor_BaseTest is xALPACAV2_BaseTest {
     uint256 _expectedAmount,
     int256 _expectedRewardDebt
   ) internal {
-    (uint256 _totalAmount, int256 _rewardDebt, ) = _rewarder.userInfo(_user);
+    (uint256 _totalAmount, int256 _rewardDebt) = _rewarder.userInfo(_user);
     assertEq(_totalAmount, _expectedAmount);
     assertEq(_rewardDebt, _expectedRewardDebt);
   }

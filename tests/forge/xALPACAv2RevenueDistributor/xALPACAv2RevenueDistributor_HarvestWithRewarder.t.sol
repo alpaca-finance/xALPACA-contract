@@ -301,7 +301,7 @@ contract xALPACAv2RevenueDistributor_HarvestWithRewarderTest is xALPACAv2Revenue
     alpaca.approve(address(revenueDistributor), 10 ether);
     revenueDistributor.deposit(BOB, 10 ether);
     vm.stopPrank();
-    (uint256 _bobStakedAmount, , ) = rewarder3.userInfo(BOB);
+    (uint256 _bobStakedAmount, ) = rewarder3.userInfo(BOB);
     assertEq(_bobStakedAmount, 60 ether);
 
     // Feed another 200 token for 50 seconds
