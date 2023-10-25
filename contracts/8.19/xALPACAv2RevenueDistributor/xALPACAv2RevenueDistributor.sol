@@ -48,7 +48,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
   mapping(address => bool) public feeders;
 
   uint256 public alpacaPerSecond;
-  uint256 private constant ACC_ALPACA_PRECISION = 1e12;
+  uint256 private constant ACC_ALPACA_PRECISION = 1e18;
 
   uint256 public rewardEndTimestamp;
 
@@ -163,10 +163,10 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
 
         // increase accAlpacaPerShare with `_alpacaReward/stakedBalance` amount
         // example:
-        //  - oldAccAlpacaPerShare = 0
+        //  - previousAccAlpacaPerShare    = 0
         //  - _alpacaReward                = 2000
         //  - stakedBalance               = 10000
-        //  _poolInfo.accAlpacaPerShare = oldAccAlpacaPerShare + (_alpacaReward/stakedBalance)
+        //  _poolInfo.accAlpacaPerShare = previousAccAlpacaPerShare + (_alpacaReward/stakedBalance)
         //  _poolInfo.accAlpacaPerShare = 0 + 2000/10000 = 0.2
         _poolInfo.accAlpacaPerShare =
           _poolInfo.accAlpacaPerShare +
@@ -210,7 +210,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     //  - accAlpacaPerShare    = 250
     //  - _receivedAmount      = 100
     //  - pendingAlpacaReward  = 25,000
-    //  rewardDebt = oldRewardDebt + (_receivedAmount * accAlpacaPerShare)= 0 + (100 * 250) = 25,000
+    //  rewardDebt = previousRewardDebt + (_receivedAmount * accAlpacaPerShare)= 0 + (100 * 250) = 25,000
     //  This means newly deposit share does not eligible for 25,000 pending rewards
     user.rewardDebt =
       user.rewardDebt +
@@ -245,8 +245,8 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     // call _updatePool in order to update poolInfo.accAlpacaPerShare
     PoolInfo memory _poolInfo = _updatePool();
 
-    uint256 _oldStakingReserve = stakingReserve;
-    uint256 _userOldAmount = user.totalAmount;
+    uint256 _previousStakingReserve = stakingReserve;
+    uint256 _previousUserAmount = user.totalAmount;
     // Effects
     unchecked {
       user.totalAmount -= _amountToWithdraw;
@@ -257,9 +257,9 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     // example:
     //  - accAlpacaPerShare    = 300
     //  - _amountToWithdraw    = 100
-    //  - oldRewardDebt        = 25,000
+    //  - previousRewardDebt   = 25,000
     //  - pendingAlpacaReward  = 35,000
-    //  rewardDebt = oldRewardDebt - (_amountToWithdraw * accAlpacaPerShare) = 25,000 - (100 * 300) = -5000
+    //  rewardDebt = previousRewardDebt - (_amountToWithdraw * accAlpacaPerShare) = 25,000 - (100 * 300) = -5000
     //  This means withdrawn share is eligible for previous pending reward in the pool = 5000
     user.rewardDebt =
       user.rewardDebt -
@@ -271,7 +271,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     for (uint256 _i; _i < _rewarderLength; ) {
       _rewarder = rewarders[_i];
       // rewarder callback to do accounting
-      IxALPACAv2Rewarder(_rewarder).onWithdraw(_from, user.totalAmount, _userOldAmount, _oldStakingReserve);
+      IxALPACAv2Rewarder(_rewarder).onWithdraw(_from, user.totalAmount, _previousUserAmount, _previousStakingReserve);
       unchecked {
         ++_i;
       }

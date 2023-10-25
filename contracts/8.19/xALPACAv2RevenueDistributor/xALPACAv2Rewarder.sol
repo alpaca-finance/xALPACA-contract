@@ -109,7 +109,7 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
     //  - accRewardPerShare    = 250
     //  - _receivedAmount      = 100
     //  - pendingRewardReward  = 25,000
-    //  rewardDebt = oldRewardDebt + (_receivedAmount * accRewardPerShare)= 0 + (100 * 250) = 25,000
+    //  rewardDebt = previousRewardDebt + (_receivedAmount * accRewardPerShare)= 0 + (100 * 250) = 25,000
     //  This means newly deposit share does not eligible for 25,000 pending rewards
     user.rewardDebt = user.rewardDebt + ((_amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION).toInt256();
 
@@ -123,13 +123,13 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
   function onWithdraw(
     address _user,
     uint256 _newAmount,
-    uint256 _oldAmount,
+    uint256 _previousAmount,
     uint256 _previousStakingReserve
   ) external override onlyxALPACAv2RevenueDistributor {
     PoolInfo memory pool = _updatePool(_previousStakingReserve);
     UserInfo storage user = userInfo[_user];
 
-    uint256 _withdrawAmount = _oldAmount - _newAmount;
+    uint256 _withdrawAmount = _previousAmount - _newAmount;
     user.rewardDebt =
       user.rewardDebt -
       (((_withdrawAmount * pool.accRewardPerShare) / ACC_REWARD_PRECISION)).toInt256();
@@ -252,10 +252,10 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
 
         // increase accRewardPerShare with `_rewards/stakedBalance` amount
         // example:
-        //  - oldaccRewardPerShare = 0
+        //  - previousaccRewardPerShare = 0
         //  - _rewards                = 2000
         //  - stakedBalance               = 10000
-        //  _poolInfo.accRewardPerShare = oldaccRewardPerShare + (_rewards/stakedBalance)
+        //  _poolInfo.accRewardPerShare = previousaccRewardPerShare + (_rewards/stakedBalance)
         //  _poolInfo.accRewardPerShare = 0 + 2000/10000 = 0.2
         _poolInfo.accRewardPerShare =
           _poolInfo.accRewardPerShare +
