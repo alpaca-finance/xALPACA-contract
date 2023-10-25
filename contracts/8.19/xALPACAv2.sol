@@ -38,20 +38,22 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   error xALPACAv2_TooMuchDelay();
   error xALPACAv2_TooMuchFee();
   error xALPACAv2_Unauthorized();
+  error xALPACAv2_InvalidParams();
 
   //--------- Events ------------//
   event LogLock(address indexed _user, uint256 _amount);
   event LogUnlock(address indexed _user, uint256 _unlockRequestId);
   event LogCancelUnlock(address indexed _user, uint256 _unlockRequestId);
-  event LogWithdraw(address indexed _user, uint256 _amount, uint256 _withdrawalFee);
-  event LogWithdrawReserve(address indexed _to, uint256 _amount);
+  event LogWithdraw(address indexed _user, uint256 _amount);
+  event LogEarlyWithdraw(address indexed _user, uint256 _feeToTreasury, uint256 _toRedistribute);
   event LogTransfer(address indexed _from, address indexed _to, uint256 _amount);
   event LogSetBreaker(uint256 _previousBreaker, uint256 _breaker);
   event LogSetDelayUnlockTime(uint256 _previousDelay, uint256 _newDelay);
   event LogSetFeeTreasury(address _previousFeeTreasury, address _newFeeTreasury);
   event LogSetEarlyWithdrawFeeBpsPerDay(uint256 _previousFee, uint256 _newFee);
   event LogRedistribute(address indexed _from, address indexed _to, uint256 _amount);
-  event LogSetWhitelistedRedistributors(address indexed caller, address indexed addr, bool ok);
+  event LogSetWhitelistedRedistributors(address indexed _caller, address indexed _addr, bool _ok);
+  event LogSetRedistributionBps(address indexed _caller, uint256 _newRedistributionFee);
 
   //--------- Enum --------------//
   enum UnlockStatus {
@@ -89,6 +91,9 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
   // penalty per day
   uint256 public earlyWithdrawFeeBpsPerDay;
 
+  // Propotion from earlywithdraw fee that will be redistributed
+  uint256 public redistributionBps;
+
   // Accumulated token to be redistributed from earlywithdraw
   uint256 public accumRedistribute;
 
@@ -118,7 +123,8 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     address _revenueDistributor,
     uint256 _delayUnlockTime,
     address _feeTreasury,
-    uint256 _earlyWithdrawFeeBpsPerDay
+    uint256 _earlyWithdrawFeeBpsPerDay,
+    uint256 _redistributionBps
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
@@ -146,6 +152,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     delayUnlockTime = _delayUnlockTime;
     token = _token;
     revenueDistributor = _revenueDistributor;
+    redistributionBps = _redistributionBps;
   }
 
   /// @notice Lock token to receive voting power
@@ -223,7 +230,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     // interaction
     token.safeTransfer(msg.sender, request.amount);
 
-    emit LogWithdraw(msg.sender, request.amount, 0);
+    emit LogWithdraw(msg.sender, request.amount);
   }
 
   /// @notice Premature withdrawal before unlock completed
@@ -248,14 +255,18 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     // if early withdraw fee is greater than amount, should revert here
     uint256 _amountToUser = request.amount - _earlyWithdrawalFee;
+    uint256 _amountToRedistribute = (_earlyWithdrawalFee * redistributionBps) / 10000;
+    uint256 _amountToTreasury = _earlyWithdrawalFee - _amountToRedistribute;
 
-    accumRedistribute += _amountToUser;
+    accumRedistribute += _amountToRedistribute;
     request.status = UnlockStatus.CLAIMED;
 
     // interaction
-    token.safeTransfer(feeTreasury, _earlyWithdrawalFee);
+    token.safeTransfer(msg.sender, _amountToUser);
+    token.safeTransfer(feeTreasury, _amountToTreasury);
 
-    emit LogWithdraw(msg.sender, _amountToUser, _earlyWithdrawalFee);
+    emit LogWithdraw(msg.sender, _amountToUser);
+    emit LogEarlyWithdraw(msg.sender, _amountToTreasury, _amountToRedistribute);
   }
 
   /// @notice Redistribute accumulated token from earlywithdraw back to revenueDistributor
@@ -350,6 +361,18 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     emit LogSetEarlyWithdrawFeeBpsPerDay(earlyWithdrawFeeBpsPerDay, _newFeePerPerDay);
     earlyWithdrawFeeBpsPerDay = _newFeePerPerDay;
+  }
+
+  /// @notice Owner set redistribution bps
+  /// @param _newRedistributionBps The new portion from earlywithdraw fee that will be redistributed
+  function setRedistributionBps(uint256 _newRedistributionBps) external onlyOwner {
+    if (_newRedistributionBps > 10000) {
+      revert xALPACAv2_InvalidParams();
+    }
+
+    redistributionBps = _newRedistributionBps;
+
+    emit LogSetRedistributionBps(msg.sender, _newRedistributionBps);
   }
 
   /// @notice Owner set new treasury address
