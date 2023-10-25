@@ -136,4 +136,35 @@ contract xALPACAv2_WithdrawTest is xALPACAV2_BaseTest {
     assertEq(alpaca.balanceOf(treasury), 0);
     vm.stopPrank();
   }
+
+  function testCorrectness_WhenUserEarlyWithdrawAndRedistributionBpsNotZero_ShouldAccumulatedToken() external {
+    uint256 _lockAmount = 10 ether;
+    uint256 _unlockAmount = 4 ether;
+    uint256 _earlyWithdrawFeeBpsPerDay = 50;
+    uint256 _redistributionBps = 5000;
+    // 50 bps per day
+    xAlpacaV2.setEarlyWithdrawFeeBpsPerDay(_earlyWithdrawFeeBpsPerDay);
+    xAlpacaV2.setRedistributionBps(_redistributionBps);
+
+    uint256 _startingBalance = alpaca.balanceOf(ALICE);
+    vm.startPrank(ALICE);
+
+    alpaca.approve(address(xAlpacaV2), type(uint256).max);
+    xAlpacaV2.lock(ALICE, _lockAmount);
+
+    uint256 _unlockId = xAlpacaV2.unlock(_unlockAmount);
+
+    skip(20.5 days);
+
+    xAlpacaV2.earlyWithdraw(_unlockId);
+
+    uint256 _fee = (_unlockAmount * (_earlyWithdrawFeeBpsPerDay / 2)) / 10000;
+    uint256 _toAccumulated = (_fee * _redistributionBps) / 10000;
+    uint256 _toTrasury = _fee - _toAccumulated;
+
+    assertEq(alpaca.balanceOf(ALICE), _startingBalance - _lockAmount + _unlockAmount - _fee); // start at 100, lock 10, unlock 4, result in 94
+    assertEq(alpaca.balanceOf(treasury), _toTrasury);
+    assertEq(xAlpacaV2.accumRedistribute(), _toAccumulated);
+    vm.stopPrank();
+  }
 }

@@ -24,5 +24,7 @@ interface IxALPACAv2RevenueDistributor {
 
   function feeders(address _feeder) external view returns (bool _allow);
 
+  function rewardEndTimestamp() external view returns (uint256);
+
   function getUserTotalAmountOf(address _user) external view returns (uint256);
 }
