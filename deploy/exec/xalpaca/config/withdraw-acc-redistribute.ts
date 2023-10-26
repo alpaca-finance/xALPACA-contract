@@ -15,14 +15,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   ░░░╚═╝░░░╚═╝░░╚═╝░░╚═╝╚═╝░░╚═╝╚═╝░░╚══╝╚═╝╚═╝░░╚══╝░╚═════╝░
   Check all variables below before execute the deployment script
   */
-  const xALPACAv2 = config.xALPACAv2!;
+  const TO = "0x08B5A95cb94f926a8B620E87eE92e675b35afc7E"; // RevenueTreasury
 
   const deployer = await getDeployer();
 
   const xAlpacaMigrator = XALPACAMigrator__factory.connect(config.xALPACA, deployer);
 
-  const setxAlpacaV2Tx = await xAlpacaMigrator.setxALPACAv2(xALPACAv2);
-  console.log(`✅ Done at: ${setxAlpacaV2Tx.hash}`);
+  const withdrawAccRedistributeTx = await xAlpacaMigrator.withdrawAccumRedistribute(TO);
+  console.log(`✅ Done at: ${withdrawAccRedistributeTx.hash}`);
 };
 export default func;
-func.tags = ["SetxALPACAv2"];
+func.tags = ["WithdrawAccRedistribute"];

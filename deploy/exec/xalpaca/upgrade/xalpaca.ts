@@ -8,7 +8,6 @@ import { TimelockEntity } from "../../../entities";
 import { getConfig } from "../../../entities/config";
 import { fileService } from "../../../services";
 import { MaybeMultisigTimelock } from "../../../services/timelock/maybe-multisig";
-import { XALPACA__factory } from "./../../../../typechain";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   /*
@@ -33,7 +32,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const proxyAdminOwner = await ProxyAdmin__factory.connect(config.ProxyAdmin, deployer).owner();
   const isTimelockOwner = compare(proxyAdminOwner, config.Timelock);
-  const newImpl = (await ethers.getContractFactory(xALPACA_VERSION)) as XALPACA__factory;
+  const newImpl = await ethers.getContractFactory(xALPACA_VERSION);
   let nonce = await deployer.getTransactionCount();
   const preparedNewXALPACA = await upgrades.prepareUpgrade(TARGET_XALPACA_ADDRESS, newImpl);
   const networkInfo = await ethers.provider.getNetwork();
