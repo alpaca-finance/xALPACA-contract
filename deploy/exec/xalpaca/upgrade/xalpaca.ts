@@ -36,7 +36,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const newImpl = (await ethers.getContractFactory(xALPACA_VERSION)) as XALPACA__factory;
   let nonce = await deployer.getTransactionCount();
   const preparedNewXALPACA = await upgrades.prepareUpgrade(TARGET_XALPACA_ADDRESS, newImpl);
-  const ops = isFork(network.name) ? { nonce: nonce++, gasLimit: 20000000 } : { nonce: nonce++ };
+  const ops = isFork() ? { nonce: nonce++, gasLimit: 20000000 } : { nonce: nonce++ };
 
   if (isTimelockOwner) {
     console.log(`> Upgrading XALPACA at ${TARGET_XALPACA_ADDRESS} through Timelock + ProxyAdmin`);
