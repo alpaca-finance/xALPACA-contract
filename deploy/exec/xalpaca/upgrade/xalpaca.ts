@@ -1,14 +1,13 @@
-import { XALPACA__factory } from "./../../../../typechain";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { ProxyAdmin__factory } from "@alpaca-finance/alpaca-contract/typechain";
+import { ethers, upgrades } from "hardhat";
 import { DeployFunction } from "hardhat-deploy/types";
-import { ethers, upgrades, network } from "hardhat";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { compare } from "../../../../utils/address";
+import { getDeployer, isFork } from "../../../../utils/deployer-helper";
+import { TimelockEntity } from "../../../entities";
 import { getConfig } from "../../../entities/config";
 import { fileService } from "../../../services";
-import { getDeployer, isFork } from "../../../../utils/deployer-helper";
-import { compare } from "../../../../utils/address";
-import { ProxyAdmin__factory } from "@alpaca-finance/alpaca-contract/typechain";
-import { TimelockEntity } from "../../../entities";
-import { CompLike } from "../../../services/timelock/comp-like";
+import { MaybeMultisigTimelock } from "../../../services/timelock/maybe-multisig";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   /*
@@ -33,20 +32,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const proxyAdminOwner = await ProxyAdmin__factory.connect(config.ProxyAdmin, deployer).owner();
   const isTimelockOwner = compare(proxyAdminOwner, config.Timelock);
-  const newImpl = (await ethers.getContractFactory(xALPACA_VERSION)) as XALPACA__factory;
+  const newImpl = await ethers.getContractFactory(xALPACA_VERSION);
   let nonce = await deployer.getTransactionCount();
   const preparedNewXALPACA = await upgrades.prepareUpgrade(TARGET_XALPACA_ADDRESS, newImpl);
-  const ops = isFork(network.name) ? { nonce: nonce++, gasLimit: 20000000 } : { nonce: nonce++ };
+  const networkInfo = await ethers.provider.getNetwork();
+  const ops = isFork() ? { nonce: nonce++, gasLimit: 20000000 } : { nonce: nonce++ };
 
   if (isTimelockOwner) {
     console.log(`> Upgrading XALPACA at ${TARGET_XALPACA_ADDRESS} through Timelock + ProxyAdmin`);
     console.log("> Prepare upgrade & deploy if needed a new IMPL automatically.");
     console.log(`> Implementation address: ${preparedNewXALPACA}`);
 
-    const timelockService = new CompLike(config.Timelock, deployer);
+    const timelock = new MaybeMultisigTimelock(networkInfo.chainId, deployer);
 
     timelockTransactions.push(
-      await timelockService.queueTransaction(
+      await timelock.queueTransaction(
         `> Queue tx to upgrade ${TARGET_XALPACA_ADDRESS}`,
         config.ProxyAdmin,
         "0",
