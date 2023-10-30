@@ -44,7 +44,7 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
   event LogOnWithdraw(address indexed _user, uint256 _amount);
   event LogHarvest(address indexed _user, uint256 _amount);
   event LogUpdatePool(uint64 _lastRewardTime, uint256 _stakedBalance, uint256 _accRewardPerShare);
-  event LogFeed(uint256 _newRewardPerSecond, uint256 _newRewardEndTimestamp);
+  event LogFeed(address indexed _feeder, uint256 _amount, uint256 _newRewardPerSecond, uint256 _newRewardEndTimestamp);
   event LogSetName(string _name);
 
   /// @dev allow only xALPACAv2RevenueDistributor
@@ -195,7 +195,7 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
     // roll over outstanding reward
     rewardPerSecond = _rewardAmount / (_newRewardEndTimestamp - block.timestamp);
     rewardEndTimestamp = _newRewardEndTimestamp;
-    emit LogFeed(rewardPerSecond, _newRewardEndTimestamp);
+    emit LogFeed(msg.sender, _rewardAmount, rewardPerSecond, _newRewardEndTimestamp);
   }
 
   /// @notice View function to see pending rewards for a given pool.
