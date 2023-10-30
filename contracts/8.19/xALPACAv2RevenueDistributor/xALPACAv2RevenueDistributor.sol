@@ -21,7 +21,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
   event LogEmergencyWithdraw(address indexed _user, uint256 _amount);
   event LogHarvest(address indexed _user, uint256 _amount);
   event LogUpdatePool(uint64 _lastRewardTime, uint256 _stakedBalance, uint256 _accAlpacaPerShare);
-  event LogFeed(uint256 _newAlpacaPerSecond, uint256 _rewardEndTimestamp);
+  event LogFeed(address indexed _feeder, uint256 _amount, uint256 _newAlpacaPerSecond, uint256 _rewardEndTimestamp);
   event LogApproveStakeDebtToken(address indexed _staker, bool _allow);
   event LogAddRewarder(address _rewarder);
   event LogSetWhitelistedCaller(address indexed _caller, bool _allow);
@@ -108,7 +108,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     alpacaPerSecond = _rewardAmount / (_newRewardEndTimestamp - block.timestamp);
     rewardEndTimestamp = _newRewardEndTimestamp;
 
-    emit LogFeed(alpacaPerSecond, _newRewardEndTimestamp);
+    emit LogFeed(msg.sender, _rewardAmount, alpacaPerSecond, _newRewardEndTimestamp);
   }
 
   /// @notice View function to see pending ALPACA on frontend.
