@@ -460,7 +460,7 @@ contract GrassHouse is Initializable, ReentrancyGuardUpgradeable, OwnableUpgrade
   function injectReward(uint256 _timestamp, uint256 _amount) external onlyOwner {
     rewardToken.safeTransferFrom(msg.sender, address(this), _amount);
     lastTokenBalance += _amount;
-    tokensPerWeek[_timestampToFloorWeek(_timestamp)] = _amount;
+    tokensPerWeek[_timestampToFloorWeek(_timestamp)] += _amount;
   }
 
   /// @notice Set whitelisted checkpoint callers.
