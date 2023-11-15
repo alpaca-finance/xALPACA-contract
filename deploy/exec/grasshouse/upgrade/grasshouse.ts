@@ -21,7 +21,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const TITLE = "upgrade_Grasshouse_to_Grasshouse_DisabledFeed";
   const GRASSHOUSE_VERSION = "GrassHouse_DisabledFeed";
   const TARGET_GRASSHOUSE = ["ALPACA"];
-  const EXACT_ETA = "1698382800";
+  const EXACT_ETA = "1699432200";
+  let NONCE = 1269;
 
   const deployer = await getDeployer();
   const networkInfo = await ethers.provider.getNetwork();
@@ -49,7 +50,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ["address", "address"],
         [grasshouse.address, preparedNewGrassHouse],
         EXACT_ETA,
-        {}
+        { nonce: NONCE++ }
       )
     );
     console.log("> ✅ Done");

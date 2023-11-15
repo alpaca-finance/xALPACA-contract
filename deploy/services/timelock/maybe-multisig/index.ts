@@ -52,6 +52,11 @@ export class MaybeMultisigTimelock {
       await queueTx.wait();
       txHash = queueTx.hash;
     } else if (compareAddress(timelockAdmin, this.multiSig.getAddress())) {
+      let nonce = undefined;
+      if (overrides && overrides.nonce) {
+        nonce = BigNumber.from(overrides.nonce).toNumber();
+      }
+
       console.log(`> Propose tx for: ${info}`);
       info = `MultiSign: ${info}`;
       txHash = await this.multiSig.proposeTransaction(
@@ -63,7 +68,8 @@ export class MaybeMultisigTimelock {
           signature,
           ethers.utils.defaultAbiCoder.encode(paramTypes, params),
           eta,
-        ])
+        ]),
+        { nonce }
       );
     } else {
       throw new Error("MaybeMultisigTimelock: Unknown admin");
@@ -133,6 +139,11 @@ export class MaybeMultisigTimelock {
       txHash = queueTx.hash;
       console.log("> ⛓ Executed at:", txHash);
     } else if (compareAddress(timelockAdmin, this.multiSig.getAddress())) {
+      let nonce = undefined;
+      if (overrides && overrides.nonce) {
+        nonce = BigNumber.from(overrides.nonce).toNumber();
+      }
+
       txHash = await this.multiSig.proposeTransaction(
         this.timelock.address,
         "0",
@@ -142,7 +153,8 @@ export class MaybeMultisigTimelock {
           signature,
           ethers.utils.defaultAbiCoder.encode(paramTypes, params),
           eta,
-        ])
+        ]),
+        { nonce }
       );
       console.log("> Proposed at:", txHash);
     }
