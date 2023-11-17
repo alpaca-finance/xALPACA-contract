@@ -309,7 +309,7 @@ contract xALPACAv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     token.safeApprove(revenueDistributor, request.amount);
     IxALPACAv2RevenueDistributor(revenueDistributor).deposit(msg.sender, request.amount);
 
-    emit LogUnlock(msg.sender, _unlockRequestId);
+    emit LogCancelUnlock(msg.sender, _unlockRequestId);
   }
 
   /// @notice Transfer xALAPCA to another address
