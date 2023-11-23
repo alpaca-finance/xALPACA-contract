@@ -4,11 +4,14 @@ import { ethers, upgrades, network } from "hardhat";
 import { getConfig } from "../../../entities/config";
 import { AlpacaFeeder__factory } from "../../../../typechain";
 import { Timelock__factory } from "@alpaca-finance/alpaca-contract/typechain";
+import { getDeployer } from "../../../../utils/deployer-helper";
+import { fileService } from "../../../services";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+  const TITLE = "upgrade_alpaca_feeder";
   const EXACT_ETA = "1640923200";
 
-  const [deployer] = await ethers.getSigners();
+  const deployer = await getDeployer();
   const config = getConfig();
   const timelock = Timelock__factory.connect(config.Timelock, deployer);
 
@@ -21,7 +24,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("✅ Done");
 
   console.log(`>> Queue tx on Timelock to upgrade the implementation`);
-  await timelock.queueTransaction(
+  const timelockTransactions = await timelock.queueTransaction(
     config.ProxyAdmin,
     "0",
     "upgrade(address,address)",
@@ -30,10 +33,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   );
   console.log("✅ Done");
 
-  console.log(`>> Generate executeTransaction:`);
-  console.log(
-    `await timelock.executeTransaction('${config.ProxyAdmin}', '0', 'upgrade(address,address)', ethers.utils.defaultAbiCoder.encode(['address','address'], ['${config.ALPACAFeeder}','${preparedNewAlpacaFeeder}']), ${EXACT_ETA})`
-  );
+  const timestamp = Math.floor(Date.now() / 1000);
+  const fileName = `${timestamp}_${TITLE}`;
+  console.log(`> Writing File ${fileName}`);
+  fileService.writeJson(fileName, timelockTransactions);
+
   console.log("✅ Done");
 };
 
