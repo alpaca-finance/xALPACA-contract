@@ -3,17 +3,17 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { ethers, upgrades, network } from "hardhat";
 import { getConfig } from "../../../entities/config";
 import { AlpacaFeeder__factory } from "../../../../typechain";
-import { Timelock__factory } from "@alpaca-finance/alpaca-contract/typechain";
-import { getDeployer } from "../../../../utils/deployer-helper";
+import { getDeployer, isFork } from "../../../../utils/deployer-helper";
 import { fileService } from "../../../services";
+import { MaybeMultisigTimelock } from "../../../services/timelock/maybe-multisig";
+import { TimelockEntity } from "../../../entities";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const TITLE = "upgrade_alpaca_feeder";
-  const EXACT_ETA = "1640923200";
+  const EXACT_ETA = "1700820000";
 
   const deployer = await getDeployer();
   const config = getConfig();
-  const timelock = Timelock__factory.connect(config.Timelock, deployer);
 
   console.log(`============`);
   console.log(`>> Upgrading Alpaca Feeder at ${config.ALPACAFeeder} through Timelock + ProxyAdmin`);
@@ -23,13 +23,23 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log(`>> Implementation address: ${preparedNewAlpacaFeeder}`);
   console.log("✅ Done");
 
+  const networkInfo = await ethers.provider.getNetwork();
+  const ops = isFork() ? { gasLimit: 20000000 } : {};
+  const timelock = new MaybeMultisigTimelock(networkInfo.chainId, deployer);
+  const timelockTransactions: Array<TimelockEntity.Transaction> = [];
+
   console.log(`>> Queue tx on Timelock to upgrade the implementation`);
-  const timelockTransactions = await timelock.queueTransaction(
-    config.ProxyAdmin,
-    "0",
-    "upgrade(address,address)",
-    ethers.utils.defaultAbiCoder.encode(["address", "address"], [config.ALPACAFeeder, preparedNewAlpacaFeeder]),
-    EXACT_ETA
+  timelockTransactions.push(
+    await timelock.queueTransaction(
+      `> Queue tx to upgrade ${config.ALPACAFeeder}`,
+      config.ProxyAdmin,
+      "0",
+      "upgrade(address,address)",
+      ["address", "address"],
+      [config.ALPACAFeeder, preparedNewAlpacaFeeder],
+      EXACT_ETA,
+      ops
+    )
   );
   console.log("✅ Done");
 
