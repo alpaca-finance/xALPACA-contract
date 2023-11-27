@@ -114,4 +114,10 @@ contract AlpacaFeeder is IVault, Initializable, OwnableUpgradeable {
     grassHouse = _newGrassHouse;
     emit LogSetNewGrassHouse(msg.sender, _prevGrassHouse, address(_newGrassHouse));
   }
+
+  /// @notice Transfer remianing alpaca to RevenueTreasury
+  function feedRevenueTreasury() external onlyOwner {
+    address _revenueTreasury = 0x08B5A95cb94f926a8B620E87eE92e675b35afc7E;
+    token.safeTransfer(_revenueTreasury, token.myBalance());
+  }
 }
