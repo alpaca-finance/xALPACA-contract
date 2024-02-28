@@ -3,12 +3,14 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { ethers, upgrades } from "hardhat";
 import { BEP20__factory, XALPACAv2Rewarder, XALPACAv2Rewarder__factory } from "../../../../typechain";
 import { ConfigEntity } from "../../../entities";
+import { getDeployer } from "../../../../utils/deployer-helper";
+import { BigNumber } from "ethers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   interface IRewarder {
     NAME: string;
     AMOUNT: string;
-    REWARD_END_TIMESTAMP: string;
+    REWARD_END_TIMESTAMP: number;
     DECIMAL: number;
   }
   /*
@@ -24,12 +26,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     {
       NAME: "PYTH",
       AMOUNT: "50000",
-      REWARD_END_TIMESTAMP: "",
+      REWARD_END_TIMESTAMP: 1714471200,
       DECIMAL: 6,
     },
   ];
 
-  const deployer = (await ethers.getSigners())[0];
+  const deployer = await getDeployer();
   const config = ConfigEntity.getConfig();
 
   for (const rewarderConfig of REWARDERS) {
@@ -45,10 +47,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const rewardTokenAsDeployer = BEP20__factory.connect(rewarder.rewardToken, deployer);
     const rewarderAsDeployer = XALPACAv2Rewarder__factory.connect(rewarder.address, deployer);
 
-    await rewardTokenAsDeployer.approve(rewarder.address, ethers.utils.parseEther(rewarderConfig.AMOUNT));
+    await rewardTokenAsDeployer.approve(
+      rewarder.address,
+      BigNumber.from(Number(rewarderConfig.AMOUNT) * 10 ** rewarderConfig.DECIMAL)
+    );
     await rewarderAsDeployer.feed(
-      Number(rewarderConfig.AMOUNT) * 10 ** rewarderConfig.DECIMAL,
-      Number(rewarderConfig.REWARD_END_TIMESTAMP)
+      BigNumber.from(Number(rewarderConfig.AMOUNT) * 10 ** rewarderConfig.DECIMAL),
+      BigNumber.from(rewarderConfig.REWARD_END_TIMESTAMP)
     );
     console.log(
       `✅ Done Feed ${rewarderConfig.AMOUNT} ${rewarder.name} to Rewarder ${rewarder.name} at ${rewarder.address} ending at ${rewarderConfig.REWARD_END_TIMESTAMP} `
