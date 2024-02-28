@@ -220,5 +220,12 @@
   ],
   "GrassHouseGateway": "0x50309398E3AbCBD3357b0DD54A624C1251026ee5",
   "xALPACAv2": "0x5E0F05D997d3904dE16d49c0125385e6FAd8FeEe",
-  "xALPACAv2RevenueDistributor": "0xABBEE41c790556b1c1994AbBCeE898933Dd8C609"
+  "xALPACAv2RevenueDistributor": "0xABBEE41c790556b1c1994AbBCeE898933Dd8C609",
+  "xALPACAv2Rewarders" : [
+    {
+      "name": "",
+      "address": "",
+      "rewardToken": ""
+    }
+  ]
 }
