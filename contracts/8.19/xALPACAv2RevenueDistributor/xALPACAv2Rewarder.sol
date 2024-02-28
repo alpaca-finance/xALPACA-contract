@@ -11,6 +11,8 @@ import { SafeCastUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/m
 import { IxALPACAv2RevenueDistributor } from "./interfaces/IxALPACAv2RevenueDistributor.sol";
 import { IxALPACAv2Rewarder } from "./interfaces/IxALPACAv2Rewarder.sol";
 
+import { IBEP20 } from "../interfaces/IBEP20.sol";
+
 contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   using SafeCastUpgradeable for uint256;
   using SafeCastUpgradeable for uint128;
@@ -35,7 +37,7 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
 
   uint256 public rewardPerSecond;
   uint256 public rewardEndTimestamp;
-  uint256 private constant ACC_REWARD_PRECISION = 1e18;
+  uint256 private ACC_REWARD_PRECISION;
 
   address public xALPACAv2RevenueDistributor;
   string public name;
@@ -81,6 +83,13 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
     name = _name;
     xALPACAv2RevenueDistributor = _xALPACAv2RevenueDistributor;
     rewardToken = _rewardToken;
+
+    uint256 _decimal = IBEP20(_rewardToken).decimals();
+    if (_decimal < 18) {
+      ACC_REWARD_PRECISION = 10 ** (18 + (18 - _decimal));
+    } else {
+      ACC_REWARD_PRECISION = 1e18;
+    }
 
     poolInfo = PoolInfo({ accRewardPerShare: 0, lastRewardTime: block.timestamp.toUint64() });
   }
