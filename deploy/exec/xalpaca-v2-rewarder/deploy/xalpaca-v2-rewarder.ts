@@ -18,9 +18,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 */
 
   const NEW_REWARDER = {
-    name: "USDT Rewarder",
+    name: "PYTH Rewarder",
     xALPACAv2RevenueDistributor: config.xALPACAv2RevenueDistributor!,
-    rewardToken: "",
+    rewardToken: "0xb0188B0bb2cD4a6D2744637fC83C94a284B247Da",
   };
 
   const deployer = await getDeployer();
