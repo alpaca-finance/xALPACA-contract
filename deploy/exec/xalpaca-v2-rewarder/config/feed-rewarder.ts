@@ -26,7 +26,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     {
       NAME: "PYTH",
       AMOUNT: "50000",
-      REWARD_END_TIMESTAMP: 1714471200,
+      REWARD_END_TIMESTAMP: 1715212800, // 9 may 2024
       DECIMAL: 6,
     },
   ];
