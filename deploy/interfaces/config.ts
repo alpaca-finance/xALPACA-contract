@@ -12,6 +12,7 @@ export interface Config {
   GrassHouseGateway: string;
   xALPACAv2?: string;
   xALPACAv2RevenueDistributor?: string;
+  xALPACAv2Rewarders: xALPACAv2Rewarder[];
 }
 
 export interface FairLaunch {
@@ -64,6 +65,12 @@ export interface Tokens {
 }
 
 export interface GrassHouse {
+  name: string;
+  address: string;
+  rewardToken: string;
+}
+
+export interface xALPACAv2Rewarder {
   name: string;
   address: string;
   rewardToken: string;
