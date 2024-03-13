@@ -10,7 +10,7 @@ import { TimelockEntity } from "../../../entities";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const TITLE = "upgrade_alpaca_feeder";
-  const EXACT_ETA = "1700820000";
+  const EXACT_ETA = "1701151200";
 
   const deployer = await getDeployer();
   const config = getConfig();
