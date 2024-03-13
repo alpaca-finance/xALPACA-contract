@@ -16,7 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   Check all variables below before execute the deployment script
   */
 
-  const REWARDER = "";
+  const REWARDER = "0x2fF618769E1A3E721AdcFc61A841c549C1061461";
 
   const deployer = await getDeployer();
 

@@ -16,7 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   Check all variables below before execute the deployment script
   */
 
-  const WHITELISTED_FEEDERS = ["0xC44f82b07Ab3E691F826951a6E335E1bC1bB0B51", config.xALPACAv2!];
+  const WHITELISTED_FEEDERS = ["0xC44f82b07Ab3E691F826951a6E335E1bC1bB0B51"];
   const IS_OK_CALLER = true;
 
   const deployer = await getDeployer();

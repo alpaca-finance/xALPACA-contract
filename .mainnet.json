@@ -223,9 +223,9 @@
   "xALPACAv2RevenueDistributor": "0xABBEE41c790556b1c1994AbBCeE898933Dd8C609",
   "xALPACAv2Rewarders" : [
     {
-      "name": "",
-      "address": "",
-      "rewardToken": ""
+      "name": "PYTH",
+      "address": "0x2fF618769E1A3E721AdcFc61A841c549C1061461",
+      "rewardToken": "0xb0188b0bb2cd4a6d2744637fc83c94a284b247da"
     }
   ]
 }

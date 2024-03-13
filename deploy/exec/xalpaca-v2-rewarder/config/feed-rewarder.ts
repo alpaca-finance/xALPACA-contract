@@ -47,10 +47,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const rewardTokenAsDeployer = BEP20__factory.connect(rewarder.rewardToken, deployer);
     const rewarderAsDeployer = XALPACAv2Rewarder__factory.connect(rewarder.address, deployer);
 
-    await rewardTokenAsDeployer.approve(
-      rewarder.address,
-      BigNumber.from(Number(rewarderConfig.AMOUNT) * 10 ** rewarderConfig.DECIMAL)
-    );
+    await rewardTokenAsDeployer.approve(rewarder.address, ethers.constants.MaxUint256);
     await rewarderAsDeployer.feed(
       BigNumber.from(Number(rewarderConfig.AMOUNT) * 10 ** rewarderConfig.DECIMAL),
       BigNumber.from(rewarderConfig.REWARD_END_TIMESTAMP)
