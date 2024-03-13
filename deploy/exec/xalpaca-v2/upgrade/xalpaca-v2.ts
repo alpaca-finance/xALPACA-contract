@@ -20,7 +20,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   */
   const TITLE = "upgrade_xalpacav2";
   const xALPACAv2_VERSION = "xALPACAv2";
-  const EXACT_ETA = "1700820000";
+  const EXACT_ETA = "1701151200";
 
   const config = getConfig();
   const TARGET_XALPACAv2_ADDRESS = config.xALPACAv2!;
@@ -31,10 +31,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const proxyAdminOwner = await ProxyAdmin__factory.connect(config.ProxyAdmin, deployer).owner();
   const newImpl = await ethers.getContractFactory(xALPACAv2_VERSION);
-  let nonce = await deployer.getTransactionCount();
+  let nonce = 21589;
   const preparedNewXALPACAv2 = await upgrades.prepareUpgrade(TARGET_XALPACAv2_ADDRESS, newImpl);
   const networkInfo = await ethers.provider.getNetwork();
-  const ops = isFork() ? { nonce: nonce++, gasLimit: 20000000 } : { nonce: nonce++ };
 
   console.log(`> Upgrading XALPACA at ${TARGET_XALPACAv2_ADDRESS} through Timelock + ProxyAdmin`);
   console.log("> Prepare upgrade & deploy if needed a new IMPL automatically.");
@@ -51,7 +50,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       ["address", "address"],
       [TARGET_XALPACAv2_ADDRESS, preparedNewXALPACAv2],
       EXACT_ETA,
-      ops
+      { nonce: nonce++ }
     )
   );
 
