@@ -33,12 +33,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const proxyAdminOwner = await ProxyAdmin__factory.connect(config.ProxyAdmin, deployer).owner();
   const newImpl = await ethers.getContractFactory(VERSION);
 
-  const preparedNewXALPACAv2 = await upgrades.prepareUpgrade(TARGET_XALPACAv2REVENUEDISTRIBUTOR_ADDRESS, newImpl);
+  const preparedNewXALPACAv2RevenueDistributor = await upgrades.prepareUpgrade(
+    TARGET_XALPACAv2REVENUEDISTRIBUTOR_ADDRESS,
+    newImpl
+  );
   const networkInfo = await ethers.provider.getNetwork();
 
-  console.log(`> Upgrading XALPACA at ${TARGET_XALPACAv2REVENUEDISTRIBUTOR_ADDRESS} through Timelock + ProxyAdmin`);
+  console.log(
+    `> Upgrading XALPACA REVENUE DISTRIBUTOR at ${TARGET_XALPACAv2REVENUEDISTRIBUTOR_ADDRESS} through Timelock + ProxyAdmin`
+  );
   console.log("> Prepare upgrade & deploy if needed a new IMPL automatically.");
-  console.log(`> Implementation address: ${preparedNewXALPACAv2}`);
+  console.log(`> Implementation address: ${preparedNewXALPACAv2RevenueDistributor}`);
 
   const timelock = new MaybeMultisigTimelock(networkInfo.chainId, deployer);
 
@@ -49,7 +54,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       "0",
       "upgrade(address,address)",
       ["address", "address"],
-      [TARGET_XALPACAv2REVENUEDISTRIBUTOR_ADDRESS, preparedNewXALPACAv2],
+      [TARGET_XALPACAv2REVENUEDISTRIBUTOR_ADDRESS, preparedNewXALPACAv2RevenueDistributor],
       EXACT_ETA,
       { nonce: nonce++ }
     )
