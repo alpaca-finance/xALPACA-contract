@@ -100,6 +100,7 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
   function onDeposit(
     address _user,
     uint256 _newAmount,
+    uint256 _previousAmount,
     uint256 _previousStakingReserve
   ) external override onlyxALPACAv2RevenueDistributor {
     PoolInfo memory pool = _updatePool(_previousStakingReserve);
@@ -120,6 +121,14 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
     //  - pendingRewardReward  = 25,000
     //  rewardDebt = previousRewardDebt + (_receivedAmount * accRewardPerShare)= 0 + (100 * 250) = 25,000
     //  This means newly deposit share does not eligible for 25,000 pending rewards
+
+    // handle if user already has deposited
+    // reward users supposed to get will be accounted here
+    if (user.rewardDebt == 0 && _previousAmount > 0) {
+      user.rewardDebt =
+        user.rewardDebt -
+        (((_previousAmount * pool.accRewardPerShare) / ACC_REWARD_PRECISION)).toInt256();
+    }
     user.rewardDebt = user.rewardDebt + ((_amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION).toInt256();
 
     emit LogOnDeposit(_user, _amount);
