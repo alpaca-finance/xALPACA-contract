@@ -40,7 +40,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       continue;
     }
     console.log(
-      `>> Feeding ${rewarderConfig.AMOUNT} ${rewarder.name} to Rewarder ${rewarder.name} at ${rewarder.address}`
+      `>> Withdrawing ${rewarderConfig.AMOUNT} ${rewarder.name} from Rewarder ${rewarder.name} at ${rewarder.address}`
     );
     const rewarderAsDeployer = XALPACAv2Rewarder__factory.connect(rewarder.address, deployer);
 
