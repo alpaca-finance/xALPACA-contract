@@ -23,15 +23,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const TITLE = "upgrade_xalpacav2_revenue_distributor";
   const VERSION = "xALPACAv2RevenueDistributor";
   const EXACT_ETA = "1712314800";
-  const REWARDER_NAME = "PYTH";
   let nonce = 0;
-  let rewarder_config = config.xALPACAv2Rewarders.find((rewarder) => rewarder.name === REWARDER_NAME);
-
-  if (!rewarder_config) {
-    console.log(`Rewarder ${REWARDER_NAME} not found`);
-    return;
-  }
-
   const TARGET_XALPACAv2REVENUEDISTRIBUTOR_ADDRESS = config.xALPACAv2RevenueDistributor!;
 
   const deployer = await getDeployer();
@@ -41,10 +33,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const proxyAdminOwner = await ProxyAdmin__factory.connect(config.ProxyAdmin, deployer).owner();
   const newImpl = await ethers.getContractFactory(VERSION);
 
-  const preparedNewXALPACAv2 = await upgrades.prepareUpgrade(rewarder_config.address, newImpl);
+  const preparedNewXALPACAv2 = await upgrades.prepareUpgrade(TARGET_XALPACAv2REVENUEDISTRIBUTOR_ADDRESS, newImpl);
   const networkInfo = await ethers.provider.getNetwork();
 
-  console.log(`> Upgrading XALPACA at ${rewarder_config.address} through Timelock + ProxyAdmin`);
+  console.log(`> Upgrading XALPACA at ${TARGET_XALPACAv2REVENUEDISTRIBUTOR_ADDRESS} through Timelock + ProxyAdmin`);
   console.log("> Prepare upgrade & deploy if needed a new IMPL automatically.");
   console.log(`> Implementation address: ${preparedNewXALPACAv2}`);
 
@@ -52,12 +44,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   timelockTransactions.push(
     await timelock.queueTransaction(
-      `> Queue tx to upgrade ${rewarder_config?.address}`,
+      `> Queue tx to upgrade ${TARGET_XALPACAv2REVENUEDISTRIBUTOR_ADDRESS}`,
       config.ProxyAdmin,
       "0",
       "upgrade(address,address)",
       ["address", "address"],
-      [rewarder_config?.address, preparedNewXALPACAv2],
+      [TARGET_XALPACAv2REVENUEDISTRIBUTOR_ADDRESS, preparedNewXALPACAv2],
       EXACT_ETA,
       { nonce: nonce++ }
     )
@@ -71,4 +63,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 
 export default func;
-func.tags = ["UpgradeXALPACAv2Rewarder"];
+func.tags = ["UpgradeXALPACAv2RevenueDistributor"];
