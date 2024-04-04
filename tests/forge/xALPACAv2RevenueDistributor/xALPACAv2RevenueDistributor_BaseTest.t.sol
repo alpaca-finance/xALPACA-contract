@@ -42,8 +42,6 @@ contract xALPACAv2RevenueDistributor_BaseTest is xALPACAV2_BaseTest {
 
     rewardToken1.approve(address(rewarder1), 10000000 ether);
     rewardToken2.approve(address(rewarder2), 15000000 ether);
-    rewarder1.feed(100 ether * 100, block.timestamp + 100);
-    rewarder2.feed(150 ether * 100, block.timestamp + 100);
 
     alpaca.mint(ALICE, 100 ether);
     alpaca.mint(EVE, 100 ether);
@@ -53,6 +51,9 @@ contract xALPACAv2RevenueDistributor_BaseTest is xALPACAV2_BaseTest {
   function setupRewarder() internal {
     revenueDistributor.addRewarders(address(rewarder1));
     revenueDistributor.addRewarders(address(rewarder2));
+
+    rewarder1.feed(100 ether * 100, block.timestamp + 100);
+    rewarder2.feed(150 ether * 100, block.timestamp + 100);
   }
 
   function assertRewarderUserInfo(
