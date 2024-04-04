@@ -292,6 +292,13 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
     return _updatePool(IxALPACAv2RevenueDistributor(xALPACAv2RevenueDistributor).stakingReserve());
   }
 
+  /// @notice Deployer pull phyiscal token from the pool
+  /// @param _to Destination Address
+  /// @param _amount Amount to transfer
+  function withdrawTo(address _to, uint256 _amount) external onlyOwner {
+    IERC20Upgradeable(rewardToken).safeTransfer(_to, _amount);
+  }
+
   /// @notice Change the name of the rewarder.
   /// @param _newName The new name of the rewarder.
   function setName(string calldata _newName) external onlyOwner {
