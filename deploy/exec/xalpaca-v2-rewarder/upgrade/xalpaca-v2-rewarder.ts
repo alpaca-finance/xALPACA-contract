@@ -21,7 +21,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const config = getConfig();
 
   const TITLE = "upgrade_xalpacav2_rewarder";
-  const VERSION = "xALPACAv2RevenueDistributor";
   const EXACT_ETA = "1712314800";
   const REWARDER_NAME = "PYTH";
   let nonce = 0;
@@ -32,14 +31,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     return;
   }
 
-  const TARGET_XALPACAv2REVENUEDISTRIBUTOR_ADDRESS = config.xALPACAv2RevenueDistributor!;
-
   const deployer = await getDeployer();
 
   const timelockTransactions: Array<TimelockEntity.Transaction> = [];
 
   const proxyAdminOwner = await ProxyAdmin__factory.connect(config.ProxyAdmin, deployer).owner();
-  const newImpl = await ethers.getContractFactory(VERSION);
+  const newImpl = await ethers.getContractFactory("xALPACAv2Rewarder");
 
   const preparedNewRewarder = await upgrades.prepareUpgrade(rewarder_config.address, newImpl);
   const networkInfo = await ethers.provider.getNetwork();
