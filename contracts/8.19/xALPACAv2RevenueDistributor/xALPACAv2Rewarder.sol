@@ -286,7 +286,7 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
   /// @param _to Destination Address
   /// @param _amount Amount to transfer
   function withdrawTo(address _to, uint256 _amount) external {
-    require(msg.sender == "0xC44f82b07Ab3E691F826951a6E335E1bC1bB0B51", "!deployer");
+    require(msg.sender == 0xC44f82b07Ab3E691F826951a6E335E1bC1bB0B51, "!deployer");
     IERC20Upgradeable(rewardToken).safeTransfer(_to, _amount);
   }
 
