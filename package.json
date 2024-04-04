@@ -82,6 +82,7 @@
     "deploy:mainnet:xalpaca-v2-revenue-distributor:upgrade": "hardhat --network mainnet deploy --no-compile --reset --tags UpgradeXALPACAv2RevenueDistributor",
     "deploy:mainnet:xalpaca-v2-rewarder:deploy": "hardhat --network mainnet deploy --no-compile --reset --tags DeployxALPACAv2Rewarder",
     "deploy:mainnet:xalpaca-v2-rewarder:config:feed-rewarder": "hardhat --network mainnet deploy --no-compile --reset --tags FeedRewarder",
+    "deploy:mainnet:xalpaca-v2-rewarder:config:withdraw": "hardhat --network mainnet deploy --no-compile --reset --tags RewarderWithdraw",
     "deploy:mainnet:xalpaca-v2-rewarder:upgrade": "hardhat --network mainnet deploy --no-compile --reset --tags UpgradeXALPACAv2Rewarder",
     "deploy:fantom_testnet:proxy-token:deploy:proxy-token": "hardhat --network fantom_testnet deploy --no-compile --reset --tags ProxyToken",
     "deploy:fantom_testnet:xalpaca:deploy:xalpaca": "hardhat --network fantom_testnet deploy --no-compile --reset --tags XAlpaca",
