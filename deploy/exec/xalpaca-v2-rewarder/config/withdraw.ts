@@ -24,7 +24,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const REWARDERS: Array<IRewarder> = [
     {
       NAME: "PYTH",
-      AMOUNT: "1",
+      AMOUNT: "175.26",
       DECIMAL: 6,
     },
   ];
