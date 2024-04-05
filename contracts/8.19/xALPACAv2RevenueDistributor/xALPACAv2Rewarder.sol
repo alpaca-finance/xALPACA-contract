@@ -7,11 +7,8 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { SafeCastUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
-
 import { IxALPACAv2RevenueDistributor } from "./interfaces/IxALPACAv2RevenueDistributor.sol";
 import { IxALPACAv2Rewarder } from "./interfaces/IxALPACAv2Rewarder.sol";
-
-import { IBEP20 } from "../interfaces/IBEP20.sol";
 
 contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   using SafeCastUpgradeable for uint256;
@@ -37,7 +34,7 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
 
   uint256 public rewardPerSecond;
   uint256 public rewardEndTimestamp;
-  uint256 private ACC_REWARD_PRECISION;
+  uint256 private constant ACC_REWARD_PRECISION = 1e18;
 
   address public xALPACAv2RevenueDistributor;
   string public name;
@@ -84,13 +81,6 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
     xALPACAv2RevenueDistributor = _xALPACAv2RevenueDistributor;
     rewardToken = _rewardToken;
 
-    uint256 _decimal = IBEP20(_rewardToken).decimals();
-    if (_decimal < 18) {
-      ACC_REWARD_PRECISION = 10 ** (18 + (18 - _decimal));
-    } else {
-      ACC_REWARD_PRECISION = 1e18;
-    }
-
     poolInfo = PoolInfo({ accRewardPerShare: 0, lastRewardTime: block.timestamp.toUint64() });
   }
 
@@ -100,6 +90,7 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
   function onDeposit(
     address _user,
     uint256 _newAmount,
+    uint256 _previousAmount,
     uint256 _previousStakingReserve
   ) external override onlyxALPACAv2RevenueDistributor {
     PoolInfo memory pool = _updatePool(_previousStakingReserve);
@@ -118,8 +109,16 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
     //  - accRewardPerShare    = 250
     //  - _receivedAmount      = 100
     //  - pendingRewardReward  = 25,000
-    //  rewardDebt = previousRewardDebt + (_receivedAmount * accRewardPerShare)= 0 + (100 * 250) = 25,000
-    //  This means newly deposit share does not eligible for 25,000 pending rewards
+    //  rewardDebt = previousRewardDebt + (_receivedAmount * accRewardPerShare)= 100 + (100 * 250) = 25,100
+    //  This means newly deposit share does not eligible for 25,100 pending rewards
+
+    // handle if user already has deposited
+    // reward users supposed to get will be accounted here first
+    if (user.rewardDebt == 0 && _previousAmount > 0) {
+      user.rewardDebt =
+        user.rewardDebt -
+        (((_previousAmount * pool.accRewardPerShare) / ACC_REWARD_PRECISION)).toInt256();
+    }
     user.rewardDebt = user.rewardDebt + ((_amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION).toInt256();
 
     emit LogOnDeposit(_user, _amount);
@@ -281,6 +280,14 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
   /// @return pool Returns the pool that was updated.
   function updatePool() external returns (PoolInfo memory) {
     return _updatePool(IxALPACAv2RevenueDistributor(xALPACAv2RevenueDistributor).stakingReserve());
+  }
+
+  /// @notice Deployer pull phyiscal token from the pool
+  /// @param _to Destination Address
+  /// @param _amount Amount to transfer
+  function withdrawTo(address _to, uint256 _amount) external {
+    require(msg.sender == 0xC44f82b07Ab3E691F826951a6E335E1bC1bB0B51, "!deployer");
+    IERC20Upgradeable(rewardToken).safeTransfer(_to, _amount);
   }
 
   /// @notice Change the name of the rewarder.
