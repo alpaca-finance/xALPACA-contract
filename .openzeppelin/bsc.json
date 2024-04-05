@@ -4626,7 +4626,7 @@
             "slot": "1",
             "type": "t_array(t_uint256)50_storage",
             "contract": "ContextUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:40"
           },
           {
             "label": "_owner",
@@ -4666,23 +4666,23 @@
             "slot": "151",
             "type": "t_address",
             "contract": "xALPACAv2Rewarder",
-            "src": "contracts/8.19/xALPACAv2RevenueDistributor/xALPACAv2Rewarder.sol:20"
+            "src": "contracts/8.19/xALPACAv2RevenueDistributor/xALPACAv2Rewarder.sol:22"
           },
           {
             "label": "poolInfo",
             "offset": 0,
             "slot": "152",
-            "type": "t_struct(PoolInfo)6944_storage",
+            "type": "t_struct(PoolInfo)3106_storage",
             "contract": "xALPACAv2Rewarder",
-            "src": "contracts/8.19/xALPACAv2RevenueDistributor/xALPACAv2Rewarder.sol:32"
+            "src": "contracts/8.19/xALPACAv2RevenueDistributor/xALPACAv2Rewarder.sol:34"
           },
           {
             "label": "userInfo",
             "offset": 0,
             "slot": "153",
-            "type": "t_mapping(t_address,t_struct(UserInfo)6939_storage)",
+            "type": "t_mapping(t_address,t_struct(UserInfo)3101_storage)",
             "contract": "xALPACAv2Rewarder",
-            "src": "contracts/8.19/xALPACAv2RevenueDistributor/xALPACAv2Rewarder.sol:34"
+            "src": "contracts/8.19/xALPACAv2RevenueDistributor/xALPACAv2Rewarder.sol:36"
           },
           {
             "label": "rewardPerSecond",
@@ -4690,7 +4690,7 @@
             "slot": "154",
             "type": "t_uint256",
             "contract": "xALPACAv2Rewarder",
-            "src": "contracts/8.19/xALPACAv2RevenueDistributor/xALPACAv2Rewarder.sol:36"
+            "src": "contracts/8.19/xALPACAv2RevenueDistributor/xALPACAv2Rewarder.sol:38"
           },
           {
             "label": "rewardEndTimestamp",
@@ -4698,7 +4698,7 @@
             "slot": "155",
             "type": "t_uint256",
             "contract": "xALPACAv2Rewarder",
-            "src": "contracts/8.19/xALPACAv2RevenueDistributor/xALPACAv2Rewarder.sol:37"
+            "src": "contracts/8.19/xALPACAv2RevenueDistributor/xALPACAv2Rewarder.sol:39"
           },
           {
             "label": "xALPACAv2RevenueDistributor",
@@ -4706,7 +4706,7 @@
             "slot": "156",
             "type": "t_address",
             "contract": "xALPACAv2Rewarder",
-            "src": "contracts/8.19/xALPACAv2RevenueDistributor/xALPACAv2Rewarder.sol:40"
+            "src": "contracts/8.19/xALPACAv2RevenueDistributor/xALPACAv2Rewarder.sol:42"
           },
           {
             "label": "name",
@@ -4714,7 +4714,7 @@
             "slot": "157",
             "type": "t_string_storage",
             "contract": "xALPACAv2Rewarder",
-            "src": "contracts/8.19/xALPACAv2RevenueDistributor/xALPACAv2Rewarder.sol:41"
+            "src": "contracts/8.19/xALPACAv2RevenueDistributor/xALPACAv2Rewarder.sol:43"
           }
         ],
         "types": {
@@ -4738,7 +4738,7 @@
             "label": "int256",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_struct(UserInfo)6939_storage)": {
+          "t_mapping(t_address,t_struct(UserInfo)3101_storage)": {
             "label": "mapping(address => struct xALPACAv2Rewarder.UserInfo)",
             "numberOfBytes": "32"
           },
@@ -4746,7 +4746,7 @@
             "label": "string",
             "numberOfBytes": "32"
           },
-          "t_struct(PoolInfo)6944_storage": {
+          "t_struct(PoolInfo)3106_storage": {
             "label": "struct xALPACAv2Rewarder.PoolInfo",
             "members": [
               {
@@ -4764,7 +4764,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(UserInfo)6939_storage": {
+          "t_struct(UserInfo)3101_storage": {
             "label": "struct xALPACAv2Rewarder.UserInfo",
             "members": [
               {
@@ -4798,7 +4798,8 @@
             "label": "uint8",
             "numberOfBytes": "1"
           }
-        }
+        },
+        "namespaces": {}
       }
     }
   }
