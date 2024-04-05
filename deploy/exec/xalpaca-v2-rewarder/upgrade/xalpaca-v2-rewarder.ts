@@ -49,12 +49,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   timelockTransactions.push(
     await timelock.queueTransaction(
-      `> Queue tx to upgrade ${rewarder_config?.address}`,
+      `> Queue tx to upgrade ${rewarder_config.address}`,
       config.ProxyAdmin,
       "0",
       "upgrade(address,address)",
       ["address", "address"],
-      [rewarder_config?.address, preparedNewRewarder],
+      [rewarder_config.address, preparedNewRewarder],
       EXACT_ETA,
       { nonce: nonce++ }
     )
