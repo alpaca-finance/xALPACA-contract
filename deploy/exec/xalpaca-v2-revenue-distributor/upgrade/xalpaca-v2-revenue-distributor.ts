@@ -22,9 +22,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const TITLE = "upgrade_xalpacav2_revenue_distributor";
   const EXACT_ETA = "1712314800";
-  let nonce = 0;
   const TARGET_XALPACAv2REVENUEDISTRIBUTOR_ADDRESS = config.xALPACAv2RevenueDistributor!;
 
+  let nonce = 0;
   const deployer = await getDeployer();
 
   const timelockTransactions: Array<TimelockEntity.Transaction> = [];

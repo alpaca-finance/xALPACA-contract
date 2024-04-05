@@ -23,6 +23,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const TITLE = "upgrade_xalpacav2_rewarder";
   const EXACT_ETA = "1712314800";
   const REWARDER_NAME = "PYTH";
+
   let nonce = 0;
   let rewarder_config = config.xALPACAv2Rewarders.find((rewarder) => rewarder.name === REWARDER_NAME);
 
