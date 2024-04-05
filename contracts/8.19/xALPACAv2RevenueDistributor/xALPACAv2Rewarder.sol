@@ -109,11 +109,11 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
     //  - accRewardPerShare    = 250
     //  - _receivedAmount      = 100
     //  - pendingRewardReward  = 25,000
-    //  rewardDebt = previousRewardDebt + (_receivedAmount * accRewardPerShare)= 100 + (100 * 250) = 26,000
-    //  This means newly deposit share does not eligible for 26,000 pending rewards
+    //  rewardDebt = previousRewardDebt + (_receivedAmount * accRewardPerShare)= 100 + (100 * 250) = 25,100
+    //  This means newly deposit share does not eligible for 25,100 pending rewards
 
     // handle if user already has deposited
-    // reward users supposed to get will be accounted here
+    // reward users supposed to get will be accounted here first
     if (user.rewardDebt == 0 && _previousAmount > 0) {
       user.rewardDebt =
         user.rewardDebt -
