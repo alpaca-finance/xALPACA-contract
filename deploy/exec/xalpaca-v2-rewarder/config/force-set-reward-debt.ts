@@ -21,11 +21,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           ░░░╚═╝░░░╚═╝░░╚═╝░░╚═╝╚═╝░░╚═╝╚═╝░░╚══╝╚═╝╚═╝░░╚══╝░╚═════╝░
           Check all variables below before execute the deployment script
     */
-  const REWARDER = {
-    NAME: "PYTH",
-    AMOUNT: "175.26",
-    DECIMAL: 6,
-  };
+  const REWARDER = "PYTH";
 
   const user = "";
   const newRewardDebt = 0;
@@ -33,20 +29,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer();
   const config = ConfigEntity.getConfig();
 
-  const rewarder = config.xALPACAv2Rewarders.find((rw) => rw.name === REWARDER.NAME);
+  const rewarder = config.xALPACAv2Rewarders.find((rw) => rw.name === REWARDER);
   console.log(rewarder);
   if (!rewarder) {
-    console.log(`>> ${REWARDER.NAME} Rewarder not found`);
+    console.log(`>> ${REWARDER} Rewarder not found`);
     return;
   }
-  console.log(
-    `>> Withdrawing ${REWARDER.AMOUNT} ${rewarder.name} from Rewarder ${rewarder.name} at ${rewarder.address}`
-  );
+  console.log(`>> Setting reward debt for ${user} from Rewarder ${rewarder.name} at ${rewarder.address}`);
   const rewarderAsDeployer = XALPACAv2Rewarder__factory.connect(rewarder.address, deployer);
 
   await rewarderAsDeployer.forceSetReward(user, newRewardDebt);
-  console.log(`✅ Done withdraw ${REWARDER.AMOUNT} ${rewarder.name} to ${deployer.address}`);
+  console.log(`✅ Done`);
 };
 
 export default func;
-func.tags = ["RewarderWithdraw"];
+func.tags = ["RewarderForceSetReward"];
