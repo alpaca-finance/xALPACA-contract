@@ -1,17 +1,12 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers, upgrades } from "hardhat";
-import { BEP20__factory, XALPACAv2Rewarder, XALPACAv2Rewarder__factory } from "../../../../typechain";
+import { XALPACAv2Rewarder, XALPACAv2Rewarder__factory } from "../../../../typechain";
 import { ConfigEntity } from "../../../entities";
 import { getDeployer } from "../../../../utils/deployer-helper";
 import { BigNumber } from "ethers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  interface IRewarder {
-    NAME: string;
-    AMOUNT: string;
-    DECIMAL: number;
-  }
   /*
           ░██╗░░░░░░░██╗░█████╗░██████╗░███╗░░██╗██╗███╗░░██╗░██████╗░
           ░██║░░██╗░░██║██╔══██╗██╔══██╗████╗░██║██║████╗░██║██╔════╝░
