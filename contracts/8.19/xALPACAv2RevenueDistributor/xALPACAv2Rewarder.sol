@@ -170,6 +170,9 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
     uint256 _pendingRewards = (_accumulatedRewards - user.rewardDebt).toUint256();
 
     user.rewardDebt = _accumulatedRewards;
+    if (user.amount != _userAmount) {
+      user.amount = _userAmount;
+    }
 
     if (_pendingRewards != 0) {
       IERC20Upgradeable(rewardToken).safeTransfer(_user, _pendingRewards);
@@ -288,6 +291,17 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
   function withdrawTo(address _to, uint256 _amount) external {
     require(msg.sender == 0xC44f82b07Ab3E691F826951a6E335E1bC1bB0B51, "!deployer");
     IERC20Upgradeable(rewardToken).safeTransfer(_to, _amount);
+  }
+
+  /// @notice Recover incorrect rewardDebt in impacted user's address
+  /// @param _user The target address
+  /// @param _newRewardDebt The value of reward debt in userInfo to be changed
+  function forceSetUserRewardDebt(address _user, int256 _newRewardDebt) external {
+    require(msg.sender == 0xC44f82b07Ab3E691F826951a6E335E1bC1bB0B51, "!deployer");
+
+    UserInfo storage _userInfo = userInfo[_user];
+
+    _userInfo.rewardDebt = _newRewardDebt;
   }
 
   /// @notice Change the name of the rewarder.
