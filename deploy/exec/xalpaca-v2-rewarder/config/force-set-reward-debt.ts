@@ -19,7 +19,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const REWARDER = "PYTH";
 
   const user = "";
-  const newRewardDebt = 0;
+  const newRewardDebt = 524935147;
 
   const deployer = await getDeployer();
   const config = ConfigEntity.getConfig();
@@ -30,7 +30,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log(`>> ${REWARDER} Rewarder not found`);
     return;
   }
-  console.log(`>> Setting reward debt for ${user} from Rewarder ${rewarder.name} at ${rewarder.address}`);
+  console.log(
+    `>> Setting ${newRewardDebt} as a new reward debt for ${user} at Rewarder ${rewarder.name} at ${rewarder.address}`
+  );
   const rewarderAsDeployer = XALPACAv2Rewarder__factory.connect(rewarder.address, deployer);
 
   await rewarderAsDeployer.forceSetReward(user, newRewardDebt);
@@ -38,4 +40,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 
 export default func;
-func.tags = ["RewarderForceSetReward"];
+func.tags = ["RewarderForceSetRewardDebt"];
