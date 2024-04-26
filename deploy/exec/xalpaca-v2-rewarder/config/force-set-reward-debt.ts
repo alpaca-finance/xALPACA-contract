@@ -18,7 +18,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     */
   const REWARDER = "PYTH";
 
-  const user = "";
+  const user = "0xd09fA948296E54D1Ab73A0497C16403A08A84732";
   const newRewardDebt = 524935147;
 
   const deployer = await getDeployer();
@@ -35,7 +35,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   );
   const rewarderAsDeployer = XALPACAv2Rewarder__factory.connect(rewarder.address, deployer);
 
-  await rewarderAsDeployer.forceSetReward(user, newRewardDebt);
+  await rewarderAsDeployer.forceSetUserRewardDebt(user, newRewardDebt);
   console.log(`✅ Done`);
 };
 
