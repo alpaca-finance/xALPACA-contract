@@ -198,6 +198,7 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     uint256 _receivedAmount = _unsafePullToken(msg.sender, ALPACA, _amountToDeposit);
 
     uint256 _previousStakingReserve = stakingReserve;
+    uint256 _previousUserTotalAmount = user.totalAmount;
     // Effects
     // can do unchecked since staked token totalSuply < max(uint256)
     unchecked {
@@ -222,7 +223,12 @@ contract xALPACAv2RevenueDistributor is IxALPACAv2RevenueDistributor, OwnableUpg
     for (uint256 _i; _i < _rewarderLength; ) {
       _rewarder = rewarders[_i];
       // rewarder callback to do accounting
-      IxALPACAv2Rewarder(_rewarder).onDeposit(_for, user.totalAmount, _previousStakingReserve);
+      IxALPACAv2Rewarder(_rewarder).onDeposit(
+        _for,
+        user.totalAmount,
+        _previousUserTotalAmount,
+        _previousStakingReserve
+      );
       unchecked {
         ++_i;
       }
