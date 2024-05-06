@@ -96,32 +96,13 @@ contract xALPACAv2Rewarder is IxALPACAv2Rewarder, OwnableUpgradeable, Reentrancy
     PoolInfo memory pool = _updatePool(_previousStakingReserve);
     UserInfo storage user = userInfo[_user];
 
-    // calculate new staked amount
-    // example: if user deposit another 500 shares
-    //  - user.amount  = 100 => from previous deposit
-    //  - _newAmount   = 600 => updated staking amount from xALPACAv2RevenueDistributor
-    //  _amount = _newAmount - user.amount = 600 - 100 = 500
-    uint256 _amount = _newAmount - user.amount;
+    uint256 _depositedAmount = _newAmount - _previousAmount;
 
     user.amount = _newAmount;
-    // update user rewardDebt to separate new deposit share amount from pending reward in the pool
-    // example:
-    //  - accRewardPerShare    = 250
-    //  - _receivedAmount      = 100
-    //  - pendingRewardReward  = 25,000
-    //  rewardDebt = previousRewardDebt + (_receivedAmount * accRewardPerShare)= 100 + (100 * 250) = 25,100
-    //  This means newly deposit share does not eligible for 25,100 pending rewards
 
-    // handle if user already has deposited
-    // reward users supposed to get will be accounted here first
-    if (user.rewardDebt == 0 && _previousAmount > 0) {
-      user.rewardDebt =
-        user.rewardDebt -
-        (((_previousAmount * pool.accRewardPerShare) / ACC_REWARD_PRECISION)).toInt256();
-    }
-    user.rewardDebt = user.rewardDebt + ((_amount * pool.accRewardPerShare) / ACC_REWARD_PRECISION).toInt256();
+    user.rewardDebt = user.rewardDebt + ((_depositedAmount * pool.accRewardPerShare) / ACC_REWARD_PRECISION).toInt256();
 
-    emit LogOnDeposit(_user, _amount);
+    emit LogOnDeposit(_user, _depositedAmount);
   }
 
   /// @notice Hook Withdraw action from xALPACAv2RevenueDistributor.
