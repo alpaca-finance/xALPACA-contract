@@ -83,6 +83,7 @@
     "deploy:mainnet:xalpaca-v2-rewarder:deploy": "hardhat --network mainnet deploy --no-compile --reset --tags DeployxALPACAv2Rewarder",
     "deploy:mainnet:xalpaca-v2-rewarder:config:feed-rewarder": "hardhat --network mainnet deploy --no-compile --reset --tags FeedRewarder",
     "deploy:mainnet:xalpaca-v2-rewarder:config:withdraw": "hardhat --network mainnet deploy --no-compile --reset --tags RewarderWithdraw",
+    "deploy:mainnet:xalpaca-v2-rewarder:config:find-pending-tokens": "hardhat --network mainnet deploy --no-compile --reset --tags FindPendingTokens",
     "deploy:mainnet:xalpaca-v2-rewarder:config:force-set-reward-debt": "hardhat --network mainnet deploy --no-compile --reset --tags RewarderForceSetRewardDebt",
     "deploy:mainnet:xalpaca-v2-rewarder:upgrade": "hardhat --network mainnet deploy --no-compile --reset --tags UpgradeXALPACAv2Rewarder",
     "deploy:fantom_testnet:proxy-token:deploy:proxy-token": "hardhat --network fantom_testnet deploy --no-compile --reset --tags ProxyToken",
