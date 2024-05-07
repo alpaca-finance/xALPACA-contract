@@ -28,7 +28,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     },
     {
       user: "0x04938ffb0c749a11fcda6d5138a95b1cd76791d0",
-      rewardDebt: 240483,
+      rewardDebt: 0,
     },
     {
       user: "0xa25ad78e8bf1ff9e5872662934ec4984b92611ff",
