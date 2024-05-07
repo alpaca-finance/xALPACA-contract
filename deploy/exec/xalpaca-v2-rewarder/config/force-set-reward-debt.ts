@@ -52,7 +52,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     },
     {
       user: "0x0567d99a4420b8da0fd91c5ecba78955c04974f0",
-      rewardDebt: 1713434087,
+      rewardDebt: 3094379,
     },
     {
       user: "0x539ec9fe37320828cdf639c2de93cbf1d1e5d257",
@@ -64,7 +64,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     },
     {
       user: "0x736b9564c98325df57e3251d405a883fa85918fd",
-      rewardDebt: 1715939580,
+      rewardDebt: 16235119,
     },
     {
       user: "0x902736ba2f6558332efbadb4a731af786e55f4b9",
