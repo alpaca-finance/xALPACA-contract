@@ -67,6 +67,3 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   fileService.writeJson(fileName, timelockTransactions);
   console.log("✅ Done");
 };
-
-export default func;
-func.tags = ["UpgradeXALPACAv2Rewarder"];
