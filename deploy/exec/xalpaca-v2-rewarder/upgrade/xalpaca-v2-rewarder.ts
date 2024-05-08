@@ -1,50 +1,63 @@
+import { ProxyAdmin__factory } from "@alpaca-finance/alpaca-contract/typechain";
 import { ethers, upgrades } from "hardhat";
-import { XALPACAv2Rewarder, XALPACAv2Rewarder__factory } from "../../../../typechain";
-import { getDeployer } from "../../../../utils/deployer-helper";
-import { ConfigEntity, TimelockEntity } from "../../../entities";
+import { DeployFunction } from "hardhat-deploy/types";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { getDeployer, isFork } from "../../../../utils/deployer-helper";
+import { TimelockEntity } from "../../../entities";
+import { getConfig } from "../../../entities/config";
 import { fileService } from "../../../services";
 import { MaybeMultisigTimelock } from "../../../services/timelock/maybe-multisig";
 
-async function main() {
-  const config = ConfigEntity.getConfig();
+const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   /*
-    ░██╗░░░░░░░██╗░█████╗░██████╗░███╗░░██╗██╗███╗░░██╗░██████╗░
-    ░██║░░██╗░░██║██╔══██╗██╔══██╗████╗░██║██║████╗░██║██╔════╝░
-    ░╚██╗████╗██╔╝███████║██████╔╝██╔██╗██║██║██╔██╗██║██║░░██╗░
-    ░░████╔═████║░██╔══██║██╔══██╗██║╚████║██║██║╚████║██║░░╚██╗
-    ░░╚██╔╝░╚██╔╝░██║░░██║██║░░██║██║░╚███║██║██║░╚███║╚██████╔╝
-    ░░░╚═╝░░░╚═╝░░╚═╝░░╚═╝╚═╝░░╚═╝╚═╝░░╚══╝╚═╝╚═╝░░╚══╝░╚═════╝░
-    Check all variables below before execute the deployment script
-*/
+  ░██╗░░░░░░░██╗░█████╗░██████╗░███╗░░██╗██╗███╗░░██╗░██████╗░
+  ░██║░░██╗░░██║██╔══██╗██╔══██╗████╗░██║██║████╗░██║██╔════╝░
+  ░╚██╗████╗██╔╝███████║██████╔╝██╔██╗██║██║██╔██╗██║██║░░██╗░
+  ░░████╔═████║░██╔══██║██╔══██╗██║╚████║██║██║╚████║██║░░╚██╗
+  ░░╚██╔╝░╚██╔╝░██║░░██║██║░░██║██║░╚███║██║██║░╚███║╚██████╔╝
+  ░░░╚═╝░░░╚═╝░░╚═╝░░╚═╝╚═╝░░╚═╝╚═╝░░╚══╝╚═╝╚═╝░░╚══╝░╚═════╝░
+  Check all variables below before execute the deployment script
+  */
+  const config = getConfig();
+
+  const TITLE = "upgrade_xalpacav2_rewarder";
+  const EXACT_ETA = "1714473000";
+  const REWARDER_NAME = "PYTH";
+  let nonce = 21892;
+
+  let rewarder_config = config.xALPACAv2Rewarders.find((rewarder) => rewarder.name === REWARDER_NAME);
+
+  if (!rewarder_config) {
+    console.log(`Rewarder ${REWARDER_NAME} not found`);
+    return;
+  }
 
   const deployer = await getDeployer();
-  const chainId = (await ethers.provider.getNetwork()).chainId;
 
-  const TITLE = "upgrade_xalpacav2rewarder";
-  const REWARDER_ADDRESS = config.xALPACAv2Rewarders[0].address;
-  const EXACT_ETA = "1712410200";
-  let NONCE = 21870;
-
-  const xALPACAv2RewarderFactory = new XALPACAv2Rewarder__factory(deployer);
-
-  console.log(`> Upgrading xALPACAv2Rewarder at ${REWARDER_ADDRESS} through Timelock + ProxyAdmin`);
-  console.log("> Prepare upgrade & deploy if needed a new IMPL automatically.");
-  const preparedImpl = await upgrades.prepareUpgrade(REWARDER_ADDRESS, xALPACAv2RewarderFactory);
-  console.log(`> Implementation address: ${preparedImpl.toString()}`);
-
-  const timelock = new MaybeMultisigTimelock(chainId, deployer);
   const timelockTransactions: Array<TimelockEntity.Transaction> = [];
+
+  const proxyAdminOwner = await ProxyAdmin__factory.connect(config.ProxyAdmin, deployer).owner();
+  const newImpl = await ethers.getContractFactory("xALPACAv2Rewarder");
+
+  const preparedNewRewarder = await upgrades.prepareUpgrade(rewarder_config.address, newImpl);
+  const networkInfo = await ethers.provider.getNetwork();
+
+  console.log(`> Upgrading XALPACA REWARDER at ${rewarder_config.address} through Timelock + ProxyAdmin`);
+  console.log("> Prepare upgrade & deploy if needed a new IMPL automatically.");
+  console.log(`> Implementation address: ${preparedNewRewarder}`);
+
+  const timelock = new MaybeMultisigTimelock(networkInfo.chainId, deployer);
 
   timelockTransactions.push(
     await timelock.queueTransaction(
-      `> Queue tx to upgrade ${REWARDER_ADDRESS}`,
+      `> Queue tx to upgrade ${rewarder_config.address}`,
       config.ProxyAdmin,
       "0",
       "upgrade(address,address)",
       ["address", "address"],
-      [REWARDER_ADDRESS, preparedImpl],
+      [rewarder_config.address, preparedNewRewarder],
       EXACT_ETA,
-      { nonce: NONCE++ }
+      { nonce: nonce++ }
     )
   );
 
@@ -53,13 +66,7 @@ async function main() {
   console.log(`> Writing File ${fileName}`);
   fileService.writeJson(fileName, timelockTransactions);
   console.log("✅ Done");
-}
+};
 
-main()
-  .then(() => {
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+export default func;
+func.tags = ["UpgradeXALPACAv2Rewarder"];

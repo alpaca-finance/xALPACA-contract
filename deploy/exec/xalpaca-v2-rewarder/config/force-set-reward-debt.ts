@@ -18,8 +18,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     */
   const REWARDER = "PYTH";
 
-  const user = "0xd09fA948296E54D1Ab73A0497C16403A08A84732";
-  const newRewardDebt = 524935147;
+  const user = "0x29AC23948DF7ba0FF99C08Ce29a848d019d254F9";
+  const newRewardDebt = 6033159;
 
   const deployer = await getDeployer();
   const config = ConfigEntity.getConfig();
